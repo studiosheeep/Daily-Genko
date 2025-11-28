@@ -183,6 +183,27 @@
       color: #e5e7eb;
     }
 
+/* ページ削除ボタン（ゴミ箱風） */
+.page-reset-btn {
+  border: 1px solid #881337;
+  background: #450a0a;
+  color: #fecaca;
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  box-shadow: 0 2px 0 rgba(15,23,42,0.6);
+}
+
+.page-reset-btn:hover {
+  background: #7f1d1d;
+}
+
+.page-reset-btn:active {
+  transform: translateY(1px);
+  box-shadow: 0 1px 0 rgba(15,23,42,0.6);
+}    
+    
     /* ===== マップエリア（Duolingo 風） ===== */
     .board-wrapper {
       margin-bottom: 4px;
@@ -406,12 +427,15 @@
     </div>
 
     <!-- ページ切り替え -->
-    <div class="page-nav">
-      <button id="prevPageBtn">◀</button>
-      <span id="pageLabel" class="page-nav-label">1ページ目 / 全1ページ</span>
-      <button id="nextPageBtn">▶</button>
-      <button id="addPageBtn">＋</button>
-    </div>
+<div class="page-nav">
+  <button id="prevPageBtn">◀</button>
+  <span id="pageLabel" class="page-nav-label">1ページ目 / 全1ページ</span>
+  <button id="nextPageBtn">▶</button>
+  <button id="addPageBtn">＋</button>
+
+  <!-- ★ 新規：ページ全削除ボタン -->
+  <button id="resetPagesBtn" class="page-reset-btn">🗑</button>
+</div>
 
     <div class="board-wrapper">
       <div id="map" class="map"></div>
@@ -1021,6 +1045,22 @@ function renderAll() {
         renderAll();
       });
 
+// ★ ページ数リセット（1ページに戻す）
+document.getElementById("resetPagesBtn").addEventListener("click", () => {
+  if (!confirm("全ページを削除して 1ページ目だけ残します。よろしいですか？")) return;
+
+  const data = loadAllProgress();
+
+  // 1ページに戻す
+  data.maxPage = 1;
+  data.pages = { "1": createInitialProgressMap() };
+
+  saveAllProgress(data);
+
+  currentPage = 1;
+  renderAll();
+  logMessage("ページ数をリセットしました。");
+});      
       // 画面幅が変わったらレイアウト再計算
       window.addEventListener("resize", () => {
         renderAll();
