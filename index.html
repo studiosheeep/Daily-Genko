@@ -10,7 +10,6 @@
         href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%2322c55e'/%3E%3C/svg%3E">
 
   <style>
-    /* ===== 全体レイアウト（ダーク＋フラット基調） ===== */
     :root {
       color-scheme: dark;
     }
@@ -37,114 +36,107 @@
       padding: 18px 16px 20px;
     }
 
-.top-bar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+      padding: 10px 16px;
+      background: linear-gradient(135deg, #22c55e, #16a34a);
+      border-radius: 20px;
+      box-shadow:
+        0 14px 30px rgba(0, 0, 0, 0.45),
+        0 0 0 1px rgba(21, 128, 61, 0.6);
+      color: #fff;
+    }
 
-  margin-bottom: 16px;
-  padding: 10px 16px;
+    .top-bar-left {
+      flex: 1 1 auto;
+      min-width: 180px;
+    }
 
-  background: linear-gradient(135deg, #22c55e, #16a34a);
-  border-radius: 20px;
-  box-shadow:
-    0 14px 30px rgba(0, 0, 0, 0.45),
-    0 0 0 1px rgba(21, 128, 61, 0.6);
-  color: #fff;
-}
+    .top-bar-left h1#nextTaskTitle {
+      font-size: 18px;
+      font-weight: 800;
+      margin: 0 0 2px;
+      color: #fff;
+    }
 
-.top-bar-left {
-  flex: 1 1 auto;
-  min-width: 180px;
-}
+    .top-bar-info {
+      font-size: 12px;
+      font-weight: 500;
+      color: rgba(255, 255, 255, 0.9);
+    }
 
-/* メインタイトル（次にやること） */
-.top-bar-left h1#nextTaskTitle {
-  font-size: 18px;
-  font-weight: 800;
-  margin: 0 0 2px;
-  color: #fff;
-}
+    .top-bar-right {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      gap: 10px;
+      flex: 0 0 auto;
+    }
 
-/* 小さめの補足行（サブタイトル的に） */
-.top-bar-info {
-  font-size: 12px;
-  font-weight: 500;
-  color: rgba(255, 255, 255, 0.9);
-}
-
-/* 右側ブロック（連続日数＋ボタン） */
-.top-bar-right {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 10px;
-  flex: 0 0 auto;
-}
-
-/* 600px 以下で縦並びにして中央寄せ */
-@media (max-width: 600px) {
-  .top-bar {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  .top-bar-right {
-    justify-content: flex-end;
-    align-self: stretch;
-  }
-}
+    @media (max-width: 600px) {
+      .top-bar {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .top-bar-right {
+        justify-content: flex-end;
+        align-self: stretch;
+      }
+    }
     
-.streak-box {
-  border-radius: 14px;
-  padding: 6px 10px;
-  font-size: 10px;
-  background: rgba(0, 0, 0, 0.15);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  text-align: right;
-  box-shadow: none;
-}
+    .streak-box {
+      border-radius: 14px;
+      padding: 6px 10px;
+      font-size: 10px;
+      background: rgba(0, 0, 0, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      text-align: right;
+      box-shadow: none;
+    }
 
-.streak-label {
-  color: rgba(255, 255, 255, 0.85);
-  margin-bottom: 1px;
-}
+    .streak-label {
+      color: rgba(255, 255, 255, 0.85);
+      margin-bottom: 1px;
+    }
 
-.streak-value {
-  font-size: 16px;
-  font-weight: 800;
-  color: #fef9c3;
-}
+    .streak-value {
+      font-size: 16px;
+      font-weight: 800;
+      color: #fef9c3;
+    }
 
-.streak-note {
-  color: rgba(255, 255, 255, 0.8);
-  font-size: 9px;
-  margin-top: 2px;
-}
+    .streak-note {
+      color: rgba(255, 255, 255, 0.8);
+      font-size: 9px;
+      margin-top: 2px;
+    }
 
-/* ガイドブック風ボタン */
-.reset-btn {
-  border-radius: 999px;
-  border: 2px solid rgba(255, 255, 255, 0.8);
-  background: rgba(255, 255, 255, 0.12);
-  color: #ffffff;
-  padding: 6px 14px;
-  font-size: 11px;
-  font-weight: 600;
-  cursor: pointer;
-  box-shadow: 0 3px 0 rgba(22, 101, 52, 0.7);
-}
+    .reset-btn {
+      border-radius: 999px;
+      border: 2px solid rgba(255, 255, 255, 0.8);
+      background: rgba(255, 255, 255, 0.12);
+      color: #ffffff;
+      padding: 6px 14px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 3px 0 rgba(22, 101, 52, 0.7);
+    }
 
-.reset-btn:hover {
-  background: rgba(255, 255, 255, 0.2);
-}
+    .reset-btn:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
 
-.reset-btn:active {
-  transform: translateY(1px);
-  box-shadow: 0 1px 0 rgba(22, 101, 52, 0.7);
-}
-    /* ===== ページナビ（フラットボタン風） ===== */
+    .reset-btn:active {
+      transform: translateY(1px);
+      box-shadow: 0 1px 0 rgba(22, 101, 52, 0.7);
+    }
+
     .page-nav {
       display: flex;
       justify-content: center;
@@ -183,28 +175,26 @@
       color: #e5e7eb;
     }
 
-/* ページ削除ボタン（ゴミ箱風） */
-.page-reset-btn {
-  border: 1px solid #881337;
-  background: #450a0a;
-  color: #fecaca;
-  border-radius: 999px;
-  padding: 4px 10px;
-  font-size: 12px;
-  cursor: pointer;
-  box-shadow: 0 2px 0 rgba(15,23,42,0.6);
-}
+    .page-reset-btn {
+      border: 1px solid #881337;
+      background: #450a0a;
+      color: #fecaca;
+      border-radius: 999px;
+      padding: 4px 10px;
+      font-size: 12px;
+      cursor: pointer;
+      box-shadow: 0 2px 0 rgba(15,23,42,0.6);
+    }
 
-.page-reset-btn:hover {
-  background: #7f1d1d;
-}
+    .page-reset-btn:hover {
+      background: #7f1d1d;
+    }
 
-.page-reset-btn:active {
-  transform: translateY(1px);
-  box-shadow: 0 1px 0 rgba(15,23,42,0.6);
-}    
+    .page-reset-btn:active {
+      transform: translateY(1px);
+      box-shadow: 0 1px 0 rgba(15,23,42,0.6);
+    }    
     
-    /* ===== マップエリア（Duolingo 風） ===== */
     .board-wrapper {
       margin-bottom: 4px;
       position: relative;
@@ -212,7 +202,7 @@
     .map {
       position: relative;
       width: 100%;
-      padding-bottom: 160%; /* PC 基準 */
+      padding-bottom: 160%;
       border-radius: 20px;
       background:
         radial-gradient(circle at 20% 0%, rgba(56,189,248,0.12) 0, transparent 55%),
@@ -223,7 +213,6 @@
         0 18px 40px rgba(0,0,0,0.7);
       overflow: hidden;
     }
-    /* スマホ時は縦長に */
     @media (max-width: 600px) {
       .map {
         padding-bottom: 500%;
@@ -271,25 +260,25 @@
       cursor: pointer;
     }
 
-.node-circle {
-  width: 72px;
-  height: 72px;
-  margin: 0 auto 6px;
-  border-radius: 999px;
-  border: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 800;
-  font-size: 18px;
-  transition:
-    transform 0.12s ease,
-    box-shadow 0.12s ease,
-    background 0.12s ease,
-    color 0.12s ease;
-  box-shadow: 0 4px 0 rgba(15,23,42,0.9);
-  position: relative; /* ★追加 */
-}
+    .node-circle {
+      width: 72px;
+      height: 72px;
+      margin: 0 auto 6px;
+      border-radius: 999px;
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 18px;
+      transition:
+        transform 0.12s ease,
+        box-shadow 0.12s ease,
+        background 0.12s ease,
+        color 0.12s ease;
+      box-shadow: 0 4px 0 rgba(15,23,42,0.9);
+      position: relative;
+    }
     .node.locked .node-circle {
       background: #0b1220;
       color: #4b5563;
@@ -331,43 +320,41 @@
 
     @media (max-width: 600px) {
       .node-title {
-      font-size: 12px;
-    }
+        font-size: 12px;
+      }
     }
 
-/* 次にやるマス用の外側リングアニメーション */
-.next-node .node-circle::after {
-  content: "";
-  position: absolute;
-  inset: -6px;                 /* 円を少し大きめに */
-  border-radius: inherit;
-  border: 3px solid rgba(190, 242, 100, 0.9); /* ライム寄りの色 */
-  opacity: 0;
-  transform: scale(0.9);
-  pointer-events: none;
-  animation: node-ring 1.4s ease-out infinite;
-}
+    .next-node .node-circle::after {
+      content: "";
+      position: absolute;
+      inset: -6px;
+      border-radius: inherit;
+      border: 3px solid rgba(190, 242, 100, 0.9);
+      opacity: 0;
+      transform: scale(0.9);
+      pointer-events: none;
+      animation: node-ring 1.4s ease-out infinite;
+    }
 
-@keyframes node-ring {
-  0% {
-    opacity: 0;
-    transform: scale(0.7);
-  }
-  25% {
-    opacity: 1;
-    transform: scale(1.02);
-  }
-  80% {
-    opacity: 0;
-    transform: scale(1.35);
-  }
-  100% {
-    opacity: 0;
-    transform: scale(1.4);
-  }
-}
+    @keyframes node-ring {
+      0% {
+        opacity: 0;
+        transform: scale(0.7);
+      }
+      25% {
+        opacity: 1;
+        transform: scale(1.02);
+      }
+      80% {
+        opacity: 0;
+        transform: scale(1.35);
+      }
+      100% {
+        opacity: 0;
+        transform: scale(1.4);
+      }
+    }
     
-    /* 「よくできました！」トースト */
     .success-toast {
       position: absolute;
       left: 50%;
@@ -406,48 +393,124 @@
       }
     }
     
-/* 紙吹雪 */
-.confetti {
-  position: absolute;
-  width: 6px;
-  height: 10px;
-  border-radius: 2px;
-  opacity: 0;
-  pointer-events: none;
-  z-index: 4;
-  /* 一定速度で動かしたいので linear */
-  animation: confetti-fall 900ms linear forwards;
-}
+    .confetti {
+      position: absolute;
+      width: 6px;
+      height: 10px;
+      border-radius: 2px;
+      opacity: 0;
+      pointer-events: none;
+      z-index: 4;
+      animation: confetti-fall 900ms linear forwards;
+    }
 
-@keyframes confetti-fall {
-  0% {
-    opacity: 0;
-    /* ボタン位置からスタート（横は 0 固定、縦だけ動かす） */
-    transform: translate3d(0, 0, 0) rotateZ(0deg);
-  }
-  /* ここで「ポン」と上に跳ねる */
-  20% {
-    opacity: 1;
-    transform: translate3d(0, -80px, 0) rotateZ(120deg);
-  }
-  /* あとはそのまま下までストンと落ちる */
-  100% {
-    opacity: 0;
-    transform: translate3d(0, 260px, 0) rotateZ(360deg);
-  }
-}
+    @keyframes confetti-fall {
+      0% {
+        opacity: 0;
+        transform: translate3d(0, 0, 0) rotateZ(0deg);
+      }
+      20% {
+        opacity: 1;
+        transform: translate3d(0, -80px, 0) rotateZ(120deg);
+      }
+      100% {
+        opacity: 0;
+        transform: translate3d(0, 260px, 0) rotateZ(360deg);
+      }
+    }
+
+    /* ===== サイドパネル ===== */
+    .side-panel {
+      position: fixed;
+      top: 80px;
+      right: 16px;
+      width: 260px;
+      max-width: 80vw;
+      background: #020617;
+      border-radius: 18px;
+      border: 1px solid rgba(148,163,184,0.6);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.7);
+      padding: 10px 12px 12px;
+      font-size: 13px;
+      opacity: 0;
+      transform: translateX(16px);
+      pointer-events: none;
+      transition:
+        opacity 0.16s ease-out,
+        transform 0.16s ease-out;
+      z-index: 30;
+    }
+
+    .side-panel.open {
+      opacity: 1;
+      transform: translateX(0);
+      pointer-events: auto;
+    }
+
+    .side-panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+
+    .side-panel-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #e5e7eb;
+    }
+
+    .side-panel-close {
+      border: none;
+      background: transparent;
+      color: #9ca3af;
+      cursor: pointer;
+      font-size: 16px;
+      line-height: 1;
+      padding: 0 4px;
+    }
+
+    .side-panel-close:hover {
+      color: #e5e7eb;
+    }
+
+    .side-panel-body {
+      font-size: 12px;
+      color: #cbd5f5;
+      line-height: 1.6;
+      white-space: pre-wrap;
+    }
+
+    .side-panel-done-btn {
+      margin-top: 10px;
+      width: 100%;
+      border-radius: 999px;
+      border: none;
+      background: #22c55e;
+      color: #022c22;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 6px 0;
+      cursor: pointer;
+      box-shadow: 0 3px 0 rgba(21,128,61,0.8);
+    }
+
+    .side-panel-done-btn:active {
+      transform: translateY(1px);
+      box-shadow: 0 1px 0 rgba(21,128,61,0.8);
+    }
   </style>
 </head>
 <body>
   <div class="app-container">
     <div class="top-bar">
-<div class="top-bar-left">
-  <!-- 「次にやること」表示 -->
-  <h1 id="nextTaskTitle">原稿すごろくマップ</h1>
-  <div class="top-bar-info" id="nextTaskInfo">
-    一番上のマスから順番にクリックして進めていく原稿すごろくです。
-  </div>
-</div>
+      <div class="top-bar-left">
+        <h1 id="nextTaskTitle">原稿すごろくマップ</h1>
+        <div class="top-bar-info" id="nextTaskInfo">
+          一番上のマスから順番にクリックして進めていく原稿すごろくです。
+        </div>
+      </div>
       <div class="top-bar-right">
         <div class="streak-box">
           <div class="streak-label">現在の連続日数</div>
@@ -458,14 +521,13 @@
       </div>
     </div>
 
-    <!-- ページ切り替え -->
-<div class="page-nav">
-  <button id="prevPageBtn">◀</button>
-  <span id="pageLabel" class="page-nav-label">1ページ目 / 全1ページ</span>
-  <button id="nextPageBtn">▶</button>
-  <button id="addPageBtn">＋</button>
-  <button id="resetPagesBtn" class="page-reset-btn">🗑</button>
-</div>
+    <div class="page-nav">
+      <button id="prevPageBtn">◀</button>
+      <span id="pageLabel" class="page-nav-label">1ページ目 / 全1ページ</span>
+      <button id="nextPageBtn">▶</button>
+      <button id="addPageBtn">＋</button>
+      <button id="resetPagesBtn" class="page-reset-btn">🗑</button>
+    </div>
 
     <div class="board-wrapper">
       <div id="map" class="map"></div>
@@ -473,8 +535,17 @@
     </div>
   </div>
 
+  <!-- ★ サイドパネル本体 -->
+  <div id="sidePanel" class="side-panel">
+    <div class="side-panel-header">
+      <div id="sidePanelTitle" class="side-panel-title"></div>
+      <button id="sidePanelClose" class="side-panel-close">×</button>
+    </div>
+    <div id="sidePanelBody" class="side-panel-body"></div>
+    <button id="sidePanelDoneBtn" class="side-panel-done-btn">進めた</button>
+  </div>
+
   <script>
-    // ===== マス定義 =====
     const frameCount   = 6;
     const roughCount   = 6;
     const textCount    = 6;
@@ -511,7 +582,6 @@
     last = addGroup("tone_",   "トーン",   "トーン {n}コマ目。",   toneCount,  last);
     last = addGroup("finish_", "仕上げ",   "仕上げ {n}コマ目。",   finishCount,last);
 
-    // ===== ページ管理 =====
     let currentPage = 1;
     const STORAGE_KEY = "mangaLessonProgress_v8_pages";
     const STREAK_KEY  = "mangaLessonStreak_v1";
@@ -601,7 +671,6 @@
       saveAllProgress(data);
     }
 
-    // ===== グリッド配置（レスポンシブ：PC=6列, 600px以下=3列） =====
     function getPerRow() {
       return window.innerWidth <= 600 ? 3 : 6;
     }
@@ -610,19 +679,11 @@
       const positions = [];
       const rows = Math.ceil(count / perRow);
 
-      // 横方向：左右に少し余白
-      let marginX;
-      if (perRow === 3) {
-        marginX = 12;
-      } else {
-        marginX = 8;
-      }
+      let marginX = (perRow === 3) ? 12 : 8;
       const usableX = 100 - marginX * 2;
       const stepX   = perRow > 1 ? usableX / (perRow - 1) : 0;
 
-      // 縦方向
-      let marginTop;
-      let totalY;
+      let marginTop, totalY;
       if (perRow === 3) {
         marginTop = 5;
         totalY    = 90;
@@ -645,7 +706,6 @@
       return positions;
     }
 
-    // ===== 日付（朝5時区切り） =====
     function getLogicalDateKey(date = new Date()) {
       const d = new Date(date.getTime());
       const hour = d.getHours();
@@ -669,7 +729,6 @@
       return `${y}-${m}-${d}`;
     }
 
-    // ===== 連続日数 =====
     function loadStreakData() {
       const raw = localStorage.getItem(STREAK_KEY);
       if (!raw) return {};
@@ -724,7 +783,6 @@
       el.textContent = `${calcCurrentStreak()} 日`;
     }
 
-    // ===== ページ表示更新 =====
     function updatePageLabel(dataOpt) {
       const labelEl = document.getElementById("pageLabel");
       const prevBtn = document.getElementById("prevPageBtn");
@@ -736,7 +794,6 @@
       if (nextBtn) nextBtn.disabled = currentPage >= data.maxPage;
     }
 
-    // まだ終わっていない最初のレッスンを探す
     function getNextIncompleteLesson(progress) {
       for (const lesson of LESSONS) {
         if (!isLessonCompleted(lesson, progress)) {
@@ -746,7 +803,6 @@
       return null;
     }
 
-    // ヘッダーに「次にやること」を表示
     function updateNextTaskDisplay(progress) {
       const titleEl = document.getElementById("nextTaskTitle");
       const infoEl  = document.getElementById("nextTaskInfo");
@@ -762,8 +818,20 @@
         infoEl.textContent  = "お疲れさまでした。新しいページを追加して続きの原稿を進めましょう。";
       }
     }
+
+    // パネルに表示するテキストを作る
+    function buildPanelText(lesson) {
+      const lines = [];
+      lines.push(`今日は「${lesson.title}」を進めてみよう。`);
+      lines.push("");
+      lines.push("小さくていいので、今できる範囲だけ手を付けてみるのがおすすめです。");
+      lines.push("・5分だけタイマーをかけて手を動かしてみる");
+      lines.push("・迷ったらとりあえずラフ線を一本引いてみる");
+      lines.push("");
+      lines.push("作業ができたら、下の「進めた」ボタンを押してマスを進めましょう。");
+      return lines.join("\n");
+    }
     
-    // ===== 成功エフェクト =====
     let audioCtx = null;
 
     function showSuccessEffect() {
@@ -798,7 +866,7 @@
         const piece = document.createElement("div");
         piece.className = "confetti";
 
-        const offsetX = (Math.random() * 30) - 15; // -15〜+15
+        const offsetX = (Math.random() * 30) - 15;
         piece.style.left = (baseXPercent + offsetX) + "%";
         piece.style.top  = baseYPercent + "%";
 
@@ -857,7 +925,7 @@
           return;
         }
 
-        const base = 523.25; // C5
+        const base = 523.25;
         const step = 0.12;
         tone(base,           now + 0.00, 0.4, 0.26, "triangle");
         tone(base * 1.25,    now + step, 0.4, 0.24, "triangle");
@@ -872,7 +940,6 @@
       }
     }
 
-    // ===== レッスン状態 =====
     function isLessonUnlocked(lesson, progress) {
       if (!lesson.prereqId) return true;
       const prereq = LESSONS.find(l => l.id === lesson.prereqId);
@@ -884,6 +951,7 @@
       return progress[lesson.id] >= lesson.maxProgress;
     }
 
+    // 実際に進捗を進めて紙吹雪する処理（従来のadvance）
     function advanceLesson(lessonId) {
       const { data, progress } = loadPageProgress(currentPage);
       const lesson = LESSONS.find(l => l.id === lessonId);
@@ -919,70 +987,102 @@
       playSuccessSound(isFinal);
     }
     
-    // ===== ログ =====
     function logMessage(text) {
       console.log(text);
     }
 
-    // ===== マップ描画 =====
-function renderMap(progress) {
-  const mapEl = document.getElementById("map");
-  mapEl.innerHTML = "";
+    // どのマスを進めるか、パネルで保持しておく
+    let pendingLessonId = null;
 
-  const perRow = getPerRow();
-  const positions = computeGridPositions(LESSONS.length, perRow);
+    function openLessonPanel(lessonId) {
+      const { progress } = loadPageProgress(currentPage);
+      const lesson = LESSONS.find(l => l.id === lessonId);
+      if (!lesson) return;
 
-  // ★追加：次にやるレッスンを取得
-  const nextLesson = getNextIncompleteLesson(progress);
+      if (!isLessonUnlocked(lesson, progress)) {
+        logMessage(`「${lesson.title}」はまだ先のマスです。手前のマスから順番に進めてください。`);
+        return;
+      }
+      if (isLessonCompleted(lesson, progress)) {
+        logMessage(`「${lesson.title}」は既にクリアしています。`);
+        return;
+      }
 
-  LESSONS.forEach((lesson, index) => {
-    const unlocked  = isLessonUnlocked(lesson, progress);
-    const completed = isLessonCompleted(lesson, progress);
-    const pos = positions[index];
+      const panel = document.getElementById("sidePanel");
+      const titleEl = document.getElementById("sidePanelTitle");
+      const bodyEl  = document.getElementById("sidePanelBody");
+      if (!panel || !titleEl || !bodyEl) return;
 
-    const node = document.createElement("div");
-    node.className = "node";
-    node.dataset.lessonId = lesson.id;
-    node.style.left = pos.x + "%";
-    node.style.top  = pos.y + "%";
+      titleEl.textContent = lesson.title;
+      bodyEl.textContent  = buildPanelText(lesson);
 
-    if (!unlocked) node.classList.add("locked");
-    if (unlocked)  node.classList.add("unlocked");
-    if (completed) node.classList.add("completed");
-
-    // ★追加：次にやるマスなら .next-node を付与
-    if (nextLesson && lesson.id === nextLesson.id) {
-      node.classList.add("next-node");
+      pendingLessonId = lessonId;
+      panel.classList.add("open");
     }
 
-    const circle = document.createElement("div");
-    circle.className = "node-circle";
-    circle.textContent = index + 1;
-
-    const title = document.createElement("div");
-    title.className = "node-title";
-    title.textContent = lesson.title;
-
-    const progressText = document.createElement("div");
-    progressText.className = "node-progress";
-    if (completed) {
-      progressText.textContent = "クリア済み";
-    } else if (unlocked) {
-      progressText.textContent = "クリックして進む";
-    } else {
-      progressText.textContent = "ロック中";
+    function closeLessonPanel() {
+      const panel = document.getElementById("sidePanel");
+      if (panel) panel.classList.remove("open");
     }
 
-    node.appendChild(circle);
-    node.appendChild(title);
-    node.appendChild(progressText);
+    function renderMap(progress) {
+      const mapEl = document.getElementById("map");
+      mapEl.innerHTML = "";
 
-    node.addEventListener("click", () => advanceLesson(lesson.id));
-    mapEl.appendChild(node);
-  });
+      const perRow = getPerRow();
+      const positions = computeGridPositions(LESSONS.length, perRow);
 
-  requestAnimationFrame(drawLinesFromDom);
-}
+      const nextLesson = getNextIncompleteLesson(progress);
+
+      LESSONS.forEach((lesson, index) => {
+        const unlocked  = isLessonUnlocked(lesson, progress);
+        const completed = isLessonCompleted(lesson, progress);
+        const pos = positions[index];
+
+        const node = document.createElement("div");
+        node.className = "node";
+        node.dataset.lessonId = lesson.id;
+        node.style.left = pos.x + "%";
+        node.style.top  = pos.y + "%";
+
+        if (!unlocked) node.classList.add("locked");
+        if (unlocked)  node.classList.add("unlocked");
+        if (completed) node.classList.add("completed");
+
+        if (nextLesson && lesson.id === nextLesson.id) {
+          node.classList.add("next-node");
+        }
+
+        const circle = document.createElement("div");
+        circle.className = "node-circle";
+        circle.textContent = index + 1;
+
+        const title = document.createElement("div");
+        title.className = "node-title";
+        title.textContent = lesson.title;
+
+        const progressText = document.createElement("div");
+        progressText.className = "node-progress";
+        if (completed) {
+          progressText.textContent = "クリア済み";
+        } else if (unlocked) {
+          progressText.textContent = "クリックして進む";
+        } else {
+          progressText.textContent = "ロック中";
+        }
+
+        node.appendChild(circle);
+        node.appendChild(title);
+        node.appendChild(progressText);
+
+        // ここで直接advanceせず、パネルを開く
+        node.addEventListener("click", () => openLessonPanel(lesson.id));
+        mapEl.appendChild(node);
+      });
+
+      requestAnimationFrame(drawLinesFromDom);
+    }
+
     function drawLinesFromDom() {
       const mapEl = document.getElementById("map");
       if (!mapEl) return;
@@ -1077,6 +1177,29 @@ function renderMap(progress) {
         renderAll();
         logMessage("ページ数をリセットしました。");
       });
+
+      // サイドパネルのボタン
+      const closeBtn = document.getElementById("sidePanelClose");
+      const doneBtn  = document.getElementById("sidePanelDoneBtn");
+
+      if (closeBtn) {
+        closeBtn.addEventListener("click", () => {
+          pendingLessonId = null;
+          closeLessonPanel();
+        });
+      }
+      if (doneBtn) {
+        doneBtn.addEventListener("click", () => {
+          if (!pendingLessonId) {
+            closeLessonPanel();
+            return;
+          }
+          const id = pendingLessonId;
+          pendingLessonId = null;
+          closeLessonPanel();
+          advanceLesson(id);
+        });
+      }
 
       window.addEventListener("resize", () => {
         renderAll();
