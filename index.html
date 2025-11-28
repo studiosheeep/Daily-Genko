@@ -164,6 +164,9 @@
       .map {
         padding-bottom: 500%;
       }
+      .node-title {
+      font-size: 12px;
+    }
     }
 
     .map::before {
@@ -509,11 +512,6 @@
       }
       return positions;
     }
-
-    .node-title {
-      font-size: 12px;
-    }
-    
     // ===== 日付（朝5時区切り） =====
     function getLogicalDateKey(date = new Date()) {
       const d = new Date(date.getTime());
