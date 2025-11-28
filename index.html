@@ -11,12 +11,10 @@
       padding: 16px;
       background: #f5f5f5;
     }
-
     h1 {
       font-size: 20px;
       margin-bottom: 4px;
     }
-
     .app-container {
       max-width: 960px;
       margin: 0 auto;
@@ -25,7 +23,6 @@
       box-shadow: 0 2px 8px rgba(0,0,0,0.08);
       padding: 16px;
     }
-
     .top-bar {
       display: flex;
       justify-content: space-between;
@@ -34,17 +31,14 @@
       gap: 8px;
       flex-wrap: wrap;
     }
-
     .top-bar-left {
       flex: 1 1 auto;
       min-width: 180px;
     }
-
     .top-bar-info {
       font-size: 13px;
       color: #555;
     }
-
     .top-bar-right {
       display: flex;
       flex-direction: column;
@@ -53,7 +47,6 @@
       flex: 0 0 auto;
       min-width: 160px;
     }
-
     .streak-box {
       border: 1px solid #ddd;
       border-radius: 6px;
@@ -62,24 +55,20 @@
       background: #fafafa;
       text-align: right;
     }
-
     .streak-label {
       color: #555;
       margin-bottom: 2px;
     }
-
     .streak-value {
       font-size: 16px;
       font-weight: bold;
       color: #c56;
     }
-
     .streak-note {
       color: #888;
       font-size: 10px;
       margin-top: 2px;
     }
-
     .reset-btn {
       border: 1px solid #d33;
       background: #fff5f5;
@@ -90,15 +79,12 @@
       cursor: pointer;
       align-self: flex-end;
     }
-
     .reset-btn:hover {
       background: #ffe5e5;
     }
-
     .board-wrapper {
       margin-bottom: 16px;
     }
-
     .map {
       position: relative;
       width: 100%;
@@ -111,34 +97,29 @@
       box-shadow: inset 0 0 0 1px rgba(0,0,0,0.05);
       overflow: hidden;
     }
-
     .map::before {
       content: "";
       position: absolute;
       inset: 8% 4%;
-      background-image:
-        radial-gradient(circle, rgba(255,150,120,0.6) 2px, transparent 2px);
+      background-image: radial-gradient(circle, rgba(255,150,120,0.6) 2px, transparent 2px);
       background-size: 32px 32px;
       opacity: 0.25;
       pointer-events: none;
       z-index: 0;
     }
-
     .map-lines {
       position: absolute;
       inset: 0;
       z-index: 1;
       pointer-events: none;
     }
-
     .map-line {
       fill: none;
       stroke: rgba(255, 152, 0, 0.7);
-      stroke-width: 4; /* 太さ（pxベース） */
+      stroke-width: 4;
       stroke-linecap: round;
       stroke-linejoin: round;
     }
-
     .node {
       position: absolute;
       transform: translate(-50%, -50%);
@@ -146,16 +127,13 @@
       text-align: center;
       z-index: 3;
     }
-
     .node.locked {
       cursor: not-allowed;
     }
-
     .node.unlocked,
     .node.completed {
       cursor: pointer;
     }
-
     .node-circle {
       width: 64px;
       height: 64px;
@@ -168,44 +146,36 @@
       background: #fefefe;
       font-weight: bold;
       font-size: 16px;
-      transition: transform 0.1s ease, box-shadow 0.1s ease,
-                  border-color 0.1s ease, background 0.1s ease;
+      transition: transform 0.1s ease, box-shadow 0.1s ease, border-color 0.1s ease, background 0.1s ease;
     }
-
     .node.locked .node-circle {
       background: #f0f0f0;
       border-style: dashed;
       color: #aaa;
     }
-
     .node.unlocked .node-circle {
       border-color: #36a;
       background: #ffffff;
     }
-
     .node.completed .node-circle {
       background: #36a;
       border-color: #247;
       color: #fff;
       box-shadow: 0 0 0 3px rgba(54,106,170,0.25);
     }
-
     .node.unlocked:hover .node-circle,
     .node.completed:hover .node-circle {
       transform: translateY(-2px);
       box-shadow: 0 4px 8px rgba(0,0,0,0.15);
     }
-
     .node-title {
       font-size: 11px;
       margin-bottom: 2px;
     }
-
     .node-progress {
       font-size: 10px;
       color: #555;
     }
-
     .label-start,
     .label-goal {
       position: absolute;
@@ -218,27 +188,22 @@
       transform: translate(-50%, -50%);
       box-shadow: 0 2px 4px rgba(0,0,0,0.15);
     }
-
     .label-start {
       background: #4caf50;
     }
-
     .label-goal {
       background: #ff9800;
     }
-
     .log-panel {
       border-top: 1px solid #eee;
       padding-top: 8px;
       margin-top: 8px;
     }
-
     .log-title {
       font-size: 13px;
       font-weight: 600;
       margin-bottom: 4px;
     }
-
     .log {
       font-size: 11px;
       max-height: 200px;
@@ -250,7 +215,6 @@
       white-space: pre-wrap;
       line-height: 1.4;
     }
-
     .empty-log {
       color: #999;
     }
@@ -262,7 +226,7 @@
       <div class="top-bar-left">
         <h1>原稿すごろくマップ</h1>
         <div class="top-bar-info">
-          START から GOAL まで、マスを順番にクリックして進めていく原稿すごろくです。
+          一番上のマスから順番にクリックして進めていく原稿すごろくです。
         </div>
       </div>
       <div class="top-bar-right">
@@ -290,19 +254,27 @@
 
   <script>
     // ===== マス定義 =====
-    const frameCount = 6;
-    const roughCount = 6;
-    const textCount  = 6;
+    const frameCount   = 6; // 枠線
+    const roughCount   = 6; // 下書き
+    const textCount    = 6; // 台詞
+    const penCount     = 6; // ペン入れ
+    const betaCount    = 6; // ベタ
+    const toneCount    = 6; // トーン
+    const finishCount  = 6; // 仕上げ
 
     const LESSONS = [];
 
+    // prefix: 保存ID用
+    // label:  表示用の「枠線」「台詞」など（タイトルは「枠線1コマ目」のようになる）
+    // descBase: 説明文テンプレ（{n} が 1,2,3…に置き換わる）
     function addGroup(prefix, label, descBase, count, prevId) {
       let lastId = prevId;
       for (let i = 1; i <= count; i++) {
         const id = `${prefix}${i}`;
+        const title = `${label}${i}コマ目`;
         LESSONS.push({
           id,
-          title: `${label} ${i}`,
+          title,
           description: descBase.replace("{n}", i),
           maxProgress: 1,
           prereqId: lastId
@@ -313,9 +285,17 @@
     }
 
     let last = null;
-    last = addGroup("frame_", "枠線マス", "コマ枠の線を進めるステップ {n}。", frameCount, last);
-    last = addGroup("rough_", "下書きマス", "下書きを進めるステップ {n}。", roughCount, last);
-    last = addGroup("text_",  "台詞マス",  "台詞・モノローグを書いていくステップ {n}。", textCount, last);
+    // 枠線1〜6コマ目
+    last = addGroup("frame_",  "枠線",   "枠線 {n}コマ目。",      frameCount, last);
+    // 下書き1〜6コマ目
+    last = addGroup("rough_",  "下書き", "下書き {n}コマ目。",    roughCount, last);
+    // 台詞1〜6コマ目
+    last = addGroup("text_",   "台詞",   "台詞 {n}コマ目。",      textCount,  last);
+    // 台詞6コマ目の後に追加する4工程
+    last = addGroup("pen_",    "ペン入れ", "ペン入れ {n}コマ目。", penCount,   last);
+    last = addGroup("beta_",   "ベタ",     "ベタ {n}コマ目。",     betaCount,  last);
+    last = addGroup("tone_",   "トーン",   "トーン {n}コマ目。",   toneCount,  last);
+    last = addGroup("finish_", "仕上げ",   "仕上げ {n}コマ目。",   finishCount,last);
 
     const STORAGE_KEY = "mangaLessonProgress_v5_grid_lines_px";
     const STREAK_KEY  = "mangaLessonStreak_v1";
@@ -326,6 +306,7 @@
     function computeGridPositions(count) {
       const positions = [];
       const rows = Math.ceil(count / PER_ROW);
+
       const marginX = 8;
       const usableX = 84;
       const stepX = PER_ROW > 1 ? usableX / (PER_ROW - 1) : 0;
@@ -339,6 +320,7 @@
         const indexInRow = i % PER_ROW;
         const isEvenRow = (row % 2 === 0);
         const col = isEvenRow ? indexInRow : PER_ROW - 1 - indexInRow;
+
         const x = marginX + stepX * col;
         const y = marginTop + rowStep * row;
         positions.push({ x, y });
@@ -353,6 +335,7 @@
       const d = new Date(date.getTime());
       const hour = d.getHours();
       if (hour < 5) d.setDate(d.getDate() - 1);
+
       const y = d.getFullYear();
       const m = String(d.getMonth() + 1).padStart(2, "0");
       const day = String(d.getDate()).padStart(2, "0");
@@ -367,7 +350,7 @@
     function dateToKey(date) {
       const y = date.getFullYear();
       const m = String(date.getMonth() + 1).padStart(2, "0");
-      const d = String(date.getDate() + 0).padStart(2, "0");
+      const d = String(date.getDate()).padStart(2, "0");
       return `${y}-${m}-${d}`;
     }
 
@@ -436,6 +419,7 @@
       const data = loadStreakData();
       const keys = Object.keys(data);
       if (keys.length === 0) return 0;
+
       const set = new Set(keys);
       let streak = 0;
       let d = keyToDate(getLogicalDateKey());
@@ -486,7 +470,6 @@
       progress[lesson.id] += 1;
       saveProgress(progress);
       logMessage(`「${lesson.title}」をクリアしました。`);
-
       registerActivity();
       updateStreakDisplay();
       renderAll();
@@ -499,6 +482,7 @@
       const hh = String(now.getHours()).padStart(2, "0");
       const mm = String(now.getMinutes()).padStart(2, "0");
       const prefix = `[${hh}:${mm}] `;
+
       if (logEl.classList.contains("empty-log")) {
         logEl.textContent = prefix + text;
         logEl.classList.remove("empty-log");
@@ -513,24 +497,6 @@
       const mapEl = document.getElementById("map");
       mapEl.innerHTML = "";
 
-      // START / GOAL ラベル（理論座標ベース）
-      const firstPos = NODE_POSITIONS[0];
-      const lastPos  = NODE_POSITIONS[NODE_POSITIONS.length - 1];
-
-      const startLabel = document.createElement("div");
-      startLabel.className = "label-start";
-      startLabel.style.left = (firstPos.x - 8) + "%";
-      startLabel.style.top  = (firstPos.y + 10) + "%";
-      startLabel.textContent = "START";
-      mapEl.appendChild(startLabel);
-
-      const goalLabel = document.createElement("div");
-      goalLabel.className = "label-goal";
-      goalLabel.style.left = (lastPos.x + 6) + "%";
-      goalLabel.style.top  = (lastPos.y - 10) + "%";
-      goalLabel.textContent = "GOAL";
-      mapEl.appendChild(goalLabel);
-
       // マス本体
       LESSONS.forEach((lesson, index) => {
         const unlocked = isLessonUnlocked(lesson, progress);
@@ -541,7 +507,7 @@
         node.className = "node";
         node.dataset.lessonId = lesson.id;
         node.style.left = pos.x + "%";
-        node.style.top  = pos.y + "%";
+        node.style.top = pos.y + "%";
 
         if (!unlocked) node.classList.add("locked");
         if (unlocked) node.classList.add("unlocked");
@@ -568,8 +534,8 @@
         node.appendChild(circle);
         node.appendChild(title);
         node.appendChild(progressText);
-        node.addEventListener("click", () => advanceLesson(lesson.id));
 
+        node.addEventListener("click", () => advanceLesson(lesson.id));
         mapEl.appendChild(node);
       });
 
@@ -589,7 +555,6 @@
       if (nodes.length < 2) return;
 
       const mapRect = mapEl.getBoundingClientRect();
-
       const centers = nodes.map(node => {
         const r = node.getBoundingClientRect();
         const cx = (r.left + r.right) / 2 - mapRect.left;
@@ -632,6 +597,7 @@
         resetProgress();
         resetStreakData();
         renderAll();
+
         const logEl = document.getElementById("log");
         logEl.textContent = "進捗と連続日数をリセットしました。";
         logEl.classList.add("empty-log");
