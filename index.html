@@ -800,8 +800,8 @@ function advanceLesson(lessonId) {
   const isFinal = lesson.id === "finish_6";
 
   showSuccessEffect();
-  triggerConfetti();          // 紙吹雪を追加
-  playSuccessSound(isFinal);
+  triggerConfetti();           // ← 紙吹雪を追加
+  playSuccessSound(isFinal);   // ← フラグを渡す
 
   renderAll();
 }
