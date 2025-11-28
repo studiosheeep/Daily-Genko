@@ -323,37 +323,33 @@
       }
     }
         /* 紙吹雪 */
-    .confetti {
-      position: absolute;
-      width: 6px;
-      height: 10px;
-      border-radius: 2px;
-      opacity: 0;
-      pointer-events: none;
-      z-index: 4;
-      animation: confetti-fall 900ms ease-out forwards;
-    }
+.confetti {
+  position: absolute;
+  width: 6px;
+  height: 10px;
+  border-radius: 2px;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 4;
+  /* ここを変更：ease-out → linear に */
+  animation: confetti-fall 900ms linear forwards;
+}
 
 @keyframes confetti-fall {
   0% {
     opacity: 0;
-    /* ボタンのあたりからスタート */
+    /* ボタンの位置からスタート */
     transform: translate3d(0, 0, 0) rotateZ(0deg);
   }
-  /* 少し上にパッと跳ねる（横はまだ少しだけ） */
-  20% {
+  /* 15% で少し上に「ポン」と跳ねる（横は 30% だけ移動） */
+  15% {
     opacity: 1;
-    transform: translate3d(calc(var(--dx) * 0.3), -50px, 0) rotateZ(80deg);
+    transform: translate3d(calc(var(--dx) * 0.3), -35px, 0) rotateZ(80deg);
   }
-  /* 中間あたり。横方向もじわっと広がる */
-  60% {
-    opacity: 1;
-    transform: translate3d(calc(var(--dx) * 0.7), 90px, 0) rotateZ(220deg);
-  }
-  /* 一番下に落ちる頃には var(--dx) ぶんだけ横に散らばっている */
+  /* あとはそのまま下までストンと落ちる（横は var(--dx) まで広がる）*/
   100% {
     opacity: 0;
-    transform: translate3d(var(--dx), 220px, 0) rotateZ(360deg);
+    transform: translate3d(var(--dx), 240px, 0) rotateZ(360deg);
   }
 }
   </style>
