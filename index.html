@@ -271,25 +271,25 @@
       cursor: pointer;
     }
 
-    .node-circle {
-      width: 72px;
-      height: 72px;
-      margin: 0 auto 6px;
-      border-radius: 999px;
-      border: none;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 800;
-      font-size: 18px;
-      transition:
-        transform 0.12s ease,
-        box-shadow 0.12s ease,
-        background 0.12s ease,
-        color 0.12s ease;
-      box-shadow: 0 4px 0 rgba(15,23,42,0.9);
-    }
-
+.node-circle {
+  width: 72px;
+  height: 72px;
+  margin: 0 auto 6px;
+  border-radius: 999px;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 18px;
+  transition:
+    transform 0.12s ease,
+    box-shadow 0.12s ease,
+    background 0.12s ease,
+    color 0.12s ease;
+  box-shadow: 0 4px 0 rgba(15,23,42,0.9);
+  position: relative; /* ★追加 */
+}
     .node.locked .node-circle {
       background: #0b1220;
       color: #4b5563;
@@ -334,6 +334,38 @@
       font-size: 12px;
     }
     }
+
+/* 次にやるマス用の外側リングアニメーション */
+.next-node .node-circle::after {
+  content: "";
+  position: absolute;
+  inset: -6px;                 /* 円を少し大きめに */
+  border-radius: inherit;
+  border: 3px solid rgba(190, 242, 100, 0.9); /* ライム寄りの色 */
+  opacity: 0;
+  transform: scale(0.9);
+  pointer-events: none;
+  animation: node-ring 1.4s ease-out infinite;
+}
+
+@keyframes node-ring {
+  0% {
+    opacity: 0;
+    transform: scale(0.7);
+  }
+  25% {
+    opacity: 1;
+    transform: scale(1.02);
+  }
+  80% {
+    opacity: 0;
+    transform: scale(1.35);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.4);
+  }
+}
     
     /* 「よくできました！」トースト */
     .success-toast {
@@ -893,57 +925,64 @@
     }
 
     // ===== マップ描画 =====
-    function renderMap(progress) {
-      const mapEl = document.getElementById("map");
-      mapEl.innerHTML = "";
+function renderMap(progress) {
+  const mapEl = document.getElementById("map");
+  mapEl.innerHTML = "";
 
-      const perRow = getPerRow();
-      const positions = computeGridPositions(LESSONS.length, perRow);
+  const perRow = getPerRow();
+  const positions = computeGridPositions(LESSONS.length, perRow);
 
-      LESSONS.forEach((lesson, index) => {
-        const unlocked = isLessonUnlocked(lesson, progress);
-        const completed = isLessonCompleted(lesson, progress);
-        const pos = positions[index];
+  // ★追加：次にやるレッスンを取得
+  const nextLesson = getNextIncompleteLesson(progress);
 
-        const node = document.createElement("div");
-        node.className = "node";
-        node.dataset.lessonId = lesson.id;
-        node.style.left = pos.x + "%";
-        node.style.top = pos.y + "%";
+  LESSONS.forEach((lesson, index) => {
+    const unlocked  = isLessonUnlocked(lesson, progress);
+    const completed = isLessonCompleted(lesson, progress);
+    const pos = positions[index];
 
-        if (!unlocked) node.classList.add("locked");
-        if (unlocked) node.classList.add("unlocked");
-        if (completed) node.classList.add("completed");
+    const node = document.createElement("div");
+    node.className = "node";
+    node.dataset.lessonId = lesson.id;
+    node.style.left = pos.x + "%";
+    node.style.top  = pos.y + "%";
 
-        const circle = document.createElement("div");
-        circle.className = "node-circle";
-        circle.textContent = index + 1;
+    if (!unlocked) node.classList.add("locked");
+    if (unlocked)  node.classList.add("unlocked");
+    if (completed) node.classList.add("completed");
 
-        const title = document.createElement("div");
-        title.className = "node-title";
-        title.textContent = lesson.title;
-
-        const progressText = document.createElement("div");
-        progressText.className = "node-progress";
-        if (completed) {
-          progressText.textContent = "クリア済み";
-        } else if (unlocked) {
-          progressText.textContent = "クリックして進む";
-        } else {
-          progressText.textContent = "ロック中";
-        }
-
-        node.appendChild(circle);
-        node.appendChild(title);
-        node.appendChild(progressText);
-
-        node.addEventListener("click", () => advanceLesson(lesson.id));
-        mapEl.appendChild(node);
-      });
-
-      requestAnimationFrame(drawLinesFromDom);
+    // ★追加：次にやるマスなら .next-node を付与
+    if (nextLesson && lesson.id === nextLesson.id) {
+      node.classList.add("next-node");
     }
 
+    const circle = document.createElement("div");
+    circle.className = "node-circle";
+    circle.textContent = index + 1;
+
+    const title = document.createElement("div");
+    title.className = "node-title";
+    title.textContent = lesson.title;
+
+    const progressText = document.createElement("div");
+    progressText.className = "node-progress";
+    if (completed) {
+      progressText.textContent = "クリア済み";
+    } else if (unlocked) {
+      progressText.textContent = "クリックして進む";
+    } else {
+      progressText.textContent = "ロック中";
+    }
+
+    node.appendChild(circle);
+    node.appendChild(title);
+    node.appendChild(progressText);
+
+    node.addEventListener("click", () => advanceLesson(lesson.id));
+    mapEl.appendChild(node);
+  });
+
+  requestAnimationFrame(drawLinesFromDom);
+}
     function drawLinesFromDom() {
       const mapEl = document.getElementById("map");
       if (!mapEl) return;
