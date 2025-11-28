@@ -419,22 +419,25 @@
       }
     }
 
-/* ===== サイドパネル ===== */
+/* ===== 中央パネル（大型版） ===== */
 .side-panel {
   position: fixed;
   top: 50%;
   left: 50%;
-  /* 画面中央配置に変更 */
-  width: 260px;
-  max-width: 90vw;
+
+  /* ★大きくする（3回りアップ） */
+  width: 360px;                 /* 260 → 360 */
+  max-width: 95vw;
   background: #020617;
-  border-radius: 18px;
+  border-radius: 20px;
   border: 1px solid rgba(148,163,184,0.6);
-  box-shadow: 0 20px 40px rgba(0,0,0,0.7);
-  padding: 12px 14px 14px;
-  font-size: 15px;              /* 13px → 15px に変更 */
+  box-shadow: 0 26px 60px rgba(0,0,0,0.75);
+
+  padding: 24px 26px 26px;      /* 内側も広げる */
+  font-size: 15px;
+
   opacity: 0;
-  transform: translate(-50%, -48%) scale(0.96);
+  transform: translate(-50%, -48%) scale(0.94);
   pointer-events: none;
   transition:
     opacity 0.16s ease-out,
@@ -448,33 +451,61 @@
   pointer-events: auto;
 }
 
-.side-panel-title {
-  font-size: 16px;              /* 14px → 16px */
-  font-weight: 700;
-  color: #e5e7eb;
+/* タイトル + ×ボタン の行 */
+.side-panel-header {
+  display: flex;
+  justify-content: space-between;  /* ★右上へ */
+  align-items: center;
+  margin-bottom: 12px;
 }
 
+/* タイトル */
+.side-panel-header span {
+  font-size: 18px;    /* 少し大きく */
+  font-weight: 800;
+  color: #f1f5f9;
+}
+
+/* ×ボタン（右上） */
+.side-panel-close {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  font-size: 20px;     /* 見やすくアップ */
+  cursor: pointer;
+  padding: 2px 4px;
+  line-height: 1;
+}
+.side-panel-close:hover {
+  color: #e2e8f0;
+}
+
+/* 本文 */
 .side-panel-body {
-  font-size: 14px;              /* 12px → 14px */
+  font-size: 15px;
   color: #cbd5f5;
-  line-height: 1.6;
+  line-height: 1.7;
   white-space: pre-wrap;
 }
 
+/* 「進めた」ボタン */
 .side-panel-done-btn {
-  margin-top: 10px;
+  margin-top: 18px;
   width: 100%;
   border-radius: 999px;
   border: none;
   background: #22c55e;
-  color: #022c22;
-  font-size: 14px;              /* 12px → 14px */
+  color: #052e16;
+  font-size: 15px;
   font-weight: 700;
-  padding: 8px 0;
+  padding: 12px 0;
   cursor: pointer;
   box-shadow: 0 3px 0 rgba(21,128,61,0.8);
 }
-
+.side-panel-done-btn:active {
+  transform: translateY(1px);
+  box-shadow: 0 1px 0 rgba(21,128,61,0.8);
+}
   </style>
 </head>
 <body>
