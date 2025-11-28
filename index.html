@@ -358,12 +358,13 @@
 <body>
   <div class="app-container">
     <div class="top-bar">
-      <div class="top-bar-left">
-        <h1>原稿すごろくマップ</h1>
-        <div class="top-bar-info">
-          一番上のマスから順番にクリックして進めていく原稿すごろくです。
-        </div>
-      </div>
+<div class="top-bar-left">
+  <!-- ここを書き換え -->
+  <h1 id="nextTaskTitle">原稿すごろくマップ</h1>
+  <div class="top-bar-info" id="nextTaskInfo">
+    一番上のマスから順番にクリックして進めていく原稿すごろくです。
+  </div>
+</div>
       <div class="top-bar-right">
         <div class="streak-box">
           <div class="streak-label">現在の連続日数</div>
@@ -650,6 +651,36 @@
       if (nextBtn) nextBtn.disabled = currentPage >= data.maxPage;
     }
 
+// まだ終わっていない最初のレッスンを探す
+function getNextIncompleteLesson(progress) {
+  for (const lesson of LESSONS) {
+    if (!isLessonCompleted(lesson, progress)) {
+      return lesson;
+    }
+  }
+  return null;
+}
+
+// ヘッダーに「次にやること」を表示
+function updateNextTaskDisplay(progress) {
+  const titleEl = document.getElementById("nextTaskTitle");
+  const infoEl  = document.getElementById("nextTaskInfo");
+  if (!titleEl || !infoEl) return;
+
+  const next = getNextIncompleteLesson(progress);
+
+  if (next) {
+    // メインの大きな文字
+    titleEl.textContent = `${next.title}を進めよう！`;
+    // 小さな補足テキスト（お好みで文言は変えてOK）
+    infoEl.textContent = `次のマスは「${next.title}」です。クリックして進めていきましょう。`;
+  } else {
+    // そのページの LESSONS を全部クリアしている場合
+    titleEl.textContent = "このページは全部クリアしました！";
+    infoEl.textContent   = "お疲れさまでした。新しいページを追加して続きの原稿を進めましょう。";
+  }
+}
+    
     // ===== 成功エフェクト =====
     let audioCtx = null;
 
@@ -918,12 +949,13 @@ function advanceLesson(lessonId) {
       mapEl.insertBefore(svg, mapEl.firstChild);
     }
 
-    function renderAll() {
-      const { data, progress } = loadPageProgress(currentPage);
-      renderMap(progress);
-      updateStreakDisplay();
-      updatePageLabel(data);
-    }
+function renderAll() {
+  const { data, progress } = loadPageProgress(currentPage);
+  renderMap(progress);
+  updateStreakDisplay();
+  updatePageLabel(data);
+  updateNextTaskDisplay(progress);   // ← 追加
+}
 
     window.addEventListener("DOMContentLoaded", () => {
       renderAll();
