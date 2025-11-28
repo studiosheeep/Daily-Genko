@@ -27,7 +27,7 @@
       display: flex;
       justify-content: space-between;
       align-items: stretch;
-      margin-bottom: 16px;
+      margin-bottom: 12px;
       gap: 8px;
       flex-wrap: wrap;
     }
@@ -82,21 +82,52 @@
     .reset-btn:hover {
       background: #ffe5e5;
     }
+
+    /* ページナビ */
+    .page-nav {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+      font-size: 13px;
+    }
+    .page-nav button {
+      border: 1px solid #ccc;
+      background: #fafafa;
+      border-radius: 999px;
+      padding: 2px 10px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+    .page-nav button:hover:not(:disabled) {
+      background: #f0f0f0;
+    }
+    .page-nav button:disabled {
+      opacity: 0.4;
+      cursor: default;
+    }
+    .page-nav-label {
+      min-width: 140px;
+      text-align: center;
+    }
+
     .board-wrapper {
       margin-bottom: 16px;
+      position: relative; /* 成功トーストを重ねるため */
     }
-.map {
-  position: relative;
-  width: 100%;
-  padding-bottom: 160%;
-  border-radius: 12px;
-  background:
-    radial-gradient(circle at 10% 20%, #fef9e7 0, #fef9e7 40%, transparent 41%),
-    radial-gradient(circle at 80% 70%, #e8f9ff 0, #e8f9ff 35%, transparent 36%),
-    #fdfdfd;
-  box-shadow: inset 0 0 0 1px rgba(0,0,0,0.05);
-  overflow: hidden;
-}
+    .map {
+      position: relative;
+      width: 100%;
+      padding-bottom: 160%;
+      border-radius: 12px;
+      background:
+        radial-gradient(circle at 10% 20%, #fef9e7 0, #fef9e7 40%, transparent 41%),
+        radial-gradient(circle at 80% 70%, #e8f9ff 0, #e8f9ff 35%, transparent 36%),
+        #fdfdfd;
+      box-shadow: inset 0 0 0 1px rgba(0,0,0,0.05);
+      overflow: hidden;
+    }
     .map::before {
       content: "";
       position: absolute;
@@ -176,24 +207,7 @@
       font-size: 10px;
       color: #555;
     }
-    .label-start,
-    .label-goal {
-      position: absolute;
-      padding: 4px 8px;
-      border-radius: 999px;
-      font-size: 11px;
-      font-weight: bold;
-      color: #fff;
-      z-index: 4;
-      transform: translate(-50%, -50%);
-      box-shadow: 0 2px 4px rgba(0,0,0,0.15);
-    }
-    .label-start {
-      background: #4caf50;
-    }
-    .label-goal {
-      background: #ff9800;
-    }
+
     .log-panel {
       border-top: 1px solid #eee;
       padding-top: 8px;
@@ -218,6 +232,45 @@
     .empty-log {
       color: #999;
     }
+
+    /* 「よくできました！」トースト */
+    .success-toast {
+      position: absolute;
+      left: 50%;
+      top: 10%;
+      transform: translate(-50%, -50%) scale(0.6);
+      background: rgba(255,255,255,0.96);
+      color: #c56;
+      font-size: 14px;
+      font-weight: bold;
+      padding: 6px 18px;
+      border-radius: 999px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+      pointer-events: none;
+      opacity: 0;
+      z-index: 5;
+    }
+    .success-toast.show {
+      animation: success-pop 0.9s ease-out forwards;
+    }
+    @keyframes success-pop {
+      0% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.6);
+      }
+      20% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1.05);
+      }
+      60% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+      }
+      100% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.8);
+      }
+    }
   </style>
 </head>
 <body>
@@ -239,8 +292,17 @@
       </div>
     </div>
 
+    <!-- ページ切り替え -->
+    <div class="page-nav">
+      <button id="prevPageBtn">◀</button>
+      <span id="pageLabel" class="page-nav-label">1ページ目 / 全1ページ</span>
+      <button id="nextPageBtn">▶</button>
+      <button id="addPageBtn">＋</button>
+    </div>
+
     <div class="board-wrapper">
       <div id="map" class="map"></div>
+      <div id="successToast" class="success-toast">よくできました！</div>
     </div>
 
     <div class="log-panel">
@@ -264,9 +326,6 @@
 
     const LESSONS = [];
 
-    // prefix: 保存ID用
-    // label:  表示用の「枠線」「台詞」など（タイトルは「枠線1コマ目」のようになる）
-    // descBase: 説明文テンプレ（{n} が 1,2,3…に置き換わる）
     function addGroup(prefix, label, descBase, count, prevId) {
       let lastId = prevId;
       for (let i = 1; i <= count; i++) {
@@ -285,20 +344,106 @@
     }
 
     let last = null;
-    // 枠線1〜6コマ目
     last = addGroup("frame_",  "枠線",   "枠線 {n}コマ目。",      frameCount, last);
-    // 下書き1〜6コマ目
     last = addGroup("rough_",  "下書き", "下書き {n}コマ目。",    roughCount, last);
-    // 台詞1〜6コマ目
     last = addGroup("text_",   "台詞",   "台詞 {n}コマ目。",      textCount,  last);
-    // 台詞6コマ目の後に追加する4工程
     last = addGroup("pen_",    "ペン入れ", "ペン入れ {n}コマ目。", penCount,   last);
     last = addGroup("beta_",   "ベタ",     "ベタ {n}コマ目。",     betaCount,  last);
     last = addGroup("tone_",   "トーン",   "トーン {n}コマ目。",   toneCount,  last);
     last = addGroup("finish_", "仕上げ",   "仕上げ {n}コマ目。",   finishCount,last);
 
-    const STORAGE_KEY = "mangaLessonProgress_v5_grid_lines_px";
+    // ===== ページ管理 =====
+    let currentPage = 1;
+    const STORAGE_KEY = "mangaLessonProgress_v7_pages";
     const STREAK_KEY  = "mangaLessonStreak_v1";
+
+    function createInitialProgressMap() {
+      const obj = {};
+      for (const lesson of LESSONS) {
+        obj[lesson.id] = 0;
+      }
+      return obj;
+    }
+
+    function createNewData() {
+      return {
+        maxPage: 1,
+        pages: { "1": createInitialProgressMap() }
+      };
+    }
+
+    function migrateLegacyProgress(legacyObj) {
+      const base = createInitialProgressMap();
+      for (const id of Object.keys(base)) {
+        if (typeof legacyObj[id] === "number") {
+          base[id] = legacyObj[id];
+        }
+      }
+      return base;
+    }
+
+    function loadAllProgress() {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) {
+        const data = createNewData();
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        return data;
+      }
+      try {
+        const parsed = JSON.parse(raw);
+        if (parsed && parsed.pages) {
+          // 新形式
+          // 各ページに最新のレッスンキーを補完
+          for (let p = 1; p <= (parsed.maxPage || 1); p++) {
+            const key = String(p);
+            if (!parsed.pages[key]) parsed.pages[key] = createInitialProgressMap();
+            else {
+              const base = createInitialProgressMap();
+              const src = parsed.pages[key];
+              for (const id of Object.keys(base)) {
+                base[id] = typeof src[id] === "number" ? src[id] : 0;
+              }
+              parsed.pages[key] = base;
+            }
+          }
+          return parsed;
+        } else {
+          // 旧形式：1ページ目として移行
+          const legacy = (parsed && typeof parsed === "object") ? parsed : {};
+          const data = createNewData();
+          data.pages["1"] = migrateLegacyProgress(legacy);
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+          return data;
+        }
+      } catch {
+        const data = createNewData();
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        return data;
+      }
+    }
+
+    function saveAllProgress(data) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    }
+
+    function loadPageProgress(page) {
+      const data = loadAllProgress();
+      const key = String(page);
+      if (!data.pages[key]) {
+        data.pages[key] = createInitialProgressMap();
+        if (page > data.maxPage) data.maxPage = page;
+        saveAllProgress(data);
+      }
+      return { data, progress: data.pages[key] };
+    }
+
+    function resetAllPagesProgress() {
+      const data = loadAllProgress();
+      for (let p = 1; p <= data.maxPage; p++) {
+        data.pages[String(p)] = createInitialProgressMap();
+      }
+      saveAllProgress(data);
+    }
 
     // ===== グリッド配置（6個ごとに蛇行） =====
     const PER_ROW = 6;
@@ -311,9 +456,9 @@
       const usableX = 84;
       const stepX = PER_ROW > 1 ? usableX / (PER_ROW - 1) : 0;
 
-  const marginTop = 8;
-  const totalY = 70;
-  const rowStep = rows > 1 ? totalY / (rows - 1) : 0;
+      const marginTop = 8;
+      const totalY = 70;
+      const rowStep = rows > 1 ? totalY / (rows - 1) : 0;
 
       for (let i = 0; i < count; i++) {
         const row = Math.floor(i / PER_ROW);
@@ -354,39 +499,7 @@
       return `${y}-${m}-${d}`;
     }
 
-    // ===== 進捗 =====
-    function loadProgress() {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) {
-        const init = {};
-        for (const lesson of LESSONS) init[lesson.id] = 0;
-        return init;
-      }
-      try {
-        const parsed = JSON.parse(raw);
-        for (const lesson of LESSONS) {
-          if (typeof parsed[lesson.id] !== "number") parsed[lesson.id] = 0;
-        }
-        return parsed;
-      } catch {
-        const init = {};
-        for (const lesson of LESSONS) init[lesson.id] = 0;
-        return init;
-      }
-    }
-
-    function saveProgress(progress) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(progress));
-    }
-
-    function resetProgress() {
-      const progress = {};
-      for (const lesson of LESSONS) progress[lesson.id] = 0;
-      saveProgress(progress);
-      return progress;
-    }
-
-    // ===== 連続日数 =====
+    // ===== 進捗（連続日数はページ共通） =====
     function loadStreakData() {
       const raw = localStorage.getItem(STREAK_KEY);
       if (!raw) return {};
@@ -441,6 +554,18 @@
       el.textContent = `${calcCurrentStreak()} 日`;
     }
 
+    // ===== ページ表示更新 =====
+    function updatePageLabel(dataOpt) {
+      const labelEl = document.getElementById("pageLabel");
+      const prevBtn = document.getElementById("prevPageBtn");
+      const nextBtn = document.getElementById("nextPageBtn");
+      const data = dataOpt || loadAllProgress();
+      if (!labelEl) return;
+      labelEl.textContent = `${currentPage}ページ目 / 全${data.maxPage}ページ`;
+      if (prevBtn) prevBtn.disabled = currentPage <= 1;
+      if (nextBtn) nextBtn.disabled = currentPage >= data.maxPage;
+    }
+
     // ===== レッスン状態 =====
     function isLessonUnlocked(lesson, progress) {
       if (!lesson.prereqId) return true;
@@ -453,8 +578,44 @@
       return progress[lesson.id] >= lesson.maxProgress;
     }
 
+    // 成功エフェクト
+    let audioCtx = null;
+
+    function showSuccessEffect() {
+      const toast = document.getElementById("successToast");
+      if (!toast) return;
+      toast.classList.remove("show");
+      void toast.offsetWidth; // リセット
+      toast.classList.add("show");
+    }
+
+    function playSuccessSound() {
+      try {
+        const Ctx = window.AudioContext || window.webkitAudioContext;
+        if (!Ctx) return;
+        if (!audioCtx) audioCtx = new Ctx();
+
+        const ctx = audioCtx;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        osc.type = "triangle";
+        const now = ctx.currentTime;
+        osc.frequency.setValueAtTime(880, now);
+        gain.gain.setValueAtTime(0.0001, now);
+        gain.gain.exponentialRampToValueAtTime(0.25, now + 0.03);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.35);
+
+        osc.connect(gain).connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.4);
+      } catch (e) {
+        console.warn("audio error", e);
+      }
+    }
+
     function advanceLesson(lessonId) {
-      const progress = loadProgress();
+      const { data, progress } = loadPageProgress(currentPage);
       const lesson = LESSONS.find(l => l.id === lessonId);
       if (!lesson) return;
 
@@ -468,10 +629,15 @@
       }
 
       progress[lesson.id] += 1;
-      saveProgress(progress);
-      logMessage(`「${lesson.title}」をクリアしました。`);
+      saveAllProgress(data);
+
+      logMessage(`「${lesson.title}」をクリアしました。（${currentPage}ページ目）`);
       registerActivity();
       updateStreakDisplay();
+
+      showSuccessEffect();
+      playSuccessSound();
+
       renderAll();
     }
 
@@ -497,7 +663,6 @@
       const mapEl = document.getElementById("map");
       mapEl.innerHTML = "";
 
-      // マス本体
       LESSONS.forEach((lesson, index) => {
         const unlocked = isLessonUnlocked(lesson, progress);
         const completed = isLessonCompleted(lesson, progress);
@@ -539,11 +704,9 @@
         mapEl.appendChild(node);
       });
 
-      // マスを置き終わったあとに線を引く
       requestAnimationFrame(drawLinesFromDom);
     }
 
-    // 実際の DOM の位置から線を描画（px ベース）
     function drawLinesFromDom() {
       const mapEl = document.getElementById("map");
       if (!mapEl) return;
@@ -584,23 +747,49 @@
     }
 
     function renderAll() {
-      const progress = loadProgress();
+      const { data, progress } = loadPageProgress(currentPage);
       renderMap(progress);
       updateStreakDisplay();
+      updatePageLabel(data);
     }
 
     window.addEventListener("DOMContentLoaded", () => {
       renderAll();
 
       document.getElementById("resetProgressBtn").addEventListener("click", () => {
-        if (!confirm("本当に進捗と連続日数をリセットしますか？")) return;
-        resetProgress();
+        if (!confirm("本当に全ページの進捗と連続日数をリセットしますか？")) return;
+        resetAllPagesProgress();
         resetStreakData();
         renderAll();
 
         const logEl = document.getElementById("log");
-        logEl.textContent = "進捗と連続日数をリセットしました。";
+        logEl.textContent = "全ページの進捗と連続日数をリセットしました。";
         logEl.classList.add("empty-log");
+      });
+
+      // ページナビ
+      document.getElementById("prevPageBtn").addEventListener("click", () => {
+        if (currentPage > 1) {
+          currentPage--;
+          renderAll();
+        }
+      });
+      document.getElementById("nextPageBtn").addEventListener("click", () => {
+        const data = loadAllProgress();
+        if (currentPage < data.maxPage) {
+          currentPage++;
+          renderAll();
+        }
+      });
+      document.getElementById("addPageBtn").addEventListener("click", () => {
+        const data = loadAllProgress();
+        const newPage = data.maxPage + 1;
+        data.maxPage = newPage;
+        data.pages[String(newPage)] = createInitialProgressMap();
+        saveAllProgress(data);
+        currentPage = newPage;
+        logMessage(`${newPage}ページ目を追加しました。`);
+        renderAll();
       });
 
       // ウィンドウサイズ変更時も線を引き直す
