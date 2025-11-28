@@ -355,44 +355,50 @@
       }
     }
     
-    .success-toast {
-      position: absolute;
-      left: 50%;
-      top: 16%;
-      transform: translate(-50%, -50%) scale(0.7);
-      background: #22c55e;
-      color: #022c22;
-      font-size: 13px;
-      font-weight: 700;
-      padding: 6px 18px;
-      border-radius: 999px;
-      box-shadow: 0 12px 30px rgba(0,0,0,0.75);
-      pointer-events: none;
-      opacity: 0;
-      z-index: 5;
-    }
-    .success-toast.show {
-      animation: success-pop 0.9s ease-out forwards;
-    }
-    @keyframes success-pop {
-      0% {
-        opacity: 0;
-        transform: translate(-50%, -50%) scale(0.6);
-      }
-      20% {
-        opacity: 1;
-        transform: translate(-50%, -50%) scale(1.05);
-      }
-      60% {
-        opacity: 1;
-        transform: translate(-50%, -50%) scale(1);
-      }
-      100% {
-        opacity: 0;
-        transform: translate(-50%, -50%) scale(0.8);
-      }
-    }
-    
+/* 「よくできました！」トースト（大型版） */
+.success-toast {
+  position: absolute;
+  left: 50%;
+  top: 16%;
+  transform: translate(-50%, -50%) scale(0.7);
+
+  /* ★背景と余白を大きく */
+  background: #22c55e;
+  color: #022c22;
+  font-size: 20px;        /* 13px → 20px （約2周りアップ） */
+  font-weight: 800;       /* 強調 */
+
+  padding: 12px 32px;     /* 6px 18px → 12px 32px（大きめバッジ） */
+  border-radius: 999px;
+
+  box-shadow: 0 16px 36px rgba(0,0,0,0.75); /* 影も強く */
+  pointer-events: none;
+  opacity: 0;
+  z-index: 5;
+}
+
+.success-toast.show {
+  animation: success-pop 0.9s ease-out forwards;
+}
+
+@keyframes success-pop {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.6);
+  }
+  20% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.12); /* アップ時の弾みも調整 */
+  }
+  60% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.8);
+  }
+}
     .confetti {
       position: absolute;
       width: 6px;
