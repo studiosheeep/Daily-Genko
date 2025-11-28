@@ -114,12 +114,12 @@
 
     .board-wrapper {
       margin-bottom: 16px;
-      position: relative; /* 成功トーストを重ねるため */
+      position: relative;
     }
     .map {
       position: relative;
       width: 100%;
-      padding-bottom: 160%;
+      padding-bottom: 160%;  /* PC 基準 */
       border-radius: 12px;
       background:
         radial-gradient(circle at 10% 20%, #fef9e7 0, #fef9e7 40%, transparent 41%),
@@ -128,6 +128,13 @@
       box-shadow: inset 0 0 0 1px rgba(0,0,0,0.05);
       overflow: hidden;
     }
+    /* 600px以下でマップを縦長に */
+    @media (max-width: 600px) {
+      .map {
+        padding-bottom: 300%;
+      }
+    }
+
     .map::before {
       content: "";
       position: absolute;
@@ -200,11 +207,11 @@
       box-shadow: 0 4px 8px rgba(0,0,0,0.15);
     }
     .node-title {
-      font-size: 16px;
+      font-size: 11px;
       margin-bottom: 2px;
     }
     .node-progress {
-      font-size: 12px;
+      font-size: 10px;
       color: #555;
     }
 
@@ -316,13 +323,13 @@
 
   <script>
     // ===== マス定義 =====
-    const frameCount   = 6; // 枠線
-    const roughCount   = 6; // 下書き
-    const textCount    = 6; // 台詞
-    const penCount     = 6; // ペン入れ
-    const betaCount    = 6; // ベタ
-    const toneCount    = 6; // トーン
-    const finishCount  = 6; // 仕上げ
+    const frameCount   = 6;
+    const roughCount   = 6;
+    const textCount    = 6;
+    const penCount     = 6;
+    const betaCount    = 6;
+    const toneCount    = 6;
+    const finishCount  = 6;
 
     const LESSONS = [];
 
@@ -392,8 +399,6 @@
       try {
         const parsed = JSON.parse(raw);
         if (parsed && parsed.pages) {
-          // 新形式
-          // 各ページに最新のレッスンキーを補完
           for (let p = 1; p <= (parsed.maxPage || 1); p++) {
             const key = String(p);
             if (!parsed.pages[key]) parsed.pages[key] = createInitialProgressMap();
@@ -408,7 +413,6 @@
           }
           return parsed;
         } else {
-          // 旧形式：1ページ目として移行
           const legacy = (parsed && typeof parsed === "object") ? parsed : {};
           const data = createNewData();
           data.pages["1"] = migrateLegacyProgress(legacy);
@@ -445,26 +449,28 @@
       saveAllProgress(data);
     }
 
-    // ===== グリッド配置（6個ごとに蛇行） =====
-    const PER_ROW = 6;
+    // ===== グリッド配置（レスポンシブ：PC=6列, 600px以下=3列） =====
+    function getPerRow() {
+      return window.innerWidth <= 600 ? 3 : 6;
+    }
 
-    function computeGridPositions(count) {
+    function computeGridPositions(count, perRow) {
       const positions = [];
-      const rows = Math.ceil(count / PER_ROW);
+      const rows = Math.ceil(count / perRow);
 
       const marginX = 8;
       const usableX = 84;
-      const stepX = PER_ROW > 1 ? usableX / (PER_ROW - 1) : 0;
+      const stepX = perRow > 1 ? usableX / (perRow - 1) : 0;
 
       const marginTop = 8;
       const totalY = 70;
       const rowStep = rows > 1 ? totalY / (rows - 1) : 0;
 
       for (let i = 0; i < count; i++) {
-        const row = Math.floor(i / PER_ROW);
-        const indexInRow = i % PER_ROW;
+        const row = Math.floor(i / perRow);
+        const indexInRow = i % perRow;
         const isEvenRow = (row % 2 === 0);
-        const col = isEvenRow ? indexInRow : PER_ROW - 1 - indexInRow;
+        const col = isEvenRow ? indexInRow : perRow - 1 - indexInRow;
 
         const x = marginX + stepX * col;
         const y = marginTop + rowStep * row;
@@ -472,8 +478,6 @@
       }
       return positions;
     }
-
-    const NODE_POSITIONS = computeGridPositions(LESSONS.length);
 
     // ===== 日付（朝5時区切り） =====
     function getLogicalDateKey(date = new Date()) {
@@ -499,7 +503,7 @@
       return `${y}-${m}-${d}`;
     }
 
-    // ===== 進捗（連続日数はページ共通） =====
+    // ===== 連続日数 =====
     function loadStreakData() {
       const raw = localStorage.getItem(STREAK_KEY);
       if (!raw) return {};
@@ -566,26 +570,14 @@
       if (nextBtn) nextBtn.disabled = currentPage >= data.maxPage;
     }
 
-    // ===== レッスン状態 =====
-    function isLessonUnlocked(lesson, progress) {
-      if (!lesson.prereqId) return true;
-      const prereq = LESSONS.find(l => l.id === lesson.prereqId);
-      if (!prereq) return true;
-      return progress[prereq.id] >= prereq.maxProgress;
-    }
-
-    function isLessonCompleted(lesson, progress) {
-      return progress[lesson.id] >= lesson.maxProgress;
-    }
-
-    // 成功エフェクト
+    // ===== 成功エフェクト =====
     let audioCtx = null;
 
     function showSuccessEffect() {
       const toast = document.getElementById("successToast");
       if (!toast) return;
       toast.classList.remove("show");
-      void toast.offsetWidth; // リセット
+      void toast.offsetWidth;
       toast.classList.add("show");
     }
 
@@ -599,8 +591,8 @@
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
 
-        osc.type = "triangle";
         const now = ctx.currentTime;
+        osc.type = "triangle";
         osc.frequency.setValueAtTime(880, now);
         gain.gain.setValueAtTime(0.0001, now);
         gain.gain.exponentialRampToValueAtTime(0.25, now + 0.03);
@@ -612,6 +604,18 @@
       } catch (e) {
         console.warn("audio error", e);
       }
+    }
+
+    // ===== レッスン状態 =====
+    function isLessonUnlocked(lesson, progress) {
+      if (!lesson.prereqId) return true;
+      const prereq = LESSONS.find(l => l.id === lesson.prereqId);
+      if (!prereq) return true;
+      return progress[prereq.id] >= prereq.maxProgress;
+    }
+
+    function isLessonCompleted(lesson, progress) {
+      return progress[lesson.id] >= lesson.maxProgress;
     }
 
     function advanceLesson(lessonId) {
@@ -663,10 +667,13 @@
       const mapEl = document.getElementById("map");
       mapEl.innerHTML = "";
 
+      const perRow = getPerRow();
+      const positions = computeGridPositions(LESSONS.length, perRow);
+
       LESSONS.forEach((lesson, index) => {
         const unlocked = isLessonUnlocked(lesson, progress);
         const completed = isLessonCompleted(lesson, progress);
-        const pos = NODE_POSITIONS[index];
+        const pos = positions[index];
 
         const node = document.createElement("div");
         node.className = "node";
@@ -767,36 +774,4 @@
         logEl.classList.add("empty-log");
       });
 
-      // ページナビ
-      document.getElementById("prevPageBtn").addEventListener("click", () => {
-        if (currentPage > 1) {
-          currentPage--;
-          renderAll();
-        }
-      });
-      document.getElementById("nextPageBtn").addEventListener("click", () => {
-        const data = loadAllProgress();
-        if (currentPage < data.maxPage) {
-          currentPage++;
-          renderAll();
-        }
-      });
-      document.getElementById("addPageBtn").addEventListener("click", () => {
-        const data = loadAllProgress();
-        const newPage = data.maxPage + 1;
-        data.maxPage = newPage;
-        data.pages[String(newPage)] = createInitialProgressMap();
-        saveAllProgress(data);
-        currentPage = newPage;
-        logMessage(`${newPage}ページ目を追加しました。`);
-        renderAll();
-      });
-
-      // ウィンドウサイズ変更時も線を引き直す
-      window.addEventListener("resize", () => {
-        requestAnimationFrame(drawLinesFromDom);
-      });
-    });
-  </script>
-</body>
-</html>
+      document.getElementById("prevPageBt
