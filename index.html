@@ -322,6 +322,32 @@
         transform: translate(-50%, -50%) scale(0.8);
       }
     }
+        /* 紙吹雪 */
+    .confetti {
+      position: absolute;
+      width: 6px;
+      height: 10px;
+      border-radius: 2px;
+      opacity: 0;
+      pointer-events: none;
+      z-index: 4;
+      animation: confetti-fall 900ms ease-out forwards;
+    }
+
+    @keyframes confetti-fall {
+      0% {
+        opacity: 0;
+        transform: translate3d(0, 0, 0) rotateZ(0deg);
+      }
+      10% {
+        opacity: 1;
+      }
+      100% {
+        opacity: 0;
+        transform: translate3d(var(--dx, 60px), 220px, 0) rotateZ(360deg);
+      }
+    }
+    
   </style>
 </head>
 <body>
@@ -630,6 +656,42 @@
       toast.classList.add("show");
     }
 
+    // 紙吹雪（クラッカー）の生成
+    function triggerConfetti() {
+      const mapEl = document.getElementById("map");
+      if (!mapEl) return;
+
+      const count = 45; // 紙吹雪の枚数
+      const colors = ["#22c55e", "#facc15", "#38bdf8", "#f97316", "#a855f7"];
+
+      for (let i = 0; i < count; i++) {
+        const piece = document.createElement("div");
+        piece.className = "confetti";
+
+        // 左右に少し幅を持たせて中央上あたりから飛び出す
+        const xPercent = 35 + Math.random() * 30; // 35〜65%
+        piece.style.left = xPercent + "%";
+        piece.style.top  = "18%";
+
+        // 飛ぶ方向と距離
+        const angle = (Math.random() * Math.PI) - Math.PI / 2; // 左右に散る
+        const distance = 140 + Math.random() * 120;
+        const dx = Math.cos(angle) * distance;
+        piece.style.setProperty("--dx", dx + "px");
+
+        // 色とディレイ
+        piece.style.backgroundColor = colors[i % colors.length];
+        piece.style.animationDelay = (Math.random() * 0.18) + "s";
+
+        mapEl.appendChild(piece);
+
+        // アニメーション終了後に削除
+        setTimeout(() => {
+          piece.remove();
+        }, 1000);
+      }
+    }
+    
 function playSuccessSound(isFinal) {
   try {
     const Ctx = window.AudioContext || window.webkitAudioContext;
