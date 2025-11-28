@@ -419,44 +419,46 @@
       saveAllProgress(data);
     }
 
-    // ===== グリッド配置（レスポンシブ：PC=6列, 600px以下=3列） =====
-    function getPerRow() {
-      return window.innerWidth <= 600 ? 3 : 6;
-    }
+// ===== グリッド配置（レスポンシブ：PC=6列, 600px以下=3列） =====
+function getPerRow() {
+  return window.innerWidth <= 600 ? 3 : 6;
+}
 
-    function computeGridPositions(count, perRow) {
-      const positions = [];
-      const rows = Math.ceil(count / perRow);
+function computeGridPositions(count, perRow) {
+  const positions = [];
+  const rows = Math.ceil(count / perRow);
 
-      const marginX = 8;
-      const usableX = 84;
-      const stepX = perRow > 1 ? usableX / (perRow - 1) : 0;
+  // 横方向：端から端までを perRow+1 で均等割り
+  const xStep = 100 / (perRow + 1);
 
-      let marginTop;
-      let totalY;
-      if (perRow === 3) {
-        marginTop = 5;
-        totalY   = 90;
-      } else {
-        marginTop = 8;
-        totalY   = 70;
-      }
+  // 縦方向：PC とスマホで設定を分ける
+  let marginTop;
+  let totalY;
+  if (perRow === 3) {
+    // スマホ：縦をほぼ全部使う
+    marginTop = 5;
+    totalY   = 90;
+  } else {
+    // PC
+    marginTop = 8;
+    totalY   = 70;
+  }
+  const rowStep = rows > 1 ? totalY / (rows - 1) : 0;
 
-      const rowStep = rows > 1 ? totalY / (rows - 1) : 0;
+  for (let i = 0; i < count; i++) {
+    const row = Math.floor(i / perRow);
+    const indexInRow = i % perRow;
+    const isEvenRow = (row % 2 === 0);
+    // 蛇行：偶数行は左→右、奇数行は右→左
+    const col = isEvenRow ? indexInRow : perRow - 1 - indexInRow;
 
-      for (let i = 0; i < count; i++) {
-        const row = Math.floor(i / perRow);
-        const indexInRow = i % perRow;
-        const isEvenRow = (row % 2 === 0);
-        const col = isEvenRow ? indexInRow : perRow - 1 - indexInRow;
+    const x = xStep * (col + 1);         // ここが横幅に自動フィット
+    const y = marginTop + rowStep * row; // 上からの位置（%）
 
-        const x = marginX + stepX * col;
-        const y = marginTop + rowStep * row;
-        positions.push({ x, y });
-      }
-      return positions;
-    }
-
+    positions.push({ x, y });
+  }
+  return positions;
+}
     // ===== 日付（朝5時区切り） =====
     function getLogicalDateKey(date = new Date()) {
       const d = new Date(date.getTime());
