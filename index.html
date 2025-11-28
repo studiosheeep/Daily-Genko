@@ -312,9 +312,10 @@
       const usableX = 84;
       const stepX = PER_ROW > 1 ? usableX / (PER_ROW - 1) : 0;
 
-      const marginTop = 12;
-      const totalY = 180;
-      const rowStep = rows > 1 ? totalY / (rows - 1) : 0;
+  const marginTop = 12;
+  // ここを 180 → 86 に変更
+  const totalY = 86;
+  const rowStep = rows > 1 ? totalY / (rows - 1) : 0;
 
       for (let i = 0; i < count; i++) {
         const row = Math.floor(i / PER_ROW);
