@@ -774,4 +774,35 @@
         logEl.classList.add("empty-log");
       });
 
-      document.getElementById("prevPageBt
+      document.getElementById("prevPageBtn").addEventListener("click", () => {
+        if (currentPage > 1) {
+          currentPage--;
+          renderAll();
+        }
+      });
+      document.getElementById("nextPageBtn").addEventListener("click", () => {
+        const data = loadAllProgress();
+        if (currentPage < data.maxPage) {
+          currentPage++;
+          renderAll();
+        }
+      });
+      document.getElementById("addPageBtn").addEventListener("click", () => {
+        const data = loadAllProgress();
+        const newPage = data.maxPage + 1;
+        data.maxPage = newPage;
+        data.pages[String(newPage)] = createInitialProgressMap();
+        saveAllProgress(data);
+        currentPage = newPage;
+        logMessage(`${newPage}ページ目を追加しました。`);
+        renderAll();
+      });
+
+      // 画面幅が変わったらレイアウトを再計算
+      window.addEventListener("resize", () => {
+        renderAll();
+      });
+    });
+  </script>
+</body>
+</html>
