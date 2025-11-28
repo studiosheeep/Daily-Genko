@@ -131,7 +131,7 @@
     /* 600px以下でマップを縦長に */
     @media (max-width: 600px) {
       .map {
-        padding-bottom: 300%;
+        padding-bottom: 500%;
       }
     }
 
@@ -449,35 +449,46 @@
       saveAllProgress(data);
     }
 
-    // ===== グリッド配置（レスポンシブ：PC=6列, 600px以下=3列） =====
-    function getPerRow() {
-      return window.innerWidth <= 600 ? 3 : 6;
-    }
+// ===== グリッド配置（レスポンシブ：PC=6列, 600px以下=3列） =====
+function getPerRow() {
+  return window.innerWidth <= 600 ? 3 : 6;
+}
 
-    function computeGridPositions(count, perRow) {
-      const positions = [];
-      const rows = Math.ceil(count / perRow);
+function computeGridPositions(count, perRow) {
+  const positions = [];
+  const rows = Math.ceil(count / perRow);
 
-      const marginX = 8;
-      const usableX = 84;
-      const stepX = perRow > 1 ? usableX / (perRow - 1) : 0;
+  const marginX = 8;
+  const usableX = 84;
+  const stepX = perRow > 1 ? usableX / (perRow - 1) : 0;
 
-      const marginTop = 8;
-      const totalY = 70;
-      const rowStep = rows > 1 ? totalY / (rows - 1) : 0;
+  // ★ここを perRow（列数）で分ける
+  let marginTop;
+  let totalY;
+  if (perRow === 3) {
+    // スマホ：縦をほぼ全部使う
+    marginTop = 5;   // 一番上の余白
+    totalY   = 90;  // 行全体で使う高さ
+  } else {
+    // PC：今まで通り
+    marginTop = 8;
+    totalY   = 70;
+  }
 
-      for (let i = 0; i < count; i++) {
-        const row = Math.floor(i / perRow);
-        const indexInRow = i % perRow;
-        const isEvenRow = (row % 2 === 0);
-        const col = isEvenRow ? indexInRow : perRow - 1 - indexInRow;
+  const rowStep = rows > 1 ? totalY / (rows - 1) : 0;
 
-        const x = marginX + stepX * col;
-        const y = marginTop + rowStep * row;
-        positions.push({ x, y });
-      }
-      return positions;
-    }
+  for (let i = 0; i < count; i++) {
+    const row = Math.floor(i / perRow);
+    const indexInRow = i % perRow;
+    const isEvenRow = (row % 2 === 0);
+    const col = isEvenRow ? indexInRow : perRow - 1 - indexInRow;
+
+    const x = marginX + stepX * col;
+    const y = marginTop + rowStep * row;
+    positions.push({ x, y });
+  }
+  return positions;
+}
 
     // ===== 日付（朝5時区切り） =====
     function getLogicalDateKey(date = new Date()) {
