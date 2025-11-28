@@ -656,41 +656,53 @@
       toast.classList.add("show");
     }
 
-    // 紙吹雪（クラッカー）の生成
-    function triggerConfetti() {
-      const mapEl = document.getElementById("map");
-      if (!mapEl) return;
+// targetNode: 紙吹雪を出したい .node 要素（nullなら中央付近から）
+function triggerConfetti(targetNode) {
+  const mapEl = document.getElementById("map");
+  if (!mapEl) return;
 
-      const count = 45; // 紙吹雪の枚数
-      const colors = ["#22c55e", "#facc15", "#38bdf8", "#f97316", "#a855f7"];
+  const mapRect = mapEl.getBoundingClientRect();
 
-      for (let i = 0; i < count; i++) {
-        const piece = document.createElement("div");
-        piece.className = "confetti";
+  // 基準位置（%）を計算：node があればその中心、なければ中央あたり
+  let baseXPercent = 50;
+  let baseYPercent = 20;
 
-        // 左右に少し幅を持たせて中央上あたりから飛び出す
-        const xPercent = 35 + Math.random() * 30; // 35〜65%
-        piece.style.left = xPercent + "%";
-        piece.style.top  = "18%";
+  if (targetNode) {
+    const nodeRect = targetNode.getBoundingClientRect();
+    const centerX = (nodeRect.left + nodeRect.right) / 2 - mapRect.left;
+    const centerY = (nodeRect.top + nodeRect.bottom) / 2 - mapRect.top;
+    baseXPercent = (centerX / mapRect.width) * 100;
+    baseYPercent = (centerY / mapRect.height) * 100;
+  }
 
-        // 飛ぶ方向と距離
-        const angle = (Math.random() * Math.PI) - Math.PI / 2; // 左右に散る
-        const distance = 140 + Math.random() * 120;
-        const dx = Math.cos(angle) * distance;
-        piece.style.setProperty("--dx", dx + "px");
+  const count = 45;
+  const colors = ["#22c55e", "#facc15", "#38bdf8", "#f97316", "#a855f7"];
 
-        // 色とディレイ
-        piece.style.backgroundColor = colors[i % colors.length];
-        piece.style.animationDelay = (Math.random() * 0.18) + "s";
+  for (let i = 0; i < count; i++) {
+    const piece = document.createElement("div");
+    piece.className = "confetti";
 
-        mapEl.appendChild(piece);
+    // 基準位置の周囲 ±8% くらいでバラけさせる
+    const offsetX = (Math.random() * 16) - 8; // -8〜+8
+    piece.style.left = (baseXPercent + offsetX) + "%";
+    piece.style.top  = baseYPercent + "%";
 
-        // アニメーション終了後に削除
-        setTimeout(() => {
-          piece.remove();
-        }, 1000);
-      }
-    }
+    // 飛ぶ方向と距離
+    const angle = (Math.random() * Math.PI) - Math.PI / 2;
+    const distance = 140 + Math.random() * 120;
+    const dx = Math.cos(angle) * distance;
+    piece.style.setProperty("--dx", dx + "px");
+
+    piece.style.backgroundColor = colors[i % colors.length];
+    piece.style.animationDelay = (Math.random() * 0.18) + "s";
+
+    mapEl.appendChild(piece);
+
+    setTimeout(() => {
+      piece.remove();
+    }, 1000);
+  }
+}
     
 function playSuccessSound(isFinal) {
   try {
@@ -797,18 +809,23 @@ function advanceLesson(lessonId) {
   registerActivity();
   updateStreakDisplay();
 
-  // 「仕上げ6コマ目」かどうか判定
   const isFinal = lesson.id === "finish_6";
 
-  // ★ 先にマップを描き直す（ここで map の中身が一度クリアされる）
+  // 先にマップを描き直す（ここで node が描き直される）
   renderAll();
 
-  // ★ そのあとで演出をのせる
+  // 描き直した後の DOM から、対象マスの要素を取り直す
+  const mapEl = document.getElementById("map");
+  const targetNode = mapEl
+    ? mapEl.querySelector(`.node[data-lesson-id="${lessonId}"]`)
+    : null;
+
+  // 演出
   showSuccessEffect();
-  triggerConfetti();
+  triggerConfetti(targetNode);   // ← クリックしたマスの周りから紙吹雪
   playSuccessSound(isFinal);
 }
-
+    
     // ===== ログ（今はコンソール出力のみ） =====
     function logMessage(text) {
       console.log(text);
