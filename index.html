@@ -789,6 +789,7 @@ function advanceLesson(lessonId) {
     return;
   }
 
+  // 進捗更新
   progress[lesson.id] += 1;
   saveAllProgress(data);
 
@@ -796,14 +797,16 @@ function advanceLesson(lessonId) {
   registerActivity();
   updateStreakDisplay();
 
-  // ★ ここで「仕上げ6コマ目」かどうか判定
+  // 「仕上げ6コマ目」かどうか判定
   const isFinal = lesson.id === "finish_6";
 
-  showSuccessEffect();
-  triggerConfetti();           // ← 紙吹雪を追加
-  playSuccessSound(isFinal);   // ← フラグを渡す
-
+  // ★ 先にマップを描き直す（ここで map の中身が一度クリアされる）
   renderAll();
+
+  // ★ そのあとで演出をのせる
+  showSuccessEffect();
+  triggerConfetti();
+  playSuccessSound(isFinal);
 }
 
     // ===== ログ（今はコンソール出力のみ） =====
