@@ -337,22 +337,23 @@
 @keyframes confetti-fall {
   0% {
     opacity: 0;
+    /* その場からスタート */
     transform: translate3d(0, 0, 0) rotateZ(0deg);
   }
-  /* ボタンの少し上にピョンと跳ねる */
+  /* 少し上にパッと跳ねる */
   20% {
     opacity: 1;
     transform: translate3d(0, -35px, 0) rotateZ(80deg);
   }
-  /* 横に流れながら落ち始める・中間地点 */
+  /* 中間地点（まだ真下方向だけ） */
   60% {
     opacity: 1;
-    transform: translate3d(var(--dx-mid, 40px), 90px, 0) rotateZ(220deg);
+    transform: translate3d(0, 90px, 0) rotateZ(220deg);
   }
-  /* さらに横に広がりながら下まで落ちて消える */
+  /* まっすぐ下に落ちてフェードアウト */
   100% {
     opacity: 0;
-    transform: translate3d(var(--dx, 80px), 220px, 0) rotateZ(360deg);
+    transform: translate3d(0, 220px, 0) rotateZ(360deg);
   }
 }
   </style>
