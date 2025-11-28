@@ -630,58 +630,74 @@
       toast.classList.add("show");
     }
 
-function playSuccessSound() {
+let audioCtx = null;
+
+function playSuccessSound(isFinal) {
   try {
     const Ctx = window.AudioContext || window.webkitAudioContext;
     if (!Ctx) return;
     if (!audioCtx) audioCtx = new Ctx();
     const ctx = audioCtx;
-
     const now = ctx.currentTime;
 
-    // ===== レイヤー1：高めのキラ音 =====
-    const osc1 = ctx.createOscillator();
-    const gain1 = ctx.createGain();
-    osc1.type = "sine";
-    osc1.frequency.setValueAtTime(1320, now);       // 高めの音
-    gain1.gain.setValueAtTime(0.001, now);
-    gain1.gain.exponentialRampToValueAtTime(0.25, now + 0.03);
-    gain1.gain.exponentialRampToValueAtTime(0.0001, now + 0.25);
-    osc1.connect(gain1).connect(ctx.destination);
-    osc1.start(now);
-    osc1.stop(now + 0.26);
-
-    // ===== レイヤー2：チャイム（和音） =====
-    const freqs = [660, 880]; // 2和音
-    freqs.forEach((f) => {
+    // 共通ヘルパー：単音を鳴らす
+    function tone(freq, start, duration, volume, type = "sine") {
       const osc = ctx.createOscillator();
-      const g = ctx.createGain();
-      osc.type = "triangle";
-      osc.frequency.setValueAtTime(f, now + 0.02); // 少し遅れて鳴らす
-      g.gain.setValueAtTime(0.001, now + 0.02);
-      g.gain.exponentialRampToValueAtTime(0.15, now + 0.06);
-      g.gain.exponentialRampToValueAtTime(0.0001, now + 0.35);
-      osc.connect(g).connect(ctx.destination);
-      osc.start(now + 0.02);
-      osc.stop(now + 0.36);
-    });
-
-    // ===== レイヤー3：ノイズ（キラ粒子感） =====
-    const bufferSize = 0.2 * ctx.sampleRate;
-    const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-    const data = noiseBuffer.getChannelData(0);
-    for (let i = 0; i < bufferSize; i++) {
-      data[i] = (Math.random() * 2 - 1) * 0.2; // ホワイトノイズ
+      const gain = ctx.createGain();
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, start);
+      gain.gain.setValueAtTime(0.0001, start);
+      gain.gain.exponentialRampToValueAtTime(volume, start + 0.03);
+      gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start(start);
+      osc.stop(start + duration + 0.02);
     }
 
-    const noise = ctx.createBufferSource();
-    noise.buffer = noiseBuffer;
-    const gainN = ctx.createGain();
-    gainN.gain.setValueAtTime(0.05, now);
-    gainN.gain.exponentialRampToValueAtTime(0.0001, now + 0.25);
-    noise.connect(gainN).connect(ctx.destination);
-    noise.start(now);
-    noise.stop(now + 0.25);
+    // 共通ヘルパー：軽いノイズ
+    function sparkleNoise(start, duration, volume) {
+      const bufferSize = duration * ctx.sampleRate;
+      const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+      const data = noiseBuffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        data[i] = (Math.random() * 2 - 1) * 0.4;
+      }
+      const noise = ctx.createBufferSource();
+      noise.buffer = noiseBuffer;
+      const gain = ctx.createGain();
+      gain.gain.setValueAtTime(volume, start);
+      gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+      noise.connect(gain).connect(ctx.destination);
+      noise.start(start);
+      noise.stop(start + duration + 0.05);
+    }
+
+    if (!isFinal) {
+      // ===== 通常のクリア音（軽め・以前よりちょっと豪華） =====
+      // 高めのキラ音
+      tone(1320, now, 0.25, 0.25, "sine");
+      // チャイムっぽい和音
+      tone(660,  now + 0.02, 0.35, 0.18, "triangle");
+      tone(880,  now + 0.02, 0.35, 0.18, "triangle");
+      // キラキラノイズ
+      sparkleNoise(now, 0.25, 0.08);
+      return;
+    }
+
+    // ===== 仕上げ6コマ目用：盛大クリア音 =====
+    // 上昇アルペジオ C-E-G-C （短いメロディ）
+    const base = 523.25; // C5 くらい
+    const step = 0.12;
+    tone(base,           now + 0.00, 0.4, 0.26, "triangle");           // C
+    tone(base * 1.25,    now + step, 0.4, 0.24, "triangle");           // E
+    tone(base * 1.5,     now + step*2, 0.4, 0.22, "triangle");         // G
+    tone(base * 2,       now + step*3, 0.5, 0.28, "sine");             // 高いC
+
+    // 下で軽く支えるベース音
+    tone(261.63, now, 0.6, 0.20, "sine");
+
+    // キラキラノイズを少し長めに
+    sparkleNoise(now, 0.45, 0.12);
 
   } catch (e) {
     console.warn("audio error", e);
@@ -699,32 +715,35 @@ function playSuccessSound() {
       return progress[lesson.id] >= lesson.maxProgress;
     }
 
-    function advanceLesson(lessonId) {
-      const { data, progress } = loadPageProgress(currentPage);
-      const lesson = LESSONS.find(l => l.id === lessonId);
-      if (!lesson) return;
+function advanceLesson(lessonId) {
+  const { data, progress } = loadPageProgress(currentPage);
+  const lesson = LESSONS.find(l => l.id === lessonId);
+  if (!lesson) return;
 
-      if (!isLessonUnlocked(lesson, progress)) {
-        logMessage(`「${lesson.title}」はまだ先のマスです。手前のマスから順番に進めてください。`);
-        return;
-      }
-      if (progress[lesson.id] >= lesson.maxProgress) {
-        logMessage(`「${lesson.title}」は既にクリアしています。`);
-        return;
-      }
+  if (!isLessonUnlocked(lesson, progress)) {
+    logMessage(`「${lesson.title}」はまだ先のマスです。手前のマスから順番に進めてください。`);
+    return;
+  }
+  if (progress[lesson.id] >= lesson.maxProgress) {
+    logMessage(`「${lesson.title}」は既にクリアしています。`);
+    return;
+  }
 
-      progress[lesson.id] += 1;
-      saveAllProgress(data);
+  progress[lesson.id] += 1;
+  saveAllProgress(data);
 
-      logMessage(`「${lesson.title}」をクリアしました。（${currentPage}ページ目）`);
-      registerActivity();
-      updateStreakDisplay();
+  logMessage(`「${lesson.title}」をクリアしました。（${currentPage}ページ目）`);
+  registerActivity();
+  updateStreakDisplay();
 
-      showSuccessEffect();
-      playSuccessSound();
+  // ★ ここで「仕上げ6コマ目」かどうか判定
+  const isFinal = lesson.id === "finish_6";
 
-      renderAll();
-    }
+  showSuccessEffect();
+  playSuccessSound(isFinal);   // ← フラグを渡す
+
+  renderAll();
+}
 
     // ===== ログ（今はコンソール出力のみ） =====
     function logMessage(text) {
