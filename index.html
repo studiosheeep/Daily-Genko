@@ -337,23 +337,23 @@
 @keyframes confetti-fall {
   0% {
     opacity: 0;
-    /* その場からスタート */
+    /* ボタンのあたりからスタート */
     transform: translate3d(0, 0, 0) rotateZ(0deg);
   }
-  /* 少し上にパッと跳ねる */
+  /* 少し上にパッと跳ねる（横はまだ少しだけ） */
   20% {
     opacity: 1;
-    transform: translate3d(0, -50px, 0) rotateZ(80deg);
+    transform: translate3d(calc(var(--dx) * 0.3), -100px, 0) rotateZ(80deg);
   }
-  /* 中間地点（まだ真下方向だけ） */
+  /* 中間あたり。横方向もじわっと広がる */
   60% {
     opacity: 1;
-    transform: translate3d(0, 90px, 0) rotateZ(220deg);
+    transform: translate3d(calc(var(--dx) * 0.7), 90px, 0) rotateZ(220deg);
   }
-  /* まっすぐ下に落ちてフェードアウト */
+  /* 一番下に落ちる頃には var(--dx) ぶんだけ横に散らばっている */
   100% {
     opacity: 0;
-    transform: translate3d(0, 220px, 0) rotateZ(360deg);
+    transform: translate3d(var(--dx), 220px, 0) rotateZ(360deg);
   }
 }
   </style>
@@ -671,36 +671,30 @@ function triggerConfetti(targetNode) {
 
   const mapRect = mapEl.getBoundingClientRect();
 
-  // デフォルトの発射位置（マップ上部中央あたり）
+  // 基準位置（px）: node があればその中心、なければ中央付近
   let originX = mapRect.width / 2;
   let originY = mapRect.height * 0.2;
 
-  // クリックしたマスがあれば、その少し上から発射
   if (targetNode) {
     const nodeRect = targetNode.getBoundingClientRect();
     originX = (nodeRect.left + nodeRect.right) / 2 - mapRect.left;
-    originY = (nodeRect.top + nodeRect.bottom) / 2 - mapRect.top - 16; // 中心より 16px 上
+    originY = (nodeRect.top + nodeRect.bottom) / 2 - mapRect.top;
   }
 
-  const count = 45;
+  const count  = 45;
   const colors = ["#22c55e", "#facc15", "#38bdf8", "#f97316", "#a855f7"];
 
   for (let i = 0; i < count; i++) {
     const piece = document.createElement("div");
     piece.className = "confetti";
 
-    // 発射口の周囲にランダムでばらけさせる
+    // 発射位置を左右に少しバラけさせる
     const jitterX = (Math.random() * 40) - 20; // -20〜+20px
     piece.style.left = (originX + jitterX) + "px";
     piece.style.top  = originY + "px";
 
-    // 飛ぶ方向と距離をランダムに
-    const angle = (Math.random() * Math.PI) - Math.PI / 2; // 左右に散る
-    const distance = 140 + Math.random() * 120;
-    const dx = Math.cos(angle) * distance;
-
-    // アニメーションで使う横方向の移動量（中間点と最終点）
-    piece.style.setProperty("--dx-mid", (dx * 0.5) + "px");
+    // 落ちるまでにどれだけ横に流すか（左右ランダム）
+    const dx = (Math.random() * 120) - 60; // -60〜+60px
     piece.style.setProperty("--dx", dx + "px");
 
     piece.style.backgroundColor = colors[i % colors.length];
@@ -708,7 +702,6 @@ function triggerConfetti(targetNode) {
 
     mapEl.appendChild(piece);
 
-    // アニメ終了後に削除
     setTimeout(() => {
       piece.remove();
     }, 1000);
