@@ -322,7 +322,8 @@
         transform: translate(-50%, -50%) scale(0.8);
       }
     }
-        /* 紙吹雪 */
+    
+/* 紙吹雪 */
 .confetti {
   position: absolute;
   width: 6px;
@@ -331,25 +332,25 @@
   opacity: 0;
   pointer-events: none;
   z-index: 4;
-  /* ここを変更：ease-out → linear に */
+  /* 一定速度で動かしたいので linear */
   animation: confetti-fall 900ms linear forwards;
 }
 
 @keyframes confetti-fall {
   0% {
     opacity: 0;
-    /* ボタンの位置からスタート */
+    /* ボタン位置からスタート（横は 0 固定、縦だけ動かす） */
     transform: translate3d(0, 0, 0) rotateZ(0deg);
   }
-  /* 30% で少し上に「ポン」と跳ねる（横は 30% だけ移動） */
-  30% {
+  /* ここで「ポン」と上に跳ねる */
+  20% {
     opacity: 1;
-    transform: translate3d(calc(var(--dx) * 0.3), -80px, 0) rotateZ(80deg);
+    transform: translate3d(0, -80px, 0) rotateZ(120deg);
   }
-  /* あとはそのまま下までストンと落ちる（横は var(--dx) まで広がる）*/
+  /* あとはそのまま下までストンと落ちる */
   100% {
     opacity: 0;
-    transform: translate3d(var(--dx), 240px, 0) rotateZ(360deg);
+    transform: translate3d(0, 260px, 0) rotateZ(360deg);
   }
 }
   </style>
@@ -667,14 +668,15 @@ function triggerConfetti(targetNode) {
 
   const mapRect = mapEl.getBoundingClientRect();
 
-  // 基準位置（px）: node があればその中心、なければ中央付近
-  let originX = mapRect.width / 2;
-  let originY = mapRect.height * 0.2;
+  let baseXPercent = 50;
+  let baseYPercent = 20;
 
   if (targetNode) {
     const nodeRect = targetNode.getBoundingClientRect();
-    originX = (nodeRect.left + nodeRect.right) / 2 - mapRect.left;
-    originY = (nodeRect.top + nodeRect.bottom) / 2 - mapRect.top;
+    const centerX = (nodeRect.left + nodeRect.right) / 2 - mapRect.left;
+    const centerY = (nodeRect.top + nodeRect.bottom) / 2 - mapRect.top;
+    baseXPercent = (centerX / mapRect.width) * 100;
+    baseYPercent = (centerY / mapRect.height) * 100;
   }
 
   const count  = 45;
@@ -684,23 +686,17 @@ function triggerConfetti(targetNode) {
     const piece = document.createElement("div");
     piece.className = "confetti";
 
-    // 発射位置を左右に少しバラけさせる
-    const jitterX = (Math.random() * 40) - 20; // -20〜+20px
-    piece.style.left = (originX + jitterX) + "px";
-    piece.style.top  = originY + "px";
-
-    // 落ちるまでにどれだけ横に流すか（左右ランダム）
-    const dx = (Math.random() * 120) - 60; // -60〜+60px
-    piece.style.setProperty("--dx", dx + "px");
+    // 基準位置の周囲 ±15% くらいに散らす（横方向のバラけ）
+    const offsetX = (Math.random() * 30) - 15; // -15〜+15
+    piece.style.left = (baseXPercent + offsetX) + "%";
+    piece.style.top  = baseYPercent + "%";
 
     piece.style.backgroundColor = colors[i % colors.length];
-    piece.style.animationDelay = (Math.random() * 0.18) + "s";
+    piece.style.animationDelay  = (Math.random() * 0.18) + "s";
 
     mapEl.appendChild(piece);
 
-    setTimeout(() => {
-      piece.remove();
-    }, 1000);
+    setTimeout(() => piece.remove(), 1000);
   }
 }
     
