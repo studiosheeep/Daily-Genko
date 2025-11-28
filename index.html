@@ -428,20 +428,26 @@ function computeGridPositions(count, perRow) {
   const positions = [];
   const rows = Math.ceil(count / perRow);
 
-  // 横方向：端から端までを perRow+1 で均等割り
-  const xStep = 100 / (perRow + 1);
+  // ★ 横方向：左右にマージンを取る
+  let marginX;
+  if (perRow === 3) {
+    // スマホのときは少し多めに余白を取る
+    marginX = 12;       // ← ここを増やすほど左右の余白が広がる
+  } else {
+    marginX = 8;
+  }
+  const usableX = 100 - marginX * 2;            // 使える横幅
+  const stepX   = perRow > 1 ? usableX / (perRow - 1) : 0;
 
-  // 縦方向：PC とスマホで設定を分ける
+  // 縦方向
   let marginTop;
   let totalY;
   if (perRow === 3) {
-    // スマホ：縦をほぼ全部使う
     marginTop = 5;
-    totalY   = 90;
+    totalY    = 90;
   } else {
-    // PC
     marginTop = 8;
-    totalY   = 70;
+    totalY    = 70;
   }
   const rowStep = rows > 1 ? totalY / (rows - 1) : 0;
 
@@ -449,11 +455,10 @@ function computeGridPositions(count, perRow) {
     const row = Math.floor(i / perRow);
     const indexInRow = i % perRow;
     const isEvenRow = (row % 2 === 0);
-    // 蛇行：偶数行は左→右、奇数行は右→左
     const col = isEvenRow ? indexInRow : perRow - 1 - indexInRow;
 
-    const x = xStep * (col + 1);         // ここが横幅に自動フィット
-    const y = marginTop + rowStep * row; // 上からの位置（%）
+    const x = marginX + stepX * col;          // ← 余白込みの X 座標
+    const y = marginTop + rowStep * row;
 
     positions.push({ x, y });
   }
