@@ -339,23 +339,22 @@
     opacity: 0;
     transform: translate3d(0, 0, 0) rotateZ(0deg);
   }
-  /* ちょっと上にパッと跳ねる */
+  /* ボタンの少し上にピョンと跳ねる */
   20% {
     opacity: 1;
-    transform: translate3d(0, -35px, 0) rotateZ(90deg);
+    transform: translate3d(0, -35px, 0) rotateZ(80deg);
   }
-  /* 落ち始めつつ少し横にズレる */
+  /* 横に流れながら落ち始める・中間地点 */
   60% {
     opacity: 1;
-    transform: translate3d(var(--dx, 60px), 90px, 0) rotateZ(220deg);
+    transform: translate3d(var(--dx-mid, 40px), 90px, 0) rotateZ(220deg);
   }
-  /* 下まで落ちてフェードアウト */
+  /* さらに横に広がりながら下まで落ちて消える */
   100% {
     opacity: 0;
-    transform: translate3d(var(--dx, 60px), 220px, 0) rotateZ(360deg);
+    transform: translate3d(var(--dx, 80px), 220px, 0) rotateZ(360deg);
   }
 }
-    
   </style>
 </head>
 <body>
@@ -671,16 +670,15 @@ function triggerConfetti(targetNode) {
 
   const mapRect = mapEl.getBoundingClientRect();
 
-  // 基準位置（%）を計算：node があればその中心、なければ中央あたり
-  let baseXPercent = 50;
-  let baseYPercent = 20;
+  // デフォルトの発射位置（マップ上部中央あたり）
+  let originX = mapRect.width / 2;
+  let originY = mapRect.height * 0.2;
 
+  // クリックしたマスがあれば、その少し上から発射
   if (targetNode) {
     const nodeRect = targetNode.getBoundingClientRect();
-    const centerX = (nodeRect.left + nodeRect.right) / 2 - mapRect.left;
-    const centerY = (nodeRect.top + nodeRect.bottom) / 2 - mapRect.top;
-    baseXPercent = (centerX / mapRect.width) * 100;
-    baseYPercent = (centerY / mapRect.height) * 100;
+    originX = (nodeRect.left + nodeRect.right) / 2 - mapRect.left;
+    originY = (nodeRect.top + nodeRect.bottom) / 2 - mapRect.top - 16; // 中心より 16px 上
   }
 
   const count = 45;
@@ -690,15 +688,18 @@ function triggerConfetti(targetNode) {
     const piece = document.createElement("div");
     piece.className = "confetti";
 
-    // 基準位置の周囲 ±8% くらいでバラけさせる
-    const offsetX = (Math.random() * 16) - 8; // -8〜+8
-    piece.style.left = (baseXPercent + offsetX) + "%";
-    piece.style.top  = baseYPercent + "%";
+    // 発射口の周囲にランダムでばらけさせる
+    const jitterX = (Math.random() * 40) - 20; // -20〜+20px
+    piece.style.left = (originX + jitterX) + "px";
+    piece.style.top  = originY + "px";
 
-    // 飛ぶ方向と距離
-    const angle = (Math.random() * Math.PI) - Math.PI / 2;
+    // 飛ぶ方向と距離をランダムに
+    const angle = (Math.random() * Math.PI) - Math.PI / 2; // 左右に散る
     const distance = 140 + Math.random() * 120;
     const dx = Math.cos(angle) * distance;
+
+    // アニメーションで使う横方向の移動量（中間点と最終点）
+    piece.style.setProperty("--dx-mid", (dx * 0.5) + "px");
     piece.style.setProperty("--dx", dx + "px");
 
     piece.style.backgroundColor = colors[i % colors.length];
@@ -706,6 +707,7 @@ function triggerConfetti(targetNode) {
 
     mapEl.appendChild(piece);
 
+    // アニメ終了後に削除
     setTimeout(() => {
       piece.remove();
     }, 1000);
