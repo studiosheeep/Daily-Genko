@@ -410,7 +410,7 @@
   <div class="app-container">
     <div class="top-bar">
 <div class="top-bar-left">
-  <!-- ここを書き換え -->
+  <!-- 「次にやること」表示 -->
   <h1 id="nextTaskTitle">原稿すごろくマップ</h1>
   <div class="top-bar-info" id="nextTaskInfo">
     一番上のマスから順番にクリックして進めていく原稿すごろくです。
@@ -432,8 +432,6 @@
   <span id="pageLabel" class="page-nav-label">1ページ目 / 全1ページ</span>
   <button id="nextPageBtn">▶</button>
   <button id="addPageBtn">＋</button>
-
-  <!-- ★ 新規：ページ全削除ボタン -->
   <button id="resetPagesBtn" class="page-reset-btn">🗑</button>
 </div>
 
@@ -614,6 +612,7 @@
       }
       return positions;
     }
+
     // ===== 日付（朝5時区切り） =====
     function getLogicalDateKey(date = new Date()) {
       const d = new Date(date.getTime());
@@ -705,35 +704,32 @@
       if (nextBtn) nextBtn.disabled = currentPage >= data.maxPage;
     }
 
-// まだ終わっていない最初のレッスンを探す
-function getNextIncompleteLesson(progress) {
-  for (const lesson of LESSONS) {
-    if (!isLessonCompleted(lesson, progress)) {
-      return lesson;
+    // まだ終わっていない最初のレッスンを探す
+    function getNextIncompleteLesson(progress) {
+      for (const lesson of LESSONS) {
+        if (!isLessonCompleted(lesson, progress)) {
+          return lesson;
+        }
+      }
+      return null;
     }
-  }
-  return null;
-}
 
-// ヘッダーに「次にやること」を表示
-function updateNextTaskDisplay(progress) {
-  const titleEl = document.getElementById("nextTaskTitle");
-  const infoEl  = document.getElementById("nextTaskInfo");
-  if (!titleEl || !infoEl) return;
+    // ヘッダーに「次にやること」を表示
+    function updateNextTaskDisplay(progress) {
+      const titleEl = document.getElementById("nextTaskTitle");
+      const infoEl  = document.getElementById("nextTaskInfo");
+      if (!titleEl || !infoEl) return;
 
-  const next = getNextIncompleteLesson(progress);
+      const next = getNextIncompleteLesson(progress);
 
-  if (next) {
-    // メインの大きな文字
-    titleEl.textContent = `${next.title}を進めよう！`;
-    // 小さな補足テキスト（お好みで文言は変えてOK）
-    infoEl.textContent = `次のマスは「${next.title}」です。クリックして進めていきましょう。`;
-  } else {
-    // そのページの LESSONS を全部クリアしている場合
-    titleEl.textContent = "このページは全部クリアしました！";
-    infoEl.textContent   = "お疲れさまでした。新しいページを追加して続きの原稿を進めましょう。";
-  }
-}
+      if (next) {
+        titleEl.textContent = `${next.title}を進めよう！`;
+        infoEl.textContent  = `次のマスは「${next.title}」です。クリックして進めていきましょう。`;
+      } else {
+        titleEl.textContent = "このページは全部クリアしました！";
+        infoEl.textContent  = "お疲れさまでした。新しいページを追加して続きの原稿を進めましょう。";
+      }
+    }
     
     // ===== 成功エフェクト =====
     let audioCtx = null;
@@ -746,116 +742,104 @@ function updateNextTaskDisplay(progress) {
       toast.classList.add("show");
     }
 
-// targetNode: 紙吹雪を出したい .node 要素（nullなら中央付近から）
-function triggerConfetti(targetNode) {
-  const mapEl = document.getElementById("map");
-  if (!mapEl) return;
+    function triggerConfetti(targetNode) {
+      const mapEl = document.getElementById("map");
+      if (!mapEl) return;
 
-  const mapRect = mapEl.getBoundingClientRect();
+      const mapRect = mapEl.getBoundingClientRect();
 
-  let baseXPercent = 50;
-  let baseYPercent = 20;
+      let baseXPercent = 50;
+      let baseYPercent = 20;
 
-  if (targetNode) {
-    const nodeRect = targetNode.getBoundingClientRect();
-    const centerX = (nodeRect.left + nodeRect.right) / 2 - mapRect.left;
-    const centerY = (nodeRect.top + nodeRect.bottom) / 2 - mapRect.top;
-    baseXPercent = (centerX / mapRect.width) * 100;
-    baseYPercent = (centerY / mapRect.height) * 100;
-  }
-
-  const count  = 45;
-  const colors = ["#22c55e", "#facc15", "#38bdf8", "#f97316", "#a855f7"];
-
-  for (let i = 0; i < count; i++) {
-    const piece = document.createElement("div");
-    piece.className = "confetti";
-
-    // 基準位置の周囲 ±15% くらいに散らす（横方向のバラけ）
-    const offsetX = (Math.random() * 30) - 15; // -15〜+15
-    piece.style.left = (baseXPercent + offsetX) + "%";
-    piece.style.top  = baseYPercent + "%";
-
-    piece.style.backgroundColor = colors[i % colors.length];
-    piece.style.animationDelay  = (Math.random() * 0.18) + "s";
-
-    mapEl.appendChild(piece);
-
-    setTimeout(() => piece.remove(), 1000);
-  }
-}
-    
-function playSuccessSound(isFinal) {
-  try {
-    const Ctx = window.AudioContext || window.webkitAudioContext;
-    if (!Ctx) return;
-    if (!audioCtx) audioCtx = new Ctx();
-    const ctx = audioCtx;
-    const now = ctx.currentTime;
-
-    // 共通ヘルパー：単音を鳴らす
-    function tone(freq, start, duration, volume, type = "sine") {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = type;
-      osc.frequency.setValueAtTime(freq, start);
-      gain.gain.setValueAtTime(0.0001, start);
-      gain.gain.exponentialRampToValueAtTime(volume, start + 0.03);
-      gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
-      osc.connect(gain).connect(ctx.destination);
-      osc.start(start);
-      osc.stop(start + duration + 0.02);
-    }
-
-    // 共通ヘルパー：軽いノイズ
-    function sparkleNoise(start, duration, volume) {
-      const bufferSize = duration * ctx.sampleRate;
-      const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-      const data = noiseBuffer.getChannelData(0);
-      for (let i = 0; i < bufferSize; i++) {
-        data[i] = (Math.random() * 2 - 1) * 0.4;
+      if (targetNode) {
+        const nodeRect = targetNode.getBoundingClientRect();
+        const centerX = (nodeRect.left + nodeRect.right) / 2 - mapRect.left;
+        const centerY = (nodeRect.top + nodeRect.bottom) / 2 - mapRect.top;
+        baseXPercent = (centerX / mapRect.width) * 100;
+        baseYPercent = (centerY / mapRect.height) * 100;
       }
-      const noise = ctx.createBufferSource();
-      noise.buffer = noiseBuffer;
-      const gain = ctx.createGain();
-      gain.gain.setValueAtTime(volume, start);
-      gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
-      noise.connect(gain).connect(ctx.destination);
-      noise.start(start);
-      noise.stop(start + duration + 0.05);
+
+      const count  = 45;
+      const colors = ["#22c55e", "#facc15", "#38bdf8", "#f97316", "#a855f7"];
+
+      for (let i = 0; i < count; i++) {
+        const piece = document.createElement("div");
+        piece.className = "confetti";
+
+        const offsetX = (Math.random() * 30) - 15; // -15〜+15
+        piece.style.left = (baseXPercent + offsetX) + "%";
+        piece.style.top  = baseYPercent + "%";
+
+        piece.style.backgroundColor = colors[i % colors.length];
+        piece.style.animationDelay  = (Math.random() * 0.18) + "s";
+
+        mapEl.appendChild(piece);
+
+        setTimeout(() => piece.remove(), 1000);
+      }
+    }
+    
+    function playSuccessSound(isFinal) {
+      try {
+        const Ctx = window.AudioContext || window.webkitAudioContext;
+        if (!Ctx) return;
+        if (!audioCtx) audioCtx = new Ctx();
+        const ctx = audioCtx;
+        const now = ctx.currentTime;
+
+        function tone(freq, start, duration, volume, type = "sine") {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = type;
+          osc.frequency.setValueAtTime(freq, start);
+          gain.gain.setValueAtTime(0.0001, start);
+          gain.gain.exponentialRampToValueAtTime(volume, start + 0.03);
+          gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+          osc.connect(gain).connect(ctx.destination);
+          osc.start(start);
+          osc.stop(start + duration + 0.02);
+        }
+
+        function sparkleNoise(start, duration, volume) {
+          const bufferSize = duration * ctx.sampleRate;
+          const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+          const data = noiseBuffer.getChannelData(0);
+          for (let i = 0; i < bufferSize; i++) {
+            data[i] = (Math.random() * 2 - 1) * 0.4;
+          }
+          const noise = ctx.createBufferSource();
+          noise.buffer = noiseBuffer;
+          const gain = ctx.createGain();
+          gain.gain.setValueAtTime(volume, start);
+          gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+          noise.connect(gain).connect(ctx.destination);
+          noise.start(start);
+          noise.stop(start + duration + 0.05);
+        }
+
+        if (!isFinal) {
+          tone(1320, now, 0.25, 0.25, "sine");
+          tone(660,  now + 0.02, 0.35, 0.18, "triangle");
+          tone(880,  now + 0.02, 0.35, 0.18, "triangle");
+          sparkleNoise(now, 0.25, 0.08);
+          return;
+        }
+
+        const base = 523.25; // C5
+        const step = 0.12;
+        tone(base,           now + 0.00, 0.4, 0.26, "triangle");
+        tone(base * 1.25,    now + step, 0.4, 0.24, "triangle");
+        tone(base * 1.5,     now + step*2, 0.4, 0.22, "triangle");
+        tone(base * 2,       now + step*3, 0.5, 0.28, "sine");
+
+        tone(261.63, now, 0.6, 0.20, "sine");
+        sparkleNoise(now, 0.45, 0.12);
+
+      } catch (e) {
+        console.warn("audio error", e);
+      }
     }
 
-    if (!isFinal) {
-      // ===== 通常のクリア音（軽め・以前よりちょっと豪華） =====
-      // 高めのキラ音
-      tone(1320, now, 0.25, 0.25, "sine");
-      // チャイムっぽい和音
-      tone(660,  now + 0.02, 0.35, 0.18, "triangle");
-      tone(880,  now + 0.02, 0.35, 0.18, "triangle");
-      // キラキラノイズ
-      sparkleNoise(now, 0.25, 0.08);
-      return;
-    }
-
-    // ===== 仕上げ6コマ目用：盛大クリア音 =====
-    // 上昇アルペジオ C-E-G-C （短いメロディ）
-    const base = 523.25; // C5 くらい
-    const step = 0.12;
-    tone(base,           now + 0.00, 0.4, 0.26, "triangle");           // C
-    tone(base * 1.25,    now + step, 0.4, 0.24, "triangle");           // E
-    tone(base * 1.5,     now + step*2, 0.4, 0.22, "triangle");         // G
-    tone(base * 2,       now + step*3, 0.5, 0.28, "sine");             // 高いC
-
-    // 下で軽く支えるベース音
-    tone(261.63, now, 0.6, 0.20, "sine");
-
-    // キラキラノイズを少し長めに
-    sparkleNoise(now, 0.45, 0.12);
-
-  } catch (e) {
-    console.warn("audio error", e);
-  }
-}
     // ===== レッスン状態 =====
     function isLessonUnlocked(lesson, progress) {
       if (!lesson.prereqId) return true;
@@ -868,46 +852,42 @@ function playSuccessSound(isFinal) {
       return progress[lesson.id] >= lesson.maxProgress;
     }
 
-function advanceLesson(lessonId) {
-  const { data, progress } = loadPageProgress(currentPage);
-  const lesson = LESSONS.find(l => l.id === lessonId);
-  if (!lesson) return;
+    function advanceLesson(lessonId) {
+      const { data, progress } = loadPageProgress(currentPage);
+      const lesson = LESSONS.find(l => l.id === lessonId);
+      if (!lesson) return;
 
-  if (!isLessonUnlocked(lesson, progress)) {
-    logMessage(`「${lesson.title}」はまだ先のマスです。手前のマスから順番に進めてください。`);
-    return;
-  }
-  if (progress[lesson.id] >= lesson.maxProgress) {
-    logMessage(`「${lesson.title}」は既にクリアしています。`);
-    return;
-  }
+      if (!isLessonUnlocked(lesson, progress)) {
+        logMessage(`「${lesson.title}」はまだ先のマスです。手前のマスから順番に進めてください。`);
+        return;
+      }
+      if (progress[lesson.id] >= lesson.maxProgress) {
+        logMessage(`「${lesson.title}」は既にクリアしています。`);
+        return;
+      }
 
-  // 進捗更新
-  progress[lesson.id] += 1;
-  saveAllProgress(data);
+      progress[lesson.id] += 1;
+      saveAllProgress(data);
 
-  logMessage(`「${lesson.title}」をクリアしました。（${currentPage}ページ目）`);
-  registerActivity();
-  updateStreakDisplay();
+      logMessage(`「${lesson.title}」をクリアしました。（${currentPage}ページ目）`);
+      registerActivity();
+      updateStreakDisplay();
 
-  const isFinal = lesson.id === "finish_6";
+      const isFinal = lesson.id === "finish_6";
 
-  // 先にマップを描き直す（ここで node が描き直される）
-  renderAll();
+      renderAll();
 
-  // 描き直した後の DOM から、対象マスの要素を取り直す
-  const mapEl = document.getElementById("map");
-  const targetNode = mapEl
-    ? mapEl.querySelector(`.node[data-lesson-id="${lessonId}"]`)
-    : null;
+      const mapEl = document.getElementById("map");
+      const targetNode = mapEl
+        ? mapEl.querySelector(`.node[data-lesson-id="${lessonId}"]`)
+        : null;
 
-  // 演出
-  showSuccessEffect();
-  triggerConfetti(targetNode);   // ← クリックしたマスの周りから紙吹雪
-  playSuccessSound(isFinal);
-}
+      showSuccessEffect();
+      triggerConfetti(targetNode);
+      playSuccessSound(isFinal);
+    }
     
-    // ===== ログ（今はコンソール出力のみ） =====
+    // ===== ログ =====
     function logMessage(text) {
       console.log(text);
     }
@@ -1003,13 +983,13 @@ function advanceLesson(lessonId) {
       mapEl.insertBefore(svg, mapEl.firstChild);
     }
 
-function renderAll() {
-  const { data, progress } = loadPageProgress(currentPage);
-  renderMap(progress);
-  updateStreakDisplay();
-  updatePageLabel(data);
-  updateNextTaskDisplay(progress);   // ← 追加
-}
+    function renderAll() {
+      const { data, progress } = loadPageProgress(currentPage);
+      renderMap(progress);
+      updateStreakDisplay();
+      updatePageLabel(data);
+      updateNextTaskDisplay(progress);
+    }
 
     window.addEventListener("DOMContentLoaded", () => {
       renderAll();
@@ -1045,23 +1025,20 @@ function renderAll() {
         renderAll();
       });
 
-// ★ ページ数リセット（1ページに戻す）
-document.getElementById("resetPagesBtn").addEventListener("click", () => {
-  if (!confirm("全ページを削除して 1ページ目だけ残します。よろしいですか？")) return;
+      document.getElementById("resetPagesBtn").addEventListener("click", () => {
+        if (!confirm("全ページを削除して 1ページ目だけ残します。よろしいですか？")) return;
 
-  const data = loadAllProgress();
+        const data = loadAllProgress();
+        data.maxPage = 1;
+        data.pages = { "1": createInitialProgressMap() };
 
-  // 1ページに戻す
-  data.maxPage = 1;
-  data.pages = { "1": createInitialProgressMap() };
+        saveAllProgress(data);
 
-  saveAllProgress(data);
+        currentPage = 1;
+        renderAll();
+        logMessage("ページ数をリセットしました。");
+      });
 
-  currentPage = 1;
-  renderAll();
-  logMessage("ページ数をリセットしました。");
-});      
-      // 画面幅が変わったらレイアウト再計算
       window.addEventListener("resize", () => {
         renderAll();
       });
