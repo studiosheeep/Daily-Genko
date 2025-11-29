@@ -11,7 +11,6 @@
 
   <style>
 :root {
-  /* ダーク → ライト */
   color-scheme: light;
 }
 
@@ -32,107 +31,108 @@ h1 {
 .app-container {
   max-width: 960px;
   margin: 0 auto;
-  background: #ffffff;               /* カード全体を白 */
+  background: #ffffff;
   border-radius: 24px;
   padding: 18px 16px 20px;
 }
-    .top-bar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 12px;
-      flex-wrap: wrap;
-      margin-bottom: 16px;
-      padding: 10px 16px;
-      background: linear-gradient(135deg, #22c55e, #16a34a);
-      border-radius: 20px;
-      color: #fff;
-    }
 
-    .top-bar-left {
-      flex: 1 1 auto;
-      min-width: 180px;
-    }
+.top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+  padding: 10px 16px;
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  border-radius: 20px;
+  color: #fff;
+}
 
-    .top-bar-left h1#nextTaskTitle {
-      font-size: 18px;
-      font-weight: 800;
-      margin: 0 0 2px;
-      color: #fff;
-    }
+.top-bar-left {
+  flex: 1 1 auto;
+  min-width: 180px;
+}
 
-    .top-bar-info {
-      font-size: 12px;
-      font-weight: 500;
-      color: rgba(255, 255, 255, 0.9);
-    }
+.top-bar-left h1#nextTaskTitle {
+  font-size: 18px;
+  font-weight: 800;
+  margin: 0 0 2px;
+  color: #fff;
+}
 
-    .top-bar-right {
-      display: flex;
-      flex-direction: row;
-      align-items: center;
-      gap: 10px;
-      flex: 0 0 auto;
-    }
+.top-bar-info {
+  font-size: 12px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.9);
+}
 
-    @media (max-width: 600px) {
-      .top-bar {
-        flex-direction: column;
-        align-items: stretch;
-      }
-      .top-bar-right {
-        justify-content: flex-end;
-        align-self: stretch;
-      }
-    }
-    
-    .streak-box {
-      border-radius: 14px;
-      padding: 6px 10px;
-      font-size: 10px;
-      background: rgba(0, 0, 0, 0.15);
-      border: 1px solid rgba(255, 255, 255, 0.3);
-      text-align: right;
-      box-shadow: none;
-    }
+.top-bar-right {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  flex: 0 0 auto;
+}
 
-    .streak-label {
-      color: rgba(255, 255, 255, 0.85);
-      margin-bottom: 1px;
-    }
+@media (max-width: 600px) {
+  .top-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .top-bar-right {
+    justify-content: flex-end;
+    align-self: stretch;
+  }
+}
 
-    .streak-value {
-      font-size: 16px;
-      font-weight: 800;
-      color: #fef9c3;
-    }
+.streak-box {
+  border-radius: 14px;
+  padding: 6px 10px;
+  font-size: 10px;
+  background: rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  text-align: right;
+  box-shadow: none;
+}
 
-    .streak-note {
-      color: rgba(255, 255, 255, 0.8);
-      font-size: 9px;
-      margin-top: 2px;
-    }
+.streak-label {
+  color: rgba(255, 255, 255, 0.85);
+  margin-bottom: 1px;
+}
 
-    .reset-btn {
-      border-radius: 999px;
-      border: 2px solid rgba(255, 255, 255, 0.8);
-      background: rgba(255, 255, 255, 0.12);
-      color: #ffffff;
-      padding: 6px 14px;
-      font-size: 11px;
-      font-weight: 600;
-      cursor: pointer;
-      box-shadow: 0 3px 0 rgba(22, 101, 52, 0.7);
-    }
+.streak-value {
+  font-size: 16px;
+  font-weight: 800;
+  color: #fef9c3;
+}
 
-    .reset-btn:hover {
-      background: rgba(255, 255, 255, 0.2);
-    }
+.streak-note {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 9px;
+  margin-top: 2px;
+}
 
-    .reset-btn:active {
-      transform: translateY(1px);
-      box-shadow: 0 1px 0 rgba(22, 101, 52, 0.7);
-    }
+.reset-btn {
+  border-radius: 999px;
+  border: 2px solid rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+  padding: 6px 14px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 3px 0 rgba(22, 101, 52, 0.7);
+}
+
+.reset-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.reset-btn:active {
+  transform: translateY(1px);
+  box-shadow: 0 1px 0 rgba(22, 101, 52, 0.7);
+}
 
 /* ===== ページナビ（ライト用） ===== */
 .page-nav {
@@ -142,17 +142,17 @@ h1 {
   gap: 8px;
   margin-bottom: 8px;
   font-size: 13px;
-  color: #111827;                  /* 「1ページ目 / 全1ページ」を黒っぽく */
+  color: #111827;
 }
 
 .page-nav button {
   border: 1px solid #d1d5db;
-  background: #ffffff;             /* ボタンも白ベース */
+  background: #ffffff;
   border-radius: 999px;
   padding: 4px 12px;
   font-size: 12px;
   cursor: pointer;
-  color: #111827;                  /* 「＋」「🗑」なども黒っぽいグレー */
+  color: #111827;
   box-shadow: 0 2px 0 rgba(229,231,235,1);
 }
 
@@ -175,10 +175,10 @@ h1 {
   min-width: 150px;
   text-align: center;
   font-weight: 500;
-  color: #111827;                  /* ラベル文字も黒っぽいグレー */
+  color: #111827;
 }
 
-/* ページ削除ボタン（ライト用赤） */
+/* ページ削除ボタン */
 .page-reset-btn {
   border: 1px solid #fecaca;
   background: #fef2f2;
@@ -198,8 +198,8 @@ h1 {
   transform: translateY(1px);
   box-shadow: 0 1px 0 rgba(254,202,202,1);
 }
-    
-/* ===== マップエリア（ライト用） ===== */
+
+/* ===== マップエリア ===== */
 .board-wrapper {
   margin-bottom: 4px;
   position: relative;
@@ -236,95 +236,100 @@ h1 {
   pointer-events: none;
   z-index: 0;
 }
-    .map-lines {
-      position: absolute;
-      inset: -20px 0;
-      z-index: 1;
-      pointer-events: none;
-    }
-    .map-line {
-      fill: none;
-      stroke: rgba(34,197,94,0.85);
-      stroke-width: 10;
-      stroke-linecap: round;
-      stroke-linejoin: round;
-    }
 
-    .node {
-      position: absolute;
-      transform: translate(-50%, -50%);
-      min-width: 80px;
-      text-align: center;
-      z-index: 3;
-    }
-    .node.locked {
-      cursor: default;
-    }
-    .node.unlocked,
-    .node.completed {
-      cursor: pointer;
-    }
+.map-lines {
+  position: absolute;
+  inset: -20px 0;
+  z-index: 1;
+  pointer-events: none;
+}
 
-    .node-circle {
-      width: 72px;
-      height: 72px;
-      margin: 0 auto 6px;
-      border-radius: 999px;
-      border: none;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 800;
-      font-size: 18px;
-      transition:
-        transform 0.12s ease,
-        box-shadow 0.12s ease,
-        background 0.12s ease,
-        color 0.12s ease;
-      box-shadow: 0 4px 0 rgba(15,23,42,0.9);
-      position: relative;
-    }
-    
-/* ロック中のノードもライト用に */
+.map-line {
+  fill: none;
+  stroke: rgba(34,197,94,0.85);
+  stroke-width: 10;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.node {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  min-width: 80px;
+  text-align: center;
+  z-index: 3;
+}
+.node.locked {
+  cursor: default;
+}
+.node.unlocked,
+.node.completed {
+  cursor: pointer;
+}
+
+.node-circle {
+  width: 72px;
+  height: 72px;
+  margin: 0 auto 6px;
+  border-radius: 999px;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 18px;
+  transition:
+    transform 0.12s ease,
+    box-shadow 0.12s ease,
+    background 0.12s ease,
+    color 0.12s ease;
+  box-shadow: 0 4px 0 rgba(15,23,42,0.9);
+  position: relative;
+}
+
+/* ロック中 */
 .node.locked .node-circle {
   background: #e5e7eb;
   color: #9ca3af;
   box-shadow: 0 3px 0 rgba(209,213,219,1);
   border: 1px solid #cbd5f5;
 }
-    .node.unlocked .node-circle {
-      background: #22c55e;
-      color: #052e16;
-      box-shadow:
-        0 4px 0 rgba(15,23,42,0.9),
-        0 0 0 4px rgba(34,197,94,0.25);
-    }
-    .node.completed .node-circle {
-      background: #16a34a;
-      color: #111827 !important;
-      box-shadow:
-        0 5px 0 rgba(15,23,42,0.9),
-        0 0 0 5px rgba(22,163,74,0.35);
-      transform: translateY(-1px) scale(1.03);
-    }
-    .node.unlocked:hover .node-circle,
-    .node.completed:hover .node-circle {
-      transform: translateY(-2px) scale(1.04);
-      box-shadow:
-        0 7px 14px rgba(0,0,0,0.9),
-        0 0 0 5px rgba(34,197,94,0.4);
-    }
+
+.node.unlocked .node-circle {
+  background: #22c55e;
+  color: #052e16;
+  box-shadow:
+    0 4px 0 rgba(15,23,42,0.9),
+    0 0 0 4px rgba(34,197,94,0.25);
+}
+
+.node.completed .node-circle {
+  background: #16a34a;
+  color: #111827 !important;
+  box-shadow:
+    0 5px 0 rgba(15,23,42,0.9),
+    0 0 0 5px rgba(22,163,74,0.35);
+  transform: translateY(-1px) scale(1.03);
+}
+
+.node.unlocked:hover .node-circle,
+.node.completed:hover .node-circle {
+  transform: translateY(-2px) scale(1.04);
+  box-shadow:
+    0 7px 14px rgba(0,0,0,0.9),
+    0 0 0 5px rgba(34,197,94,0.4);
+}
 
 /* ===== ノードの文字色 ===== */
 .node-title {
   font-size: 16px;
   margin-bottom: 2px;
-  color: #111827;          /* 「枠線1コマ目」などを黒っぽいグレーに */
+  color: #111827;
 }
 
 .node-progress {
   font-size: 9px;
-  color: #6b7280;          /* 「クリックして進む」もやや濃いグレー */
+  color: #6b7280;
 }
 
 @media (max-width: 600px) {
@@ -332,58 +337,55 @@ h1 {
     font-size: 12px;
   }
 }
-    /* ★現在進行形のマスだけ数字を白に */
+
+/* 次のマス */
 .next-node .node-circle {
   color: #ffffff !important;
 }
-    .next-node .node-circle::after {
-      content: "";
-      position: absolute;
-      inset: -6px;
-      border-radius: inherit;
-      border: 3px solid rgba(190, 242, 100, 0.9);
-      opacity: 0;
-      transform: scale(0.9);
-      pointer-events: none;
-      animation: node-ring 1.4s ease-out infinite;
-    }
+.next-node .node-circle::after {
+  content: "";
+  position: absolute;
+  inset: -6px;
+  border-radius: inherit;
+  border: 3px solid rgba(190, 242, 100, 0.9);
+  opacity: 0;
+  transform: scale(0.9);
+  pointer-events: none;
+  animation: node-ring 1.4s ease-out infinite;
+}
 
-    @keyframes node-ring {
-      0% {
-        opacity: 0;
-        transform: scale(0.7);
-      }
-      25% {
-        opacity: 1;
-        transform: scale(1.02);
-      }
-      80% {
-        opacity: 0;
-        transform: scale(1.35);
-      }
-      100% {
-        opacity: 0;
-        transform: scale(1.4);
-      }
-    }
-    
-/* 「よくできました！」トースト（大型版） */
+@keyframes node-ring {
+  0% {
+    opacity: 0;
+    transform: scale(0.7);
+  }
+  25% {
+    opacity: 1;
+    transform: scale(1.02);
+  }
+  80% {
+    opacity: 0;
+    transform: scale(1.35);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.4);
+  }
+}
+
+/* 「よくできました！」トースト */
 .success-toast {
   position: absolute;
   left: 50%;
   top: 16%;
   transform: translate(-50%, -50%) scale(0.7);
-
-  /* ★背景と余白を大きく */
   background: #22c55e;
-  color: #022c22;
-  font-size: 20px;        /* 13px → 20px （約2周りアップ） */
-  font-weight: 800;       /* 強調 */
-
-  padding: 12px 32px;     /* 6px 18px → 12px 32px（大きめバッジ） */
+  color: #ffffff;
+  font-size: 20px;
+  font-weight: 800;
+  padding: 12px 32px;
   border-radius: 999px;
-
-  box-shadow: 0 16px 36px rgba(0,0,0,0.75); /* 影も強く */
+  box-shadow: 0 16px 36px rgba(0,0,0,0.75);
   pointer-events: none;
   opacity: 0;
   z-index: 5;
@@ -400,7 +402,7 @@ h1 {
   }
   20% {
     opacity: 1;
-    transform: translate(-50%, -50%) scale(1.12); /* アップ時の弾みも調整 */
+    transform: translate(-50%, -50%) scale(1.12);
   }
   60% {
     opacity: 1;
@@ -411,48 +413,46 @@ h1 {
     transform: translate(-50%, -50%) scale(0.8);
   }
 }
-    .confetti {
-      position: absolute;
-      width: 6px;
-      height: 10px;
-      border-radius: 2px;
-      opacity: 0;
-      pointer-events: none;
-      z-index: 4;
-      animation: confetti-fall 900ms linear forwards;
-    }
 
-    @keyframes confetti-fall {
-      0% {
-        opacity: 0;
-        transform: translate3d(0, 0, 0) rotateZ(0deg);
-      }
-      20% {
-        opacity: 1;
-        transform: translate3d(0, -80px, 0) rotateZ(120deg);
-      }
-      100% {
-        opacity: 0;
-        transform: translate3d(0, 260px, 0) rotateZ(360deg);
-      }
-    }
+.confetti {
+  position: absolute;
+  width: 6px;
+  height: 10px;
+  border-radius: 2px;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 4;
+  animation: confetti-fall 900ms linear forwards;
+}
 
-/* ===== 中央パネル（大型版） ===== */
+@keyframes confetti-fall {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 0, 0) rotateZ(0deg);
+  }
+  20% {
+    opacity: 1;
+    transform: translate3d(0, -80px, 0) rotateZ(120deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(0, 260px, 0) rotateZ(360deg);
+  }
+}
+
+/* ===== 中央パネル ===== */
 .side-panel {
   position: fixed;
   top: 50%;
   left: 50%;
-
   width: 360px;
   max-width: 95vw;
-  background: #ffffff;                          /* パネルを白に */
+  background: #ffffff;
   border-radius: 20px;
-  border: 1px solid #e5e7eb;                   /* 薄い枠線 */
+  border: 1px solid #e5e7eb;
   box-shadow: 0 24px 60px rgba(15,23,42,0.16);
-
-  padding: 24px 26px 26px;
+  padding: 24px 26px 20px;
   font-size: 15px;
-
   opacity: 0;
   transform: translate(-50%, -48%) scale(0.94);
   pointer-events: none;
@@ -468,22 +468,19 @@ h1 {
   pointer-events: auto;
 }
 
-/* タイトル + ×ボタン の行 */
 .side-panel-header {
   display: flex;
-  justify-content: space-between;  /* ★右上へ */
+  justify-content: space-between;
   align-items: center;
   margin-bottom: 12px;
 }
 
-/* タイトル */
 .side-panel-header span {
   font-size: 18px;
   font-weight: 800;
   color: #0f172a;
 }
 
-/* ×ボタン（右上） */
 .side-panel-close {
   background: transparent;
   border: none;
@@ -497,31 +494,94 @@ h1 {
   color: #111827;
 }
 
-/* 本文 */
 .side-panel-body {
   font-size: 15px;
-  color: #374151;           /* 説明文を黒寄りのグレーに */
+  color: #374151;
   line-height: 1.7;
   white-space: pre-wrap;
 }
 
-/* 「進めた」ボタン */
-.side-panel-done-btn {
-  margin-top: 18px;
-  width: 100%;
+/* フッター（進めた＋書き出す） */
+.side-panel-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.side-panel-done-btn,
+.side-panel-export-btn {
   border-radius: 999px;
   border: none;
-  background: #22c55e;
-  color: #ffffff;
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 700;
-  padding: 12px 0;
+  padding: 10px 16px;
   cursor: pointer;
   box-shadow: 0 3px 0 rgba(21,128,61,0.8);
 }
+
+.side-panel-done-btn {
+  background: #22c55e;
+  color: #ffffff;
+}
+
 .side-panel-done-btn:active {
   transform: translateY(1px);
   box-shadow: 0 1px 0 rgba(21,128,61,0.8);
+}
+
+/* 初期は非表示。ベタ～仕上げのときだけ表示 */
+.side-panel-export-btn {
+  display: none;
+  background: #0ea5e9;
+  color: #f9fafb;
+  box-shadow: 0 3px 0 rgba(30,64,175,0.8);
+}
+.side-panel-export-btn:active {
+  transform: translateY(1px);
+  box-shadow: 0 1px 0 rgba(30,64,175,0.8);
+}
+
+/* ===== 原稿用紙キャンバス用 ===== */
+.canvas-wrapper {
+  width: 100%;
+  aspect-ratio: 4441 / 6213; /* B5+3mm余白 */
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  background: #f9fafb;
+  overflow: hidden;
+  box-shadow: inset 0 0 0 1px rgba(148,163,184,0.25);
+}
+
+.canvas-wrapper canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.canvas-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  margin-bottom: 8px;
+  font-size: 12px;
+  color: #4b5563;
+}
+
+.canvas-toolbar button {
+  border-radius: 999px;
+  border: 1px solid #d1d5db;
+  background: #f9fafb;
+  padding: 4px 10px;
+  font-size: 11px;
+  cursor: pointer;
+  box-shadow: 0 2px 0 rgba(209,213,219,1);
+}
+
+.canvas-toolbar button:active {
+  transform: translateY(1px);
+  box-shadow: 0 1px 0 rgba(209,213,219,1);
 }
   </style>
 </head>
@@ -558,17 +618,21 @@ h1 {
     </div>
   </div>
 
-  <!-- ★ サイドパネル本体 -->
+  <!-- サイドパネル -->
   <div id="sidePanel" class="side-panel">
     <div class="side-panel-header">
       <div id="sidePanelTitle" class="side-panel-title"></div>
       <button id="sidePanelClose" class="side-panel-close">×</button>
     </div>
     <div id="sidePanelBody" class="side-panel-body"></div>
-    <button id="sidePanelDoneBtn" class="side-panel-done-btn">進めた</button>
+    <div class="side-panel-footer">
+      <button id="sidePanelDoneBtn" class="side-panel-done-btn">進めた</button>
+      <button id="sidePanelExportBtn" class="side-panel-export-btn">書き出す</button>
+    </div>
   </div>
 
   <script>
+    /* ===== すごろく構成 ===== */
     const frameCount   = 6;
     const roughCount   = 6;
     const textCount    = 6;
@@ -609,6 +673,7 @@ h1 {
     const STORAGE_KEY = "mangaLessonProgress_v8_pages";
     const STREAK_KEY  = "mangaLessonStreak_v1";
 
+    /* ===== 進捗保存（既存） ===== */
     function createInitialProgressMap() {
       const obj = {};
       for (const lesson of LESSONS) {
@@ -729,11 +794,11 @@ h1 {
       return positions;
     }
 
+    /* ===== 連続日数 ===== */
     function getLogicalDateKey(date = new Date()) {
       const d = new Date(date.getTime());
       const hour = d.getHours();
       if (hour < 5) d.setDate(d.getDate() - 1);
-
       const y = d.getFullYear();
       const m = String(d.getMonth() + 1).padStart(2, "0");
       const day = String(d.getDate()).padStart(2, "0");
@@ -784,7 +849,6 @@ h1 {
       const data = loadStreakData();
       const keys = Object.keys(data);
       if (keys.length === 0) return 0;
-
       const set = new Set(keys);
       let streak = 0;
       let d = keyToDate(getLogicalDateKey());
@@ -806,6 +870,7 @@ h1 {
       el.textContent = `${calcCurrentStreak()} 日`;
     }
 
+    /* ===== ページラベル ===== */
     function updatePageLabel(dataOpt) {
       const labelEl = document.getElementById("pageLabel");
       const prevBtn = document.getElementById("prevPageBtn");
@@ -817,6 +882,7 @@ h1 {
       if (nextBtn) nextBtn.disabled = currentPage >= data.maxPage;
     }
 
+    /* ===== 次のタスク表示 ===== */
     function getNextIncompleteLesson(progress) {
       for (const lesson of LESSONS) {
         if (!isLessonCompleted(lesson, progress)) {
@@ -842,19 +908,50 @@ h1 {
       }
     }
 
-    // パネルに表示するテキストを作る
-    function buildPanelText(lesson) {
-      const lines = [];
-      lines.push(`今日は「${lesson.title}」を進めてみよう。`);
-      lines.push("");
-      lines.push("小さくていいので、今できる範囲だけ手を付けてみるのがおすすめです。");
-      lines.push("・5分だけタイマーをかけて手を動かしてみる");
-      lines.push("・迷ったらとりあえずラフ線を一本引いてみる");
-      lines.push("");
-      lines.push("作業ができたら、下の「進めた」ボタンを押してマスを進めましょう。");
-      return lines.join("\n");
+    /* ===== 原稿用紙描画データ ===== */
+    const EDIT_CANVAS_WIDTH  = 1000; // 表示用
+    const EDIT_CANVAS_HEIGHT = Math.round(EDIT_CANVAS_WIDTH * 6213 / 4441);
+    const EXPORT_WIDTH  = 4961; // 600dpi A4相当
+    const EXPORT_HEIGHT = 7016;
+    const DRAW_STORAGE_KEY = "mangaBoardDraw_v1";
+
+    // page -> { frames, rough, pen, text, roughColor }
+    function createEmptyDrawPage() {
+      return {
+        frames: {},          // panelIndex -> {x,y,w,h}
+        rough: {},           // panelIndex -> [ {points:[{x,y}]} ]
+        pen: {},             // panelIndex -> [ {points:[{x,y}]} ]
+        text: {},            // panelIndex -> [ {x,y,text} ]
+        roughColor: "black"  // "black" | "blue" | "gray"
+      };
     }
-    
+
+    function loadDrawAll() {
+      const raw = localStorage.getItem(DRAW_STORAGE_KEY);
+      if (!raw) return {};
+      try {
+        const obj = JSON.parse(raw);
+        return obj && typeof obj === "object" ? obj : {};
+      } catch {
+        return {};
+      }
+    }
+
+    function saveDrawAll(data) {
+      localStorage.setItem(DRAW_STORAGE_KEY, JSON.stringify(data));
+    }
+
+    function getDrawPage(page) {
+      const all = loadDrawAll();
+      const key = String(page);
+      if (!all[key]) {
+        all[key] = createEmptyDrawPage();
+        saveDrawAll(all);
+      }
+      return { all, pageData: all[key] };
+    }
+
+    /* ===== 成功エフェクト ===== */
     let audioCtx = null;
 
     function showSuccessEffect() {
@@ -897,11 +994,10 @@ h1 {
         piece.style.animationDelay  = (Math.random() * 0.18) + "s";
 
         mapEl.appendChild(piece);
-
         setTimeout(() => piece.remove(), 1000);
       }
     }
-    
+
     function playSuccessSound(isFinal) {
       try {
         const Ctx = window.AudioContext || window.webkitAudioContext;
@@ -974,7 +1070,11 @@ h1 {
       return progress[lesson.id] >= lesson.maxProgress;
     }
 
-    // 実際に進捗を進めて紙吹雪する処理（従来のadvance）
+    function logMessage(text) {
+      console.log(text);
+    }
+
+    /* ===== 進める処理 ===== */
     function advanceLesson(lessonId) {
       const { data, progress } = loadPageProgress(currentPage);
       const lesson = LESSONS.find(l => l.id === lessonId);
@@ -997,7 +1097,6 @@ h1 {
       updateStreakDisplay();
 
       const isFinal = lesson.id === "finish_6";
-
       renderAll();
 
       const mapEl = document.getElementById("map");
@@ -1009,14 +1108,344 @@ h1 {
       triggerConfetti(targetNode);
       playSuccessSound(isFinal);
     }
-    
-    function logMessage(text) {
-      console.log(text);
+
+    /* ===== サイドパネル・原稿用紙キャンバス ===== */
+    let pendingLessonId = null;
+    let currentPanelMode = null;   // "frame" | "rough" | "text" | "pen" | "info"
+    let currentPanelIndex = null;  // 1..6
+    let drawingCanvas = null;
+    let drawingCtx = null;
+    let isDrawing = false;
+    let lastX = 0, lastY = 0;
+
+    function clearCanvasListeners(canvas) {
+      if (!canvas) return;
+      canvas.onmousedown = canvas.onmousemove = canvas.onmouseup = canvas.onmouseleave = null;
+      canvas.ontouchstart = canvas.ontouchmove = canvas.ontouchend = null;
     }
 
-    // どのマスを進めるか、パネルで保持しておく
-    let pendingLessonId = null;
+    function getPanelIndexFromLesson(lessonId) {
+      const parts = lessonId.split("_");
+      if (parts.length < 2) return null;
+      const n = parseInt(parts[1], 10);
+      return isNaN(n) ? null : n;
+    }
 
+    function setupCanvasForLesson(lesson) {
+      const panelBody = document.getElementById("sidePanelBody");
+      const exportBtn = document.getElementById("sidePanelExportBtn");
+      const [group] = lesson.id.split("_");
+      const index = getPanelIndexFromLesson(lesson.id);
+      currentPanelIndex = index;
+
+      // モード判別
+      if (group === "frame")      currentPanelMode = "frame";
+      else if (group === "rough") currentPanelMode = "rough";
+      else if (group === "text")  currentPanelMode = "text";
+      else if (group === "pen")   currentPanelMode = "pen";
+      else                        currentPanelMode = "info";
+
+      // ベタ～仕上げ以外では書き出しボタンを隠す
+      if (["beta", "tone", "finish"].includes(group)) {
+        exportBtn.style.display = "inline-block";
+      } else {
+        exportBtn.style.display = "none";
+      }
+
+      if (currentPanelMode === "info") {
+        panelBody.innerHTML =
+          "この後の作業は描画ソフトやアプリをご利用ください。\n" +
+          "「書き出す」ボタンを押し、書き出した画像データをソフトやアプリに読み込んで作業を行ってください。";
+        drawingCanvas = null;
+        drawingCtx = null;
+        return;
+      }
+
+      // モード別の説明とツールバー
+      let infoText = "";
+      let toolbarHtml = "";
+
+      if (currentPanelMode === "frame") {
+        infoText = "ドラッグしてこのコマの枠線を引きます。\n（後の下描き・台詞・ペン入れの作業範囲になります）";
+        toolbarHtml = `
+          <div class="canvas-toolbar">
+            <span>ドラッグで枠線作成 / このコマのみ保存されます。</span>
+            <button id="clearFrameBtn">このコマの枠を消す</button>
+          </div>`;
+      } else if (currentPanelMode === "rough") {
+        infoText = `マウス・ペン・指で下描きを行います。\n「${lesson.title}」のコマ内だけ描けます。`;
+        toolbarHtml = `
+          <div class="canvas-toolbar">
+            <span>コマ内にラフを描いてください。</span>
+          </div>`;
+      } else if (currentPanelMode === "text") {
+        infoText = `クリックした位置に吹き出しと縦書き台詞を追加します。\n「${lesson.title}」のコマ内のみ編集されます。`;
+        toolbarHtml = `
+          <div class="canvas-toolbar">
+            <span>キャンバス上をクリックすると吹き出しを追加します。</span>
+          </div>`;
+      } else if (currentPanelMode === "pen") {
+        infoText = `下描きを元にペン入れします。\nラフを水色・グレーに変更、または削除できます。`;
+        toolbarHtml = `
+          <div class="canvas-toolbar">
+            <button id="draftBlueBtn">下描きを水色にする</button>
+            <button id="draftGrayBtn">下描きをグレーにする</button>
+            <button id="draftDeleteBtn">下描きを削除する</button>
+          </div>`;
+      }
+
+      panelBody.innerHTML = `
+        <div style="margin-bottom:8px; font-size:13px; white-space:pre-wrap;">${infoText}</div>
+        ${toolbarHtml}
+        <div class="canvas-wrapper">
+          <canvas id="pageCanvas" width="${EDIT_CANVAS_WIDTH}" height="${EDIT_CANVAS_HEIGHT}"></canvas>
+        </div>
+      `;
+
+      drawingCanvas = document.getElementById("pageCanvas");
+      drawingCtx = drawingCanvas.getContext("2d");
+      clearCanvasListeners(drawingCanvas);
+
+      const { pageData } = getDrawPage(currentPage);
+
+      // ツールバーのボタン処理
+      if (currentPanelMode === "frame") {
+        const clearBtn = document.getElementById("clearFrameBtn");
+        if (clearBtn) {
+          clearBtn.onclick = () => {
+            delete pageData.frames[currentPanelIndex];
+            const { all } = getDrawPage(currentPage);
+            all[String(currentPage)] = pageData;
+            saveDrawAll(all);
+            redrawCanvas();
+          };
+        }
+      } else if (currentPanelMode === "pen") {
+        const blueBtn = document.getElementById("draftBlueBtn");
+        const grayBtn = document.getElementById("draftGrayBtn");
+        const delBtn  = document.getElementById("draftDeleteBtn");
+        if (blueBtn) blueBtn.onclick = () => { pageData.roughColor = "blue"; saveDrawPage(pageData); redrawCanvas(); };
+        if (grayBtn) grayBtn.onclick = () => { pageData.roughColor = "gray"; saveDrawPage(pageData); redrawCanvas(); };
+        if (delBtn)  delBtn.onclick  = () => { pageData.rough = {}; saveDrawPage(pageData); redrawCanvas(); };
+      }
+
+      // マウス・タッチ共通処理
+      function getCanvasPos(evt) {
+        const rect = drawingCanvas.getBoundingClientRect();
+        const clientX = evt.touches ? evt.touches[0].clientX : evt.clientX;
+        const clientY = evt.touches ? evt.touches[0].clientY : evt.clientY;
+        const x = (clientX - rect.left) * (drawingCanvas.width / rect.width);
+        const y = (clientY - rect.top) * (drawingCanvas.height / rect.height);
+        return { x, y };
+      }
+
+      // フレーム描画用
+      let frameStart = null;
+
+      function handleDown(evt) {
+        evt.preventDefault();
+        const { x, y } = getCanvasPos(evt);
+
+        if (currentPanelMode === "frame") {
+          frameStart = { x, y };
+        } else if (currentPanelMode === "rough" || currentPanelMode === "pen") {
+          isDrawing = true;
+          lastX = x; lastY = y;
+          const layer = currentPanelMode === "rough" ? pageData.rough : pageData.pen;
+          if (!layer[currentPanelIndex]) layer[currentPanelIndex] = [];
+          layer[currentPanelIndex].push({ points: [{ x, y }] });
+        } else if (currentPanelMode === "text") {
+          // クリック位置に吹き出し＋縦書きテキスト
+          const panelRect = pageData.frames[currentPanelIndex];
+          if (panelRect && !pointInRect(x, y, panelRect)) {
+            return;
+          }
+          const text = window.prompt("台詞（縦書き）を入力してください", "");
+          if (!text) return;
+          if (!pageData.text[currentPanelIndex]) pageData.text[currentPanelIndex] = [];
+          pageData.text[currentPanelIndex].push({ x, y, text });
+          saveDrawPage(pageData);
+          redrawCanvas();
+        }
+      }
+
+      function handleMove(evt) {
+        if (!drawingCanvas) return;
+        if (currentPanelMode === "frame") {
+          if (!frameStart) return;
+          const { x, y } = getCanvasPos(evt);
+          redrawCanvas(); // 既存を描き直し
+          drawingCtx.save();
+          drawingCtx.strokeStyle = "#22c55e";
+          drawingCtx.lineWidth = 2;
+          drawingCtx.setLineDash([8, 4]);
+          drawingCtx.strokeRect(frameStart.x, frameStart.y, x - frameStart.x, y - frameStart.y);
+          drawingCtx.restore();
+        } else if ((currentPanelMode === "rough" || currentPanelMode === "pen") && isDrawing) {
+          const { x, y } = getCanvasPos(evt);
+          const panelRect = pageData.frames[currentPanelIndex];
+          if (panelRect && !pointInRect(x, y, panelRect)) {
+            lastX = x; lastY = y;
+            return;
+          }
+          const layer = currentPanelMode === "rough" ? pageData.rough : pageData.pen;
+          const paths = layer[currentPanelIndex];
+          if (!paths || paths.length === 0) return;
+          const path = paths[paths.length - 1];
+          path.points.push({ x, y });
+          lastX = x; lastY = y;
+          redrawCanvas();
+        }
+      }
+
+      function handleUp(evt) {
+        if (currentPanelMode === "frame") {
+          if (frameStart) {
+            const { x, y } = getCanvasPos(evt);
+            const rect = normalizeRect(frameStart.x, frameStart.y, x, y);
+            pageData.frames[currentPanelIndex] = rect;
+            saveDrawPage(pageData);
+            frameStart = null;
+            redrawCanvas();
+          }
+        } else if (currentPanelMode === "rough" || currentPanelMode === "pen") {
+          if (isDrawing) {
+            isDrawing = false;
+            saveDrawPage(pageData);
+          }
+        }
+      }
+
+      drawingCanvas.onmousedown = handleDown;
+      drawingCanvas.onmousemove = handleMove;
+      drawingCanvas.onmouseup   = handleUp;
+      drawingCanvas.onmouseleave= handleUp;
+      drawingCanvas.ontouchstart= handleDown;
+      drawingCanvas.ontouchmove = handleMove;
+      drawingCanvas.ontouchend  = handleUp;
+
+      redrawCanvas();
+    }
+
+    function normalizeRect(x1, y1, x2, y2) {
+      const x = Math.min(x1, x2);
+      const y = Math.min(y1, y2);
+      const w = Math.abs(x2 - x1);
+      const h = Math.abs(y2 - y1);
+      return { x, y, w, h };
+    }
+
+    function pointInRect(x, y, rect) {
+      return x >= rect.x && y >= rect.y && x <= rect.x + rect.w && y <= rect.y + rect.h;
+    }
+
+    function saveDrawPage(pageData) {
+      const all = loadDrawAll();
+      all[String(currentPage)] = pageData;
+      saveDrawAll(all);
+    }
+
+    function redrawCanvas() {
+      if (!drawingCanvas || !drawingCtx) return;
+      const { pageData } = getDrawPage(currentPage);
+      const ctx = drawingCtx;
+      ctx.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height);
+
+      // 用紙背景
+      ctx.save();
+      ctx.fillStyle = "#fefefe";
+      ctx.fillRect(0, 0, drawingCanvas.width, drawingCanvas.height);
+      ctx.strokeStyle = "#e5e7eb";
+      ctx.lineWidth = 1;
+      ctx.strokeRect(10, 10, drawingCanvas.width - 20, drawingCanvas.height - 20);
+      ctx.restore();
+
+      // すべての枠を描画
+      ctx.save();
+      ctx.strokeStyle = "#111827";
+      ctx.lineWidth = 3;
+      Object.values(pageData.frames).forEach(rect => {
+        ctx.strokeRect(rect.x, rect.y, rect.w, rect.h);
+      });
+      ctx.restore();
+
+      // コマごと描画（ラフ→ペン→台詞）
+      const roughColor = pageData.roughColor || "black";
+      let roughStroke = "#111827";
+      if (roughColor === "blue") roughStroke = "#60a5fa";
+      if (roughColor === "gray") roughStroke = "#9ca3af";
+
+      function drawStrokeLayer(layer, strokeStyle, lineWidth) {
+        ctx.save();
+        ctx.lineJoin = "round";
+        ctx.lineCap = "round";
+        ctx.strokeStyle = strokeStyle;
+        ctx.lineWidth = lineWidth;
+        for (const [panelIndex, paths] of Object.entries(layer)) {
+          const rect = pageData.frames[panelIndex];
+          if (rect) {
+            ctx.save();
+            ctx.beginPath();
+            ctx.rect(rect.x, rect.y, rect.w, rect.h);
+            ctx.clip();
+          }
+          paths.forEach(path => {
+            const pts = path.points;
+            if (!pts || pts.length < 2) return;
+            ctx.beginPath();
+            ctx.moveTo(pts[0].x, pts[0].y);
+            for (let i = 1; i < pts.length; i++) {
+              ctx.lineTo(pts[i].x, pts[i].y);
+            }
+            ctx.stroke();
+          });
+          if (rect) ctx.restore();
+        }
+        ctx.restore();
+      }
+
+      // ラフ
+      drawStrokeLayer(pageData.rough, roughStroke, 2);
+      // ペン
+      drawStrokeLayer(pageData.pen, "#111827", 3);
+
+      // 吹き出し＋台詞
+      ctx.save();
+      for (const [panelIndex, balloons] of Object.entries(pageData.text)) {
+        const rect = pageData.frames[panelIndex];
+        balloons.forEach(b => {
+          if (rect) {
+            ctx.save();
+            ctx.beginPath();
+            ctx.rect(rect.x, rect.y, rect.w, rect.h);
+            ctx.clip();
+          }
+          const rx = 80;
+          const ry = 60;
+          ctx.beginPath();
+          ctx.ellipse(b.x, b.y, rx, ry, 0, 0, Math.PI * 2);
+          ctx.fillStyle = "rgba(255,255,255,0.95)";
+          ctx.fill();
+          ctx.strokeStyle = "#111827";
+          ctx.lineWidth = 2;
+          ctx.stroke();
+
+          // 縦書きテキスト
+          ctx.fillStyle = "#111827";
+          const fontSize = 16;
+          ctx.font = `${fontSize}px "Yu Mincho", "Hiragino Mincho ProN", serif`;
+          const chars = [...b.text];
+          const startY = b.y - (chars.length * fontSize) / 2;
+          for (let i = 0; i < chars.length; i++) {
+            ctx.fillText(chars[i], b.x, startY + i * fontSize);
+          }
+          if (rect) ctx.restore();
+        });
+      }
+      ctx.restore();
+    }
+
+    /* ===== サイドパネル開閉 ===== */
     function openLessonPanel(lessonId) {
       const { progress } = loadPageProgress(currentPage);
       const lesson = LESSONS.find(l => l.id === lessonId);
@@ -1033,21 +1462,24 @@ h1 {
 
       const panel = document.getElementById("sidePanel");
       const titleEl = document.getElementById("sidePanelTitle");
-      const bodyEl  = document.getElementById("sidePanelBody");
-      if (!panel || !titleEl || !bodyEl) return;
+      if (!panel || !titleEl) return;
 
       titleEl.textContent = lesson.title;
-      bodyEl.textContent  = buildPanelText(lesson);
 
       pendingLessonId = lessonId;
+      setupCanvasForLesson(lesson);
       panel.classList.add("open");
     }
 
     function closeLessonPanel() {
       const panel = document.getElementById("sidePanel");
       if (panel) panel.classList.remove("open");
+      pendingLessonId = null;
+      drawingCanvas = null;
+      drawingCtx = null;
     }
 
+    /* ===== マップ描画 ===== */
     function renderMap(progress) {
       const mapEl = document.getElementById("map");
       mapEl.innerHTML = "";
@@ -1098,7 +1530,6 @@ h1 {
         node.appendChild(title);
         node.appendChild(progressText);
 
-        // ここで直接advanceせず、パネルを開く
         node.addEventListener("click", () => openLessonPanel(lesson.id));
         mapEl.appendChild(node);
       });
@@ -1153,6 +1584,130 @@ h1 {
       updateNextTaskDisplay(progress);
     }
 
+    /* ===== 書き出し ===== */
+    function exportCurrentPageImage() {
+      const off = document.createElement("canvas");
+      off.width = EXPORT_WIDTH;
+      off.height = EXPORT_HEIGHT;
+      const ctx = off.getContext("2d");
+
+      const { pageData } = getDrawPage(currentPage);
+
+      // 背景（白）
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, off.width, off.height);
+
+      // 編集キャンバスを中央に配置するスケール
+      const scale = Math.min(
+        off.width / EDIT_CANVAS_WIDTH,
+        off.height / EDIT_CANVAS_HEIGHT
+      );
+      const offsetX = (off.width  - EDIT_CANVAS_WIDTH  * scale) / 2;
+      const offsetY = (off.height - EDIT_CANVAS_HEIGHT * scale) / 2;
+
+      ctx.save();
+      ctx.translate(offsetX, offsetY);
+      ctx.scale(scale, scale);
+
+      // 以下 redrawCanvas とほぼ同じ処理
+      ctx.fillStyle = "#fefefe";
+      ctx.fillRect(0, 0, EDIT_CANVAS_WIDTH, EDIT_CANVAS_HEIGHT);
+      ctx.strokeStyle = "#e5e7eb";
+      ctx.lineWidth = 1;
+      ctx.strokeRect(10, 10, EDIT_CANVAS_WIDTH - 20, EDIT_CANVAS_HEIGHT - 20);
+
+      // 枠
+      ctx.save();
+      ctx.strokeStyle = "#111827";
+      ctx.lineWidth = 3;
+      Object.values(pageData.frames).forEach(rect => {
+        ctx.strokeRect(rect.x, rect.y, rect.w, rect.h);
+      });
+      ctx.restore();
+
+      // ラフ＋ペン＋台詞
+      const roughColor = pageData.roughColor || "black";
+      let roughStroke = "#111827";
+      if (roughColor === "blue") roughStroke = "#60a5fa";
+      if (roughColor === "gray") roughStroke = "#9ca3af";
+
+      function drawStrokeLayer(layer, strokeStyle, lineWidth) {
+        ctx.save();
+        ctx.lineJoin = "round";
+        ctx.lineCap = "round";
+        ctx.strokeStyle = strokeStyle;
+        ctx.lineWidth = lineWidth;
+        for (const [panelIndex, paths] of Object.entries(layer)) {
+          const rect = pageData.frames[panelIndex];
+          if (rect) {
+            ctx.save();
+            ctx.beginPath();
+            ctx.rect(rect.x, rect.y, rect.w, rect.h);
+            ctx.clip();
+          }
+          paths.forEach(path => {
+            const pts = path.points;
+            if (!pts || pts.length < 2) return;
+            ctx.beginPath();
+            ctx.moveTo(pts[0].x, pts[0].y);
+            for (let i = 1; i < pts.length; i++) {
+              ctx.lineTo(pts[i].x, pts[i].y);
+            }
+            ctx.stroke();
+          });
+          if (rect) ctx.restore();
+        }
+        ctx.restore();
+      }
+
+      drawStrokeLayer(pageData.rough, roughStroke, 2);
+      drawStrokeLayer(pageData.pen, "#111827", 3);
+
+      ctx.save();
+      for (const [panelIndex, balloons] of Object.entries(pageData.text)) {
+        const rect = pageData.frames[panelIndex];
+        balloons.forEach(b => {
+          if (rect) {
+            ctx.save();
+            ctx.beginPath();
+            ctx.rect(rect.x, rect.y, rect.w, rect.h);
+            ctx.clip();
+          }
+          const rx = 80;
+          const ry = 60;
+          ctx.beginPath();
+          ctx.ellipse(b.x, b.y, rx, ry, 0, Math.PI * 2);
+          ctx.fillStyle = "rgba(255,255,255,0.95)";
+          ctx.fill();
+          ctx.strokeStyle = "#111827";
+          ctx.lineWidth = 2;
+          ctx.stroke();
+
+          const fontSize = 16;
+          ctx.font = `${fontSize}px "Yu Mincho", "Hiragino Mincho ProN", serif`;
+          ctx.fillStyle = "#111827";
+          const chars = [...b.text];
+          const startY = b.y - (chars.length * fontSize) / 2;
+          for (let i = 0; i < chars.length; i++) {
+            ctx.fillText(chars[i], b.x, startY + i * fontSize);
+          }
+          if (rect) ctx.restore();
+        });
+      }
+      ctx.restore();
+
+      ctx.restore();
+
+      const url = off.toDataURL("image/png");
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `manga_page${currentPage}.png`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+
+    /* ===== 起動 ===== */
     window.addEventListener("DOMContentLoaded", () => {
       renderAll();
 
@@ -1189,21 +1744,18 @@ h1 {
 
       document.getElementById("resetPagesBtn").addEventListener("click", () => {
         if (!confirm("全ページを削除して 1ページ目だけ残します。よろしいですか？")) return;
-
         const data = loadAllProgress();
         data.maxPage = 1;
         data.pages = { "1": createInitialProgressMap() };
-
         saveAllProgress(data);
-
         currentPage = 1;
         renderAll();
         logMessage("ページ数をリセットしました。");
       });
 
-      // サイドパネルのボタン
       const closeBtn = document.getElementById("sidePanelClose");
       const doneBtn  = document.getElementById("sidePanelDoneBtn");
+      const exportBtn = document.getElementById("sidePanelExportBtn");
 
       if (closeBtn) {
         closeBtn.addEventListener("click", () => {
@@ -1221,6 +1773,11 @@ h1 {
           pendingLessonId = null;
           closeLessonPanel();
           advanceLesson(id);
+        });
+      }
+      if (exportBtn) {
+        exportBtn.addEventListener("click", () => {
+          exportCurrentPageImage();
         });
       }
 
