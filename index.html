@@ -1560,26 +1560,28 @@ for (const [panelIndex, balloons] of Object.entries(pageData.text)) {
     ctx.lineWidth = 2;
     ctx.stroke();
 
-    // 縦書き：上揃え・中央配置（/｜で列分割）
+    // 縦書き：左右中央寄せ＋上下ほぼ中央寄せ
     ctx.fillStyle = "#111827";
-    const fontSize = 19;                 // +3px
+    const fontSize = 19;
     ctx.font = `${fontSize}px "Yu Mincho", "Hiragino Mincho ProN", serif`;
     ctx.textAlign = "center";
     ctx.textBaseline = "top";
 
+    // ／ or ｜ or 全角｜ で列を分割
     const lines = String(b.text).split(/[\/|｜]/);
-    const topMargin = 10;
     const columnGap = 4;
 
-    // 列全体の幅を計算して中央に配置
+    // 列全体の横幅を計算してフキダシ中心に配置
     const totalWidth = (lines.length - 1) * (fontSize + columnGap);
     const firstX = b.x - totalWidth / 2;
-    const startY = b.y - BALLOON_RY + topMargin;
 
     lines.forEach((line, lineIndex) => {
       const chars = [...line];
+      const columnHeight = chars.length * fontSize;
+      // この列の文字ブロックを縦方向の中央に
+      let y = b.y - columnHeight / 2;
+
       const x = firstX + lineIndex * (fontSize + columnGap);
-      let y = startY;
       for (const ch of chars) {
         ctx.fillText(ch, x, y);
         y += fontSize;
@@ -1847,16 +1849,16 @@ for (const [panelIndex, balloons] of Object.entries(pageData.text)) {
     ctx.textBaseline = "top";
 
     const lines = String(b.text).split(/[\/|｜]/);
-    const topMargin = 10;
     const columnGap = 4;
     const totalWidth = (lines.length - 1) * (fontSize + columnGap);
     const firstX = b.x - totalWidth / 2;
-    const startY = b.y - BALLOON_RY + topMargin;
 
     lines.forEach((line, lineIndex) => {
       const chars = [...line];
+      const columnHeight = chars.length * fontSize;
+      let y = b.y - columnHeight / 2;
+
       const x = firstX + lineIndex * (fontSize + columnGap);
-      let y = startY;
       for (const ch of chars) {
         ctx.fillText(ch, x, y);
         y += fontSize;
