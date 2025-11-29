@@ -1631,7 +1631,7 @@ if (currentPanelMode === "text") {
       saveDrawAll(all);
     }
 
-// 三点リーダー＋句読点補正つき縦書き
+// 句読点・三点リーダ専用の縦書き描画
 function drawVerticalBalloonText(ctx, text, centerX, centerY) {
   const fontSize = 18;
 
@@ -1644,59 +1644,58 @@ function drawVerticalBalloonText(ctx, text, centerX, centerY) {
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
 
-  // /, 改行, ｜ で段を区切り（右 → 左）
-  const lineTexts = String(text).split(/[\/\n|｜]/);
+  // 段分け（右の段から左へ）
+  const lineTexts = String(text).split(/[\/\n]/);
 
-  // 「…」を「···」または「...」に展開（お好みで）
-  const columns = lineTexts.map(line => {
-    const expanded = line.replace(/…/g, "···"); // ←ここは今までどおりでOK
-    return Array.from(expanded);
+  // ここで三点リーダは展開しない → そのまま 1 文字扱い
+  const columns = lineTexts.map(line => Array.from(line));
+
+  // 縦方向の最大文字数（中央寄せ用）
+  let maxLen = 0;
+  columns.forEach(chars => {
+    if (chars.length > maxLen) maxLen = chars.length;
   });
 
-  // 通常の行間と「・」専用の狭い行間
-  const normalLineHeight = fontSize * 1.1;
-  const dotLineHeight    = fontSize * 0.55;   // ←「・」だけ少し詰めたい
-  const isDot = ch => ch === "・" || ch === ".";
+  const lineHeight  = fontSize * 1.1;
+  const totalHeight = lineHeight * (maxLen - 1);
+  const topY        = centerY - totalHeight / 2;
 
-  // 1段（1列）の高さを事前に計算
-  function getColumnHeight(chars) {
-    let h = 0;
-    for (const ch of chars) {
-      h += isDot(ch) ? dotLineHeight : normalLineHeight;
-    }
-    return h;
-  }
-
-  const colGap = fontSize + 4;
+  // 段の左右間隔
+  const colGap     = fontSize + 4;
   const totalWidth = colGap * (columns.length - 1);
-  const rightX = centerX + totalWidth / 2; // 1 段目が一番右
+  const rightX     = centerX + totalWidth / 2; // 1 段目が一番右
 
   columns.forEach((chars, colIndex) => {
-    const x = rightX - colGap * colIndex;
+    const x = rightX - colGap * colIndex; // 右 → 左
 
-    // この段の高さを出して、吹き出し中心で上下センタリング
-    const colHeight = getColumnHeight(chars);
-    let y = centerY - colHeight / 2;
+    chars.forEach((ch, i) => {
+      const baseY = topY + lineHeight * i;
+      let drawX   = x;
+      let drawY   = baseY;
 
-    for (const ch of chars) {
-      let drawX = x;
-      let drawY = y;
-
-      // 句読点だけ右上寄せにオフセット
       if (ch === "、" || ch === "。") {
-        drawX = x + fontSize * 0.25;      // 右へ
-        drawY = y - fontSize * 0.35;      // 上へ
+        // 句読点：少し内側＆下に寄せる（ズレを小さめに）
+        drawX = x - fontSize * 0.12;
+        drawY = baseY + fontSize * 0.15;
+        ctx.fillText(ch, drawX, drawY);
+      } else if (ch === "…") {
+        // 三点リーダは自前で 3 つの小さい点を縦に打つ
+        const dotGap = fontSize * 0.32;   // 点どうしの間隔
+        const r      = fontSize * 0.07;   // 点の大きさ
+        for (let k = -1; k <= 1; k++) {
+          ctx.beginPath();
+          ctx.arc(drawX, baseY + dotGap * k, r, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      } else {
+        ctx.fillText(ch, drawX, baseY);
       }
-
-      ctx.fillText(ch, drawX, drawY);
-
-      // 次の文字へ進める量を、「・」だけ小さくする
-      y += isDot(ch) ? dotLineHeight : normalLineHeight;
-    }
+    });
   });
 
   ctx.restore();
 }
+    
     function redrawCanvas() {
       if (!drawingCanvas || !drawingCtx) return;
       const pageData = activeDrawPageData || getDrawPage(currentPage).pageData;
