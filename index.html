@@ -1613,67 +1613,70 @@ if (currentPanelMode === "text") {
       saveDrawAll(all);
     }
 
-// 句読点・三点リーダ対応の縦書き描画
+// 句読点・三点リーダ専用の縦書き描画
 function drawVerticalBalloonText(ctx, text, centerX, centerY) {
   const fontSize = 18;
+
+  ctx.save();
   ctx.font =
     `${fontSize}px ` +
     `"やさしさアンチック","新コミック体","源暎アンチック","ノバンチカ源",` +
     `"Yu Mincho","Hiragino Mincho ProN",serif`;
   ctx.fillStyle = "#111827";
-
-  // 縦書き用の基準
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
 
-  // / と改行記号で段を分ける（右→左に進める）
+  // 段分け（右の段から左へ）
   const lineTexts = String(text).split(/[\/\n]/);
 
-  // 三点リーダ「…」→「···」に展開して縦に3つ並べる
-  const columns = lineTexts.map(line => {
-    const expanded = line.replace(/…/g, "···");
-    return Array.from(expanded);
-  });
+  // ここで三点リーダは展開しない → そのまま 1 文字扱い
+  const columns = lineTexts.map(line => Array.from(line));
 
-  // 一番長い列の文字数
+  // 縦方向の最大文字数（中央寄せ用）
   let maxLen = 0;
   columns.forEach(chars => {
     if (chars.length > maxLen) maxLen = chars.length;
   });
 
   const lineHeight  = fontSize * 1.1;
-  const totalHeight = lineHeight * maxLen;
+  const totalHeight = lineHeight * (maxLen - 1);
   const topY        = centerY - totalHeight / 2;
 
-  // 段と段の間隔
+  // 段の左右間隔
   const colGap     = fontSize + 4;
   const totalWidth = colGap * (columns.length - 1);
-  const rightX     = centerX + totalWidth / 2; // 1段目が一番右
+  const rightX     = centerX + totalWidth / 2; // 1 段目が一番右
 
   columns.forEach((chars, colIndex) => {
-    const x = rightX - colGap * colIndex; // 右→左にずらす
+    const x = rightX - colGap * colIndex; // 右 → 左
 
-    for (let i = 0; i < chars.length; i++) {
-      const ch = chars[i];
+    chars.forEach((ch, i) => {
+      const baseY = topY + lineHeight * i;
+      let drawX   = x;
+      let drawY   = baseY;
 
-      let drawX = x;
-      let drawY = topY + lineHeight * i;
-
-      // 句読点は少し内側＆下に寄せて配置
       if (ch === "、" || ch === "。") {
-        drawX = x - fontSize * 0.22;      // 内側へ寄せる
-        drawY = topY + lineHeight * i + fontSize * 0.18; // 少し下げる
+        // 句読点：少し内側＆下に寄せる（ズレを小さめに）
+        drawX = x - fontSize * 0.12;
+        drawY = baseY + fontSize * 0.15;
+        ctx.fillText(ch, drawX, drawY);
+      } else if (ch === "…") {
+        // 三点リーダは自前で 3 つの小さい点を縦に打つ
+        const dotGap = fontSize * 0.32;   // 点どうしの間隔
+        const r      = fontSize * 0.07;   // 点の大きさ
+        for (let k = -1; k <= 1; k++) {
+          ctx.beginPath();
+          ctx.arc(drawX, baseY + dotGap * k, r, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      } else {
+        ctx.fillText(ch, drawX, baseY);
       }
-
-      ctx.fillText(ch, drawX, drawY);
-    }
+    });
   });
 
-  // 他の描画に影響しないように戻す
-  ctx.textAlign   = "start";
-  ctx.textBaseline = "alphabetic";
+  ctx.restore();
 }
-    
     function redrawCanvas() {
       if (!drawingCanvas || !drawingCtx) return;
       const pageData = activeDrawPageData || getDrawPage(currentPage).pageData;
@@ -1770,7 +1773,7 @@ for (const [panelIndex, balloons] of Object.entries(pageData.text)) {
     ctx.lineWidth = 2;
     ctx.stroke();
 
-    // 縦書き台詞（プレビューと同じロジック）
+    // 縦書き台詞（編集時と同じ描画）
     drawVerticalBalloonText(ctx, b.text, b.x, b.y);
 
     if (rect) ctx.restore();
