@@ -1647,21 +1647,25 @@ function drawVerticalBalloonText(ctx, text, centerX, centerY) {
   // /, 改行, ｜ で段を区切り（右 → 左）
   const lineTexts = String(text).split(/[\/\n|｜]/);
 
-  // 「…」を「···」に置き換えてから 1 文字ずつの配列に
+  // 「…」を「···」または「...」に展開（お好みで）
   const columns = lineTexts.map(line => {
-    const expanded = line.replace(/…/g, "···");
+    const expanded = line.replace(/…/g, "···"); // ←ここは今までどおりでOK
     return Array.from(expanded);
   });
 
-  // 一番長い段の文字数
-  let maxLen = 0;
-  columns.forEach(chars => {
-    if (chars.length > maxLen) maxLen = chars.length;
-  });
+  // 通常の行間と「・」専用の狭い行間
+  const normalLineHeight = fontSize * 1.1;
+  const dotLineHeight    = fontSize * 0.55;   // ←「・」だけ少し詰めたい
+  const isDot = ch => ch === "・" || ch === ".";
 
-  const lineHeight = fontSize * 0.5;
-  const totalHeight = lineHeight * maxLen;
-  const topY = centerY - totalHeight / 2;
+  // 1段（1列）の高さを事前に計算
+  function getColumnHeight(chars) {
+    let h = 0;
+    for (const ch of chars) {
+      h += isDot(ch) ? dotLineHeight : normalLineHeight;
+    }
+    return h;
+  }
 
   const colGap = fontSize + 4;
   const totalWidth = colGap * (columns.length - 1);
@@ -1670,18 +1674,24 @@ function drawVerticalBalloonText(ctx, text, centerX, centerY) {
   columns.forEach((chars, colIndex) => {
     const x = rightX - colGap * colIndex;
 
-    for (let i = 0; i < chars.length; i++) {
-      const ch = chars[i];
+    // この段の高さを出して、吹き出し中心で上下センタリング
+    const colHeight = getColumnHeight(chars);
+    let y = centerY - colHeight / 2;
+
+    for (const ch of chars) {
       let drawX = x;
-      let drawY = topY + lineHeight * i;
+      let drawY = y;
 
       // 句読点だけ右上寄せにオフセット
       if (ch === "、" || ch === "。") {
         drawX = x + fontSize * 0.25;      // 右へ
-        drawY = drawY - fontSize * 0.35;  // 上へ
+        drawY = y - fontSize * 0.35;      // 上へ
       }
 
       ctx.fillText(ch, drawX, drawY);
+
+      // 次の文字へ進める量を、「・」だけ小さくする
+      y += isDot(ch) ? dotLineHeight : normalLineHeight;
     }
   });
 
