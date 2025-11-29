@@ -446,13 +446,13 @@ h1 {
   position: fixed;
   top: 50%;
   left: 50%;
-  width: 520px;                 /* 横幅を広げる */
+  width: 520px;
   max-width: 98vw;
   background: #ffffff;
   border-radius: 20px;
   border: 1px solid #e5e7eb;
   box-shadow: 0 24px 60px rgba(15,23,42,0.16);
-  padding: 18px 20px 16px;      /* 余白を少し詰める */
+  padding: 18px 20px 16px;
   font-size: 15px;
   opacity: 0;
   transform: translate(-50%, -48%) scale(0.94);
@@ -498,14 +498,14 @@ h1 {
 .side-panel-body {
   font-size: 14px;
   color: #374151;
-  line-height: 1.4;     /* 1.6 → 1.4 くらいに */
+  line-height: 1.4;
 }
 
- /* 説明文直後の余白をゼロにする */
+/* 説明文直後の余白をゼロに */
 .side-panel-body > div:first-child {
   margin-bottom: 0 !important;
-}   
-    
+}
+
 /* フッター（進めた＋書き出す） */
 .side-panel-footer {
   display: flex;
@@ -557,14 +557,14 @@ h1 {
   display: block;
 }
 
-/* ツールバーの余白も最小限に */
+/* ツールバー */
 .canvas-toolbar {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
   align-items: center;
-  margin-top: 2px;      /* 説明文とほぼくっつく */
-  margin-bottom: 4px;   /* 下方向だけ少し余白 */
+  margin-top: 2px;
+  margin-bottom: 4px;
   font-size: 12px;
   color: #4b5563;
 }
@@ -619,17 +619,17 @@ h1 {
   </div>
 
   <!-- サイドパネル -->
-<div id="sidePanel" class="side-panel">
-  <div class="side-panel-header">
-    <div id="sidePanelTitle" class="side-panel-title"></div>
-    <button id="sidePanelClose" class="side-panel-close">×</button>
+  <div id="sidePanel" class="side-panel">
+    <div class="side-panel-header">
+      <div id="sidePanelTitle" class="side-panel-title"></div>
+      <button id="sidePanelClose" class="side-panel-close">×</button>
+    </div>
+    <div id="sidePanelBody" class="side-panel-body"></div>
+    <div class="side-panel-footer">
+      <button id="sidePanelDoneBtn" class="side-panel-done-btn">進めた</button>
+      <button id="sidePanelExportBtn" class="side-panel-export-btn">書き出す</button>
+    </div>
   </div>
-  <div id="sidePanelBody" class="side-panel-body"></div>
-  <div class="side-panel-footer">
-    <button id="sidePanelDoneBtn" class="side-panel-done-btn">進めた</button>
-    <button id="sidePanelExportBtn" class="side-panel-export-btn">書き出す</button>
-  </div>
-</div>
 
   <script>
     /* ===== すごろく構成 ===== */
@@ -909,23 +909,22 @@ h1 {
     }
 
     /* ===== 原稿用紙描画データ ===== */
-    const EDIT_CANVAS_WIDTH  = 1000; // 表示用
+    const EDIT_CANVAS_WIDTH  = 1000;
     const EDIT_CANVAS_HEIGHT = Math.round(EDIT_CANVAS_WIDTH * 6213 / 4441);
-    const EXPORT_WIDTH  = 4961; // 出力サイズ（600dpi A4想定）
+    const EXPORT_WIDTH  = 4961;
     const EXPORT_HEIGHT = 7016;
     const DRAW_STORAGE_KEY = "mangaBoardDraw_v1";
 
-    // 台詞吹き出しの縦長楕円サイズ
     const BALLOON_RX = 60;
     const BALLOON_RY = 110;
 
     function createEmptyDrawPage() {
       return {
-        frames: {},          // panelIndex -> {x,y,w,h}
-        rough: {},           // panelIndex -> [ {points:[{x,y}]} ]
-        pen: {},             // panelIndex -> [ {points:[{x,y}]} ]
-        text: {},            // panelIndex -> [ {x,y,text} ]
-        roughColor: "black"  // "black" | "blue" | "gray"
+        frames: {},
+        rough: {},
+        pen: {},
+        text: {},
+        roughColor: "black"
       };
     }
 
@@ -954,11 +953,14 @@ h1 {
       return { all, pageData: all[key] };
     }
 
-function resetAllDrawData() {
-  // 全ページ分の枠線・ラフ・ペン入れ・台詞をまとめて削除
-  localStorage.removeItem(DRAW_STORAGE_KEY);
-}   
-    /* ===== 成功エフェクト ===== */
+    function resetAllDrawData() {
+      localStorage.removeItem(DRAW_STORAGE_KEY);
+    }
+
+    /* 描画中のページデータをキャッシュして高速化 */
+    let activeDrawPageData = null;
+
+    /* ===== 成功エフェクトなど ===== */
     let audioCtx = null;
 
     function showSuccessEffect() {
@@ -1081,7 +1083,7 @@ function resetAllDrawData() {
       console.log(text);
     }
 
-    /* ===== マンガ原稿用紙風のベース描画 ===== */
+    /* ===== 原稿用紙ベース ===== */
     function drawPaperBase(ctx, w, h) {
       ctx.save();
       ctx.fillStyle = "#ffffff";
@@ -1093,48 +1095,37 @@ function resetAllDrawData() {
       const outerMargin = 24;
       const innerMargin = 70;
 
-      // 外側のガイド枠
       ctx.strokeRect(outerMargin, outerMargin, w - outerMargin * 2, h - outerMargin * 2);
-      // 内側の作画枠
       ctx.strokeRect(innerMargin, innerMargin, w - innerMargin * 2, h - innerMargin * 2);
 
-      // トンボ
       const markLen = 16;
       ctx.beginPath();
 
-      // 上中
       const cx = w / 2;
       ctx.moveTo(cx, 4);
       ctx.lineTo(cx, 4 + markLen);
-
-      // 下中
       ctx.moveTo(cx, h - 4);
       ctx.lineTo(cx, h - 4 - markLen);
 
-      // 左中
       const cy = h / 2;
       ctx.moveTo(4, cy);
       ctx.lineTo(4 + markLen, cy);
-
-      // 右中
       ctx.moveTo(w - 4, cy);
       ctx.lineTo(w - 4 - markLen, cy);
 
-      // 四隅（L字）
       const cornerLen = 14;
-      // 左上
       ctx.moveTo(outerMargin, outerMargin - cornerLen);
       ctx.lineTo(outerMargin, outerMargin);
       ctx.lineTo(outerMargin - cornerLen, outerMargin);
-      // 右上
+
       ctx.moveTo(w - outerMargin, outerMargin - cornerLen);
       ctx.lineTo(w - outerMargin, outerMargin);
       ctx.lineTo(w - outerMargin + cornerLen, outerMargin);
-      // 左下
+
       ctx.moveTo(outerMargin, h - outerMargin + cornerLen);
       ctx.lineTo(outerMargin, h - outerMargin);
       ctx.lineTo(outerMargin - cornerLen, h - outerMargin);
-      // 右下
+
       ctx.moveTo(w - outerMargin, h - outerMargin + cornerLen);
       ctx.lineTo(w - outerMargin, h - outerMargin);
       ctx.lineTo(w - outerMargin + cornerLen, h - outerMargin);
@@ -1178,17 +1169,15 @@ function resetAllDrawData() {
       playSuccessSound(isFinal);
     }
 
-    /* ===== サイドパネル・原稿用紙キャンバス ===== */
+    /* ===== キャンバス関連 ===== */
     let pendingLessonId = null;
-    let currentPanelMode = null;   // "frame" | "rough" | "text" | "pen" | "info"
-    let currentPanelIndex = null;  // 1..6
+    let currentPanelMode = null;
+    let currentPanelIndex = null;
     let drawingCanvas = null;
     let drawingCtx = null;
     let isDrawing = false;
     let lastX = 0, lastY = 0;
-
-    // 台詞バルーンドラッグ用
-    let draggingBalloon = null; // {index}
+    let draggingBalloon = null;
 
     function clearCanvasListeners(canvas) {
       if (!canvas) return;
@@ -1229,10 +1218,10 @@ function resetAllDrawData() {
           "「書き出す」ボタンを押し、書き出した画像データをソフトやアプリに読み込んで作業を行ってください。";
         drawingCanvas = null;
         drawingCtx = null;
+        activeDrawPageData = null;
         return;
       }
 
-      // 説明テキスト（余白少なめ）
       let infoText = "";
       let toolbarHtml = "";
 
@@ -1253,7 +1242,7 @@ function resetAllDrawData() {
         infoText = `右クリック位置に吹き出しと縦書き台詞を追加します。左ドラッグで吹き出しを移動できます。`;
         toolbarHtml = `
           <div class="canvas-toolbar">
-            <span>このコマ内だけ編集されます。</span>
+            <span>このコマ内だけ編集されます。（/ や ｜ を入れると簡易改行）</span>
           </div>`;
       } else if (currentPanelMode === "pen") {
         infoText = `下描きを元にペン入れします。ラフ色を変更したり、不要になったら削除できます。`;
@@ -1265,27 +1254,27 @@ function resetAllDrawData() {
           </div>`;
       }
 
-panelBody.innerHTML = `
-  <div style="margin-bottom:0; font-size:13px;">${infoText}</div>
-  ${toolbarHtml}
-  <div class="canvas-wrapper">
-    <canvas id="pageCanvas" width="${EDIT_CANVAS_WIDTH}" height="${EDIT_CANVAS_HEIGHT}"></canvas>
-  </div>
-`;
+      panelBody.innerHTML = `
+        <div style="margin-bottom:0; font-size:13px;">${infoText}</div>
+        ${toolbarHtml}
+        <div class="canvas-wrapper">
+          <canvas id="pageCanvas" width="${EDIT_CANVAS_WIDTH}" height="${EDIT_CANVAS_HEIGHT}"></canvas>
+        </div>
+      `;
 
       drawingCanvas = document.getElementById("pageCanvas");
       drawingCtx = drawingCanvas.getContext("2d");
       clearCanvasListeners(drawingCanvas);
 
       const { pageData } = getDrawPage(currentPage);
+      activeDrawPageData = pageData;
 
-      // ツールバー処理
       if (currentPanelMode === "frame") {
         const clearBtn = document.getElementById("clearFrameBtn");
         if (clearBtn) {
           clearBtn.onclick = () => {
             delete pageData.frames[currentPanelIndex];
-            const { all } = getDrawPage(currentPage);
+            const all = loadDrawAll();
             all[String(currentPage)] = pageData;
             saveDrawAll(all);
             redrawCanvas();
@@ -1309,7 +1298,6 @@ panelBody.innerHTML = `
         return { x, y };
       }
 
-      /* ==== frame / rough / pen モード ==== */
       let frameStart = null;
 
       function handleDown(evt) {
@@ -1341,6 +1329,12 @@ panelBody.innerHTML = `
           drawingCtx.restore();
         } else if ((currentPanelMode === "rough" || currentPanelMode === "pen") && isDrawing) {
           const { x, y } = getCanvasPos(evt);
+
+          // 動きが小さいときはスキップして負荷軽減
+          const dx = x - lastX;
+          const dy = y - lastY;
+          if (dx * dx + dy * dy < 4) return;
+
           const rect = pageData.frames[currentPanelIndex];
           if (rect && !pointInRect(x, y, rect)) {
             lastX = x; lastY = y;
@@ -1374,7 +1368,6 @@ panelBody.innerHTML = `
         }
       }
 
-      /* ==== text モード（右クリックで追加、左ドラッグで移動） ==== */
       function findBalloonAt(x, y) {
         const arr = pageData.text[currentPanelIndex] || [];
         for (let i = arr.length - 1; i >= 0; i--) {
@@ -1424,7 +1417,7 @@ panelBody.innerHTML = `
         const { x, y } = getCanvasPos(evt);
         const rect = pageData.frames[currentPanelIndex];
         if (rect && !pointInRect(x, y, rect)) return;
-        const text = window.prompt("台詞（縦書き）を入力してください", "");
+        const text = window.prompt("台詞（縦書き）を入力してください\n（/ や ｜ で簡易改行）", "");
         if (!text) return;
         if (!pageData.text[currentPanelIndex]) pageData.text[currentPanelIndex] = [];
         pageData.text[currentPanelIndex].push({ x, y, text });
@@ -1432,7 +1425,6 @@ panelBody.innerHTML = `
         redrawCanvas();
       }
 
-      // リスナー設定
       if (currentPanelMode === "text") {
         drawingCanvas.onmousedown = textMouseDown;
         drawingCanvas.onmousemove = textMouseMove;
@@ -1472,14 +1464,12 @@ panelBody.innerHTML = `
 
     function redrawCanvas() {
       if (!drawingCanvas || !drawingCtx) return;
-      const { pageData } = getDrawPage(currentPage);
+      const pageData = activeDrawPageData || getDrawPage(currentPage).pageData;
       const ctx = drawingCtx;
       ctx.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height);
 
-      // 原稿用紙ベース
       drawPaperBase(ctx, drawingCanvas.width, drawingCanvas.height);
 
-      // 枠線（黒）
       ctx.save();
       ctx.strokeStyle = "#111827";
       ctx.lineWidth = 3;
@@ -1488,7 +1478,6 @@ panelBody.innerHTML = `
       });
       ctx.restore();
 
-      // ラフ／ペンストローク
       const roughColor = pageData.roughColor || "black";
       let roughStroke = "#111827";
       if (roughColor === "blue") roughStroke = "#60a5fa";
@@ -1545,19 +1534,51 @@ panelBody.innerHTML = `
           ctx.lineWidth = 2;
           ctx.stroke();
 
-          // 縦書き
+          // 縦書き・上揃い・中央寄せ（/ や ｜ で列分け）
           ctx.fillStyle = "#111827";
-          const fontSize = 16;
+          const fontSize = 19;
           ctx.font = `${fontSize}px "Yu Mincho", "Hiragino Mincho ProN", serif`;
-          const chars = [...b.text];
-          const startY = b.y - (chars.length * fontSize) / 2;
-          for (let i = 0; i < chars.length; i++) {
-            ctx.fillText(chars[i], b.x, startY + i * fontSize);
-          }
+          ctx.textAlign = "center";
+          ctx.textBaseline = "top";
+
+          const lines = String(b.text).split(/[\/|｜]/);
+          const topMargin = 12;
+          const columnGap = 4;
+          const startY = b.y - BALLOON_RY + topMargin;
+
+          lines.forEach((line, lineIndex) => {
+            const chars = [...line];
+            const x = b.x - lineIndex * (fontSize + columnGap);
+            let y = startY;
+            for (const ch of chars) {
+              ctx.fillText(ch, x, y);
+              y += fontSize;
+            }
+          });
+
           if (rect) ctx.restore();
         });
       }
       ctx.restore();
+
+      // 作業中のコマ以外をグレーアウト
+      const activeRect = currentPanelIndex && pageData.frames[currentPanelIndex];
+      if (activeRect) {
+        ctx.save();
+        ctx.fillStyle = "rgba(0,0,0,0.15)";
+        ctx.beginPath();
+        ctx.rect(0, 0, drawingCanvas.width, drawingCanvas.height);
+        ctx.rect(activeRect.x, activeRect.y, activeRect.w, activeRect.h);
+        ctx.fill("evenodd");
+        ctx.restore();
+
+        // アクティブ枠を強調
+        ctx.save();
+        ctx.strokeStyle = "#22c55e";
+        ctx.lineWidth = 3;
+        ctx.strokeRect(activeRect.x, activeRect.y, activeRect.w, activeRect.h);
+        ctx.restore();
+      }
     }
 
     /* ===== サイドパネル開閉 ===== */
@@ -1593,6 +1614,7 @@ panelBody.innerHTML = `
       drawingCanvas = null;
       drawingCtx = null;
       draggingBalloon = null;
+      activeDrawPageData = null;
     }
 
     /* ===== マップ描画 ===== */
@@ -1788,14 +1810,27 @@ panelBody.innerHTML = `
           ctx.lineWidth = 2;
           ctx.stroke();
 
-          const fontSize = 16;
+          const fontSize = 19;
           ctx.font = `${fontSize}px "Yu Mincho", "Hiragino Mincho ProN", serif`;
           ctx.fillStyle = "#111827";
-          const chars = [...b.text];
-          const startY = b.y - (chars.length * fontSize) / 2;
-          for (let i = 0; i < chars.length; i++) {
-            ctx.fillText(chars[i], b.x, startY + i * fontSize);
-          }
+          ctx.textAlign = "center";
+          ctx.textBaseline = "top";
+
+          const lines = String(b.text).split(/[\/|｜]/);
+          const topMargin = 12;
+          const columnGap = 4;
+          const startY = b.y - BALLOON_RY + topMargin;
+
+          lines.forEach((line, lineIndex) => {
+            const chars = [...line];
+            const x = b.x - lineIndex * (fontSize + columnGap);
+            let y = startY;
+            for (const ch of chars) {
+              ctx.fillText(ch, x, y);
+              y += fontSize;
+            }
+          });
+
           if (rect) ctx.restore();
         });
       }
@@ -1816,13 +1851,14 @@ panelBody.innerHTML = `
     window.addEventListener("DOMContentLoaded", () => {
       renderAll();
 
-document.getElementById("resetProgressBtn").addEventListener("click", () => {
-  if (!confirm("本当に全ページの進捗・連続日数・枠線や下描き・台詞・ペン入れをすべてリセットしますか？")) return;
-  resetAllPagesProgress();  // すごろく進捗
-  resetStreakData();        // 連続日数
-  resetAllDrawData();       // 枠線・下描き・台詞・ペン入れなどキャンバスの内容
-  renderAll();
-});      
+      document.getElementById("resetProgressBtn").addEventListener("click", () => {
+        if (!confirm("本当に全ページの進捗・連続日数・枠線や下描き・台詞・ペン入れをすべてリセットしますか？")) return;
+        resetAllPagesProgress();
+        resetStreakData();
+        resetAllDrawData();
+        renderAll();
+      });
+
       document.getElementById("prevPageBtn").addEventListener("click", () => {
         if (currentPage > 1) {
           currentPage--;
