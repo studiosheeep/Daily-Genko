@@ -1655,12 +1655,12 @@ function drawVerticalBalloonText(ctx, text, centerX, centerY) {
       let drawX   = x;
       let drawY   = baseY;
 
-      if (ch === "、" || ch === "。") {
-        // 句読点：少し内側＆下に寄せる（ズレを小さめに）
-        drawX = x - fontSize * 0.12;
-        drawY = baseY + fontSize * 0.15;
-        ctx.fillText(ch, drawX, drawY);
-      } else if (ch === "…") {
+if (ch === "、" || ch === "。") {
+  // 句読点は横位置は他の字と同じ、縦だけ少し下に
+  const drawX = x;
+  const drawY = baseY + fontSize * 0.25;
+  ctx.fillText(ch, drawX, drawY);
+} else if (ch === "…") {
         // 三点リーダは自前で 3 つの小さい点を縦に打つ
         const dotGap = fontSize * 0.32;   // 点どうしの間隔
         const r      = fontSize * 0.07;   // 点の大きさ
