@@ -1631,63 +1631,85 @@ if (currentPanelMode === "text") {
       saveDrawAll(all);
     }
 
-// 縦書き台詞（右→左、句読点・三点リーダ補正）
+// 句読点補正＋三点リーダー対応の縦書き描画
 function drawVerticalBalloonText(ctx, text, centerX, centerY) {
+  ctx.save();
+
   const fontSize = 18;
   ctx.font =
     `${fontSize}px ` +
     `"やさしさアンチック","新コミック体","源暎アンチック","ノバンチカ源",` +
     `"Yu Mincho","Hiragino Mincho ProN",serif`;
-
   ctx.fillStyle = "#111827";
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
 
-  // 行分割（右→左）
-  const lineTexts = text.split(/[\/\n]/);
+  // /, 改行, ｜ で段を分割（右 → 左）
+  const rawCols = String(text).split(/[\/\n|｜]/);
 
-  // … を ·· に置き換え（縦3段）
-  const columns = lineTexts.map(line => {
-    const expanded = line.replace(/…/g, "···");
-    return Array.from(expanded);
+  // 各段を「通常文字」と「三点リーダー(…)」のトークン列に変換
+  const columns = rawCols.map(line => {
+    const tokens = [];
+    for (const ch of line) {
+      if (ch === "…") {
+        tokens.push({ type: "ellipsis" }); // 三点リーダー 1 つ
+      } else {
+        tokens.push({ type: "char", value: ch });
+      }
+    }
+    return tokens;
   });
 
-  let maxLen = 0;
-  columns.forEach(chars => {
-    if (chars.length > maxLen) maxLen = chars.length;
-  });
+  // 一番長い段の「行数」（三点リーダーは3行ぶんとして数える）
+  let maxUnits = 0;
+  for (const col of columns) {
+    let units = 0;
+    for (const t of col) {
+      units += (t.type === "ellipsis") ? 3 : 1;
+    }
+    if (units > maxUnits) maxUnits = units;
+  }
 
   const lineHeight = fontSize * 1.1;
-  const totalHeight = lineHeight * maxLen;
+  const totalHeight = lineHeight * maxUnits;
   const topY = centerY - totalHeight / 2;
 
   const colGap = fontSize + 4;
   const totalWidth = colGap * (columns.length - 1);
-  const rightX = centerX + totalWidth / 2;
+  const rightX = centerX + totalWidth / 2; // 1 段目が一番右
 
-  columns.forEach((chars, colIndex) => {
+  columns.forEach((tokens, colIndex) => {
     const x = rightX - colGap * colIndex;
+    let unitIndex = 0;
 
-    for (let i = 0; i < chars.length; i++) {
-      const ch = chars[i];
-      let drawX = x;
-      let drawY = topY + lineHeight * i;
+    for (const token of tokens) {
+      if (token.type === "ellipsis") {
+        // 三点リーダー：縦に「・」を 3 個
+        const y1 = topY + lineHeight * unitIndex;
+        const y2 = y1 + lineHeight;
+        const y3 = y1 + lineHeight * 2;
+        ctx.fillText("・", x, y1);
+        ctx.fillText("・", x, y2);
+        ctx.fillText("・", x, y3);
+        unitIndex += 3;
+      } else {
+        const ch = token.value;
+        let drawX = x;
+        let drawY = topY + lineHeight * unitIndex;
 
-      // ★ 句読点の縦書き補正（右上寄せ）
-      if (ch === "、" || ch === "。") {
-        // 右へ：フォントサイズの 0.22
-        drawX = x + fontSize * 0.22;
+        // 句読点は「右上」に寄せる
+        if (ch === "、" || ch === "。") {
+          drawX = x + fontSize * 0.25;      // 右に少し
+          drawY = drawY - fontSize * 0.35;  // 上に少し
+        }
 
-        // 上へ：フォントサイズの 0.30
-        drawY = topY + lineHeight * i - fontSize * 0.30;
+        ctx.fillText(ch, drawX, drawY);
+        unitIndex += 1;
       }
-
-      ctx.fillText(ch, drawX, drawY);
     }
   });
 
-  ctx.textAlign = "start";
-  ctx.textBaseline = "alphabetic";
+  ctx.restore();
 }
     function redrawCanvas() {
       if (!drawingCanvas || !drawingCtx) return;
