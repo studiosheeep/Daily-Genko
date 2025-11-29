@@ -1613,51 +1613,51 @@ if (currentPanelMode === "text") {
       saveDrawAll(all);
     }
 
-// 句読点・三点リーダ対応の縦書き描画
-function drawVerticalBalloonText(ctx, text, centerX, centerY) {
-  // 漫画用フォント（入っていれば優先的に使われる）
-  const fontSize = 18;
+// 句読点・三点リーダ対応の縦書き描画（右→左の列）
+function drawVerticalBalloonText(ctx, text, centerX, centerY, opts = {}) {
+  const fontSize   = opts.fontSize || 18;
+  const lineHeight = fontSize * 1.1;
+
+  ctx.save();
   ctx.font =
     `${fontSize}px ` +
     `"やさしさアンチック","新コミック体","源暎アンチック","ノバンチカ源",` +
     `"Yu Mincho","Hiragino Mincho ProN",serif`;
-  ctx.fillStyle = "#111827";
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
+  ctx.fillStyle   = "#111827";
+  ctx.textAlign   = "center";
+  ctx.textBaseline= "middle";
 
-  // / と改行で段を分ける（右→左に進める）
-  const lineTexts = text.split(/[\/\n]/);
+  // / や ｜ で縦列を区切る（右列 → 左列）
+  const raw = String(text);
+  const columnTexts = raw.split(/[\/\|｜]/);
 
-  // 三点リーダ「…」を縦用にバラす（「···」にして3段に）
-  const columns = lineTexts.map(line => {
-    const expanded = line.replace(/…/g, "···");
-    return Array.from(expanded);
-  });
+  // 三点リーダはそのまま扱う（展開しない）
+  // → 「……」と打てば2文字分として縦に並ぶ
+  const columns = columnTexts.map(col => Array.from(col));
 
-  // 縦方向の最大文字数（中央寄せ用）
+  // 一番長い列の文字数
   let maxLen = 0;
-  columns.forEach(chars => {
+  for (const chars of columns) {
     if (chars.length > maxLen) maxLen = chars.length;
-  });
+  }
 
-  const lineHeight = fontSize * 1.1;
-  const totalHeight = lineHeight * maxLen;
-  const topY = centerY - totalHeight / 2;
+  const totalHeight = maxLen * lineHeight;
+  const topY        = centerY - totalHeight / 2;
 
-  // 段の左右の間隔
-  const colGap = fontSize + 4;
-  const totalWidth = colGap * (columns.length - 1);
-  const rightX = centerX + totalWidth / 2; // 1段目が一番右
+  const colGap      = fontSize + 4;          // 列の間隔
+  const totalWidth  = (columns.length - 1) * colGap;
+  const rightX      = centerX + totalWidth / 2; // いちばん右の列
 
   columns.forEach((chars, colIndex) => {
-    const x = rightX - colGap * colIndex; // 右→左にずらす
+    const x = rightX - colGap * colIndex;
+
     for (let i = 0; i < chars.length; i++) {
       const ch = chars[i];
       let drawX = x;
       let drawY = topY + lineHeight * i;
 
-      // 句読点は少し内側・下寄りに
-      if (ch === "、" || ch === "。") {
+      // 句読点などは少し内側＆下寄せ
+      if (ch === "、" || ch === "。" || ch === "！」" || ch === "？" || ch === "！" || ch === "？") {
         drawX = x - fontSize * 0.18;
         drawY = topY + lineHeight * i + fontSize * 0.25;
       }
@@ -1666,9 +1666,7 @@ function drawVerticalBalloonText(ctx, text, centerX, centerY) {
     }
   });
 
-  // 他の描画に影響しないように戻しておく
-  ctx.textAlign = "start";
-  ctx.textBaseline = "alphabetic";
+  ctx.restore();
 }
     
     function redrawCanvas() {
@@ -1746,7 +1744,7 @@ function drawVerticalBalloonText(ctx, text, centerX, centerY) {
       drawStrokeLayer(pageData.rough, roughStroke, 2, false);
       drawStrokeLayer(pageData.pen,   "#111827",   3, true);
 
-// 吹き出し＋台詞
+// 吹き出し＋台詞（書き出し時も縦書きロジックを共通化）
 ctx.save();
 for (const [panelIndex, balloons] of Object.entries(pageData.text)) {
   const rect = pageData.frames[panelIndex];
@@ -1757,17 +1755,18 @@ for (const [panelIndex, balloons] of Object.entries(pageData.text)) {
       ctx.rect(rect.x, rect.y, rect.w, rect.h);
       ctx.clip();
     }
+
     // 吹き出し本体
     ctx.beginPath();
     ctx.ellipse(b.x, b.y, BALLOON_RX, BALLOON_RY, 0, 0, Math.PI * 2);
-    ctx.fillStyle = "rgba(255,255,255,0.97)";
+    ctx.fillStyle   = "rgba(255,255,255,0.97)";
     ctx.fill();
     ctx.strokeStyle = "#111827";
-    ctx.lineWidth = 2;
+    ctx.lineWidth   = 2;
     ctx.stroke();
 
-    // 縦書き台詞（右→左、句読点・三点リーダ補正）
-    drawVerticalBalloonText(ctx, b.text, b.x, b.y);
+    // 縦書き台詞を共通関数で描画
+    drawVerticalBalloonText(ctx, b.text, b.x, b.y, { fontSize: 19 });
 
     if (rect) ctx.restore();
   });
