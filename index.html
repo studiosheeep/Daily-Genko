@@ -546,6 +546,27 @@ h1 {
   box-shadow: 0 1px 0 rgba(30,64,175,0.8);
 }
 
+/* スマホ（幅480px以下）はパネルをほぼ全画面に */
+@media (max-width: 480px) {
+  .side-panel {
+    top: 0;
+    left: 0;
+    width: 100vw;
+    max-width: 100vw;
+    height: 100vh;
+    border-radius: 0;
+    transform: none;
+  }
+  .side-panel.open {
+    transform: none;
+  }
+  .side-panel-body {
+    /* ヘッダー＋フッターを引いた分だけスクロール領域にする */
+    max-height: calc(100vh - 110px);
+    overflow: auto;
+  }
+}
+    
 /* ===== 原稿用紙キャンバス ===== */
 .canvas-wrapper {
   width: 100%;
@@ -1085,56 +1106,96 @@ h1 {
     }
 
     /* ===== 原稿用紙ベース ===== */
-    function drawPaperBase(ctx, w, h) {
-      ctx.save();
-      ctx.fillStyle = "#ffffff";
-      ctx.fillRect(0, 0, w, h);
+  function drawPaperBase(ctx, w, h) {
+  ctx.save();
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(0, 0, w, h);
 
-      ctx.strokeStyle = "#3b82f6";
-      ctx.lineWidth = 1;
+  ctx.strokeStyle = "#3b82f6";
+  ctx.lineWidth = 1;
 
-      const outerMargin = 24;
-      const innerMargin = 70;
+  // 外枠：安全に大き目（仕上がり）
+  const outerMargin = Math.min(w, h) * 0.04;   // 4%
 
-      ctx.strokeRect(outerMargin, outerMargin, w - outerMargin * 2, h - outerMargin * 2);
-      ctx.strokeRect(innerMargin, innerMargin, w - innerMargin * 2, h - innerMargin * 2);
+  // 基本枠：セリフや人物が入る推奨範囲
+  const basicMargin = Math.min(w, h) * 0.12;   // 12%
 
-      const markLen = 16;
-      ctx.beginPath();
+  // 内枠：実際の作画範囲（もっと狭い）
+  const innerMargin = Math.min(w, h) * 0.18;   // 18%
 
-      const cx = w / 2;
-      ctx.moveTo(cx, 4);
-      ctx.lineTo(cx, 4 + markLen);
-      ctx.moveTo(cx, h - 4);
-      ctx.lineTo(cx, h - 4 - markLen);
+  // ---- 外枠（仕上がり） ----
+  ctx.strokeRect(
+    outerMargin,
+    outerMargin,
+    w - outerMargin * 2,
+    h - outerMargin * 2
+  );
 
-      const cy = h / 2;
-      ctx.moveTo(4, cy);
-      ctx.lineTo(4 + markLen, cy);
-      ctx.moveTo(w - 4, cy);
-      ctx.lineTo(w - 4 - markLen, cy);
+  // ---- 基本枠（推奨範囲） ----
+  ctx.strokeRect(
+    basicMargin,
+    basicMargin,
+    w - basicMargin * 2,
+    h - basicMargin * 2
+  );
 
-      const cornerLen = 14;
-      ctx.moveTo(outerMargin, outerMargin - cornerLen);
-      ctx.lineTo(outerMargin, outerMargin);
-      ctx.lineTo(outerMargin - cornerLen, outerMargin);
+  // ---- 内枠（実際の作画範囲）----
+  ctx.strokeRect(
+    innerMargin,
+    innerMargin,
+    w - innerMargin * 2,
+    h - innerMargin * 2
+  );
 
-      ctx.moveTo(w - outerMargin, outerMargin - cornerLen);
-      ctx.lineTo(w - outerMargin, outerMargin);
-      ctx.lineTo(w - outerMargin + cornerLen, outerMargin);
+  // ---- トンボ ----
+  const markLen = Math.min(w, h) * 0.03;
+  const cornerLen = Math.min(w, h) * 0.025;
 
-      ctx.moveTo(outerMargin, h - outerMargin + cornerLen);
-      ctx.lineTo(outerMargin, h - outerMargin);
-      ctx.lineTo(outerMargin - cornerLen, h - outerMargin);
+  const cx = w / 2;
+  const cy = h / 2;
 
-      ctx.moveTo(w - outerMargin, h - outerMargin + cornerLen);
-      ctx.lineTo(w - outerMargin, h - outerMargin);
-      ctx.lineTo(w - outerMargin + cornerLen, h - outerMargin);
+  ctx.beginPath();
 
-      ctx.stroke();
-      ctx.restore();
-    }
+  // 上中央
+  ctx.moveTo(cx, outerMargin - markLen);
+  ctx.lineTo(cx, outerMargin);
 
+  // 下中央
+  ctx.moveTo(cx, h - outerMargin);
+  ctx.lineTo(cx, h - outerMargin + markLen);
+
+  // 左中央
+  ctx.moveTo(outerMargin - markLen, cy);
+  ctx.lineTo(outerMargin, cy);
+
+  // 右中央
+  ctx.moveTo(w - outerMargin, cy);
+  ctx.lineTo(w - outerMargin + markLen, cy);
+
+  // 4隅 L字
+  // 左上
+  ctx.moveTo(outerMargin, outerMargin - cornerLen);
+  ctx.lineTo(outerMargin, outerMargin);
+  ctx.lineTo(outerMargin - cornerLen, outerMargin);
+
+  // 右上
+  ctx.moveTo(w - outerMargin, outerMargin - cornerLen);
+  ctx.lineTo(w - outerMargin, outerMargin);
+  ctx.lineTo(w - outerMargin + cornerLen, outerMargin);
+
+  // 左下
+  ctx.moveTo(outerMargin, h - outerMargin + cornerLen);
+  ctx.lineTo(outerMargin, h - outerMargin);
+  ctx.lineTo(outerMargin - cornerLen, h - outerMargin);
+
+  // 右下
+  ctx.moveTo(w - outerMargin, h - outerMargin + cornerLen);
+  ctx.lineTo(w - outerMargin, h - outerMargin);
+  ctx.lineTo(w - outerMargin + cornerLen, h - outerMargin);
+
+  ctx.stroke();
+  ctx.restore();
+}
     /* ===== 「進めた」処理 ===== */
     function advanceLesson(lessonId) {
       const { data, progress } = loadPageProgress(currentPage);
@@ -1290,15 +1351,29 @@ h1 {
         if (delBtn)  delBtn.onclick  = () => { pageData.rough = {}; saveDrawPage(pageData); redrawCanvas(); };
       }
 
-      function getCanvasPos(evt) {
-        const rect = drawingCanvas.getBoundingClientRect();
-        const clientX = evt.touches ? evt.touches[0].clientX : evt.clientX;
-        const clientY = evt.touches ? evt.touches[0].clientY : evt.clientY;
-        const x = (clientX - rect.left) * (drawingCanvas.width / rect.width);
-        const y = (clientY - rect.top) * (drawingCanvas.height / rect.height);
-        return { x, y };
-      }
+function getCanvasPos(evt) {
+  const rect = drawingCanvas.getBoundingClientRect();
+  let clientX, clientY;
 
+  // 指が画面に乗っているとき
+  if (evt.touches && evt.touches.length > 0) {
+    clientX = evt.touches[0].clientX;
+    clientY = evt.touches[0].clientY;
+  }
+  // 指を離した瞬間（touchend）は changedTouches に入る
+  else if (evt.changedTouches && evt.changedTouches.length > 0) {
+    clientX = evt.changedTouches[0].clientX;
+    clientY = evt.changedTouches[0].clientY;
+  } else {
+    // マウス操作用
+    clientX = evt.clientX;
+    clientY = evt.clientY;
+  }
+
+  const x = (clientX - rect.left) * (drawingCanvas.width / rect.width);
+  const y = (clientY - rect.top) * (drawingCanvas.height / rect.height);
+  return { x, y };
+}
       let frameStart = null;
 
       function handleDown(evt) {
