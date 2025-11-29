@@ -498,7 +498,7 @@ h1 {
 .side-panel-body {
   font-size: 14px;
   color: #374151;
-  line-height: 1.6;
+  line-height: 1.4;   /* 1.6 → 1.4 にして行間を少し詰める */
   white-space: pre-wrap;
 }
 
@@ -564,7 +564,8 @@ h1 {
   flex-wrap: wrap;
   gap: 6px;
   align-items: center;
-  margin-bottom: 4px;      /* 間隔を詰める */
+  margin-top: 2px;    /* ここを追加（上の説明とほぼくっつく） */
+  margin-bottom: 4px; /* 既存のまま or 好みで 2px にしてもOK */
   font-size: 12px;
   color: #4b5563;
 }
@@ -954,6 +955,10 @@ h1 {
       return { all, pageData: all[key] };
     }
 
+function resetAllDrawData() {
+  // 全ページ分の枠線・ラフ・ペン入れ・台詞をまとめて削除
+  localStorage.removeItem(DRAW_STORAGE_KEY);
+}   
     /* ===== 成功エフェクト ===== */
     let audioCtx = null;
 
@@ -1261,13 +1266,13 @@ h1 {
           </div>`;
       }
 
-      panelBody.innerHTML = `
-        <div style="margin-bottom:4px; font-size:13px;">${infoText}</div>
-        ${toolbarHtml}
-        <div class="canvas-wrapper">
-          <canvas id="pageCanvas" width="${EDIT_CANVAS_WIDTH}" height="${EDIT_CANVAS_HEIGHT}"></canvas>
-        </div>
-      `;
+panelBody.innerHTML = `
+  <div style="margin-bottom:0; font-size:13px;">${infoText}</div>
+  ${toolbarHtml}
+  <div class="canvas-wrapper">
+    <canvas id="pageCanvas" width="${EDIT_CANVAS_WIDTH}" height="${EDIT_CANVAS_HEIGHT}"></canvas>
+  </div>
+`;
 
       drawingCanvas = document.getElementById("pageCanvas");
       drawingCtx = drawingCanvas.getContext("2d");
@@ -1812,13 +1817,13 @@ h1 {
     window.addEventListener("DOMContentLoaded", () => {
       renderAll();
 
-      document.getElementById("resetProgressBtn").addEventListener("click", () => {
-        if (!confirm("本当に全ページの進捗と連続日数をリセットしますか？")) return;
-        resetAllPagesProgress();
-        resetStreakData();
-        renderAll();
-      });
-
+document.getElementById("resetProgressBtn").addEventListener("click", () => {
+  if (!confirm("本当に全ページの進捗・連続日数・枠線や下描き・台詞・ペン入れをすべてリセットしますか？")) return;
+  resetAllPagesProgress();  // すごろく進捗
+  resetStreakData();        // 連続日数
+  resetAllDrawData();       // 枠線・下描き・台詞・ペン入れなどキャンバスの内容
+  renderAll();
+});      
       document.getElementById("prevPageBtn").addEventListener("click", () => {
         if (currentPage > 1) {
           currentPage--;
