@@ -566,21 +566,21 @@ h1 {
     
 /* スマホ（幅480px以下）はパネルをほぼ全画面に */
 @media (max-width: 480px) {
-  .side-panel {
-    top: 0;
-    left: 0;
-    width: 100vw;
-    max-width: 100vw;
-    height: 100vh;
-    border-radius: 0;
-    transform: none;
+
+  .canvas-wrapper {
+    width: 100%;
+    max-height: 70vh;     /* ← 画面高の 70% に制限 */
+    overflow: auto;        /* ← 中身のキャンバスをスクロール */
+    border-radius: 8px;
   }
-  .side-panel.open {
-    transform: none;
+
+  .canvas-wrapper canvas {
+    width: 100%;
+    height: auto;          /* ← 比率は維持したまま縮小して表示 */
   }
+
   .side-panel-body {
-    /* ヘッダー＋フッターを引いた分だけスクロール領域にする */
-    max-height: calc(100vh - 110px);
+    max-height: 80vh;      /* ← 原稿用紙ごとパネル内に収める */
     overflow: auto;
   }
 }
@@ -1507,15 +1507,33 @@ function getCanvasPos(evt) {
         return -1;
       }
 
-      function textMouseDown(evt) {
-        evt.preventDefault();
-        const { x, y } = getCanvasPos(evt);
-        const idx = findBalloonAt(x, y);
-        if (idx !== -1) {
-          draggingBalloon = { index: idx };
-        }
-      }
+function textMouseDown(evt) {
+  evt.preventDefault();
+  const { x, y } = getCanvasPos(evt);
+  const idx = findBalloonAt(x, y);
 
+  // PointerEvent なら pointerType、古いブラウザ用に touches も見る
+  const isTouch =
+    evt.pointerType === "touch" ||
+    (evt.touches && evt.touches.length > 0);
+
+  if (isTouch) {
+    if (idx !== -1) {
+      // 既存の吹き出しの上：ドラッグで移動
+      draggingBalloon = { index: idx };
+    } else {
+      // 何もない場所をタップ：その位置に新規吹き出し追加
+      textContextMenu(evt);
+    }
+    return;
+  }
+
+  // マウス操作（PC）の場合は従来どおり：
+  // 左ドラッグで移動、右クリック（contextmenu）は textContextMenu が担当
+  if (idx !== -1) {
+    draggingBalloon = { index: idx };
+  }
+}
       function textMouseMove(evt) {
         if (!draggingBalloon) return;
         evt.preventDefault();
@@ -1613,69 +1631,63 @@ if (currentPanelMode === "text") {
       saveDrawAll(all);
     }
 
-// 句読点・三点リーダ専用の縦書き描画
+// 縦書き台詞（右→左、句読点・三点リーダ補正）
 function drawVerticalBalloonText(ctx, text, centerX, centerY) {
   const fontSize = 18;
-
-  ctx.save();
   ctx.font =
     `${fontSize}px ` +
     `"やさしさアンチック","新コミック体","源暎アンチック","ノバンチカ源",` +
     `"Yu Mincho","Hiragino Mincho ProN",serif`;
+
   ctx.fillStyle = "#111827";
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
 
-  // 段分け（右の段から左へ）
-  const lineTexts = String(text).split(/[\/\n]/);
+  // 行分割（右→左）
+  const lineTexts = text.split(/[\/\n]/);
 
-  // ここで三点リーダは展開しない → そのまま 1 文字扱い
-  const columns = lineTexts.map(line => Array.from(line));
+  // … を ·· に置き換え（縦3段）
+  const columns = lineTexts.map(line => {
+    const expanded = line.replace(/…/g, "···");
+    return Array.from(expanded);
+  });
 
-  // 縦方向の最大文字数（中央寄せ用）
   let maxLen = 0;
   columns.forEach(chars => {
     if (chars.length > maxLen) maxLen = chars.length;
   });
 
-  const lineHeight  = fontSize * 1.1;
-  const totalHeight = lineHeight * (maxLen - 1);
-  const topY        = centerY - totalHeight / 2;
+  const lineHeight = fontSize * 1.1;
+  const totalHeight = lineHeight * maxLen;
+  const topY = centerY - totalHeight / 2;
 
-  // 段の左右間隔
-  const colGap     = fontSize + 4;
+  const colGap = fontSize + 4;
   const totalWidth = colGap * (columns.length - 1);
-  const rightX     = centerX + totalWidth / 2; // 1 段目が一番右
+  const rightX = centerX + totalWidth / 2;
 
   columns.forEach((chars, colIndex) => {
-    const x = rightX - colGap * colIndex; // 右 → 左
+    const x = rightX - colGap * colIndex;
 
-    chars.forEach((ch, i) => {
-      const baseY = topY + lineHeight * i;
-      let drawX   = x;
-      let drawY   = baseY;
+    for (let i = 0; i < chars.length; i++) {
+      const ch = chars[i];
+      let drawX = x;
+      let drawY = topY + lineHeight * i;
 
-if (ch === "、" || ch === "。") {
-  // 句読点は横位置は他の字と同じ、縦だけ少し下に
-  const drawX = x;
-  const drawY = baseY + fontSize * 0.25;
-  ctx.fillText(ch, drawX, drawY);
-} else if (ch === "…") {
-        // 三点リーダは自前で 3 つの小さい点を縦に打つ
-        const dotGap = fontSize * 0.32;   // 点どうしの間隔
-        const r      = fontSize * 0.07;   // 点の大きさ
-        for (let k = -1; k <= 1; k++) {
-          ctx.beginPath();
-          ctx.arc(drawX, baseY + dotGap * k, r, 0, Math.PI * 2);
-          ctx.fill();
-        }
-      } else {
-        ctx.fillText(ch, drawX, baseY);
+      // ★ 句読点の縦書き補正（右上寄せ）
+      if (ch === "、" || ch === "。") {
+        // 右へ：フォントサイズの 0.22
+        drawX = x + fontSize * 0.22;
+
+        // 上へ：フォントサイズの 0.30
+        drawY = topY + lineHeight * i - fontSize * 0.30;
       }
-    });
+
+      ctx.fillText(ch, drawX, drawY);
+    }
   });
 
-  ctx.restore();
+  ctx.textAlign = "start";
+  ctx.textBaseline = "alphabetic";
 }
     function redrawCanvas() {
       if (!drawingCanvas || !drawingCtx) return;
