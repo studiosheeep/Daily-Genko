@@ -1659,7 +1659,7 @@ function drawVerticalBalloonText(ctx, text, centerX, centerY) {
     if (chars.length > maxLen) maxLen = chars.length;
   });
 
-  const lineHeight = fontSize * 1.1;
+  const lineHeight = fontSize * 0.5;
   const totalHeight = lineHeight * maxLen;
   const topY = centerY - totalHeight / 2;
 
