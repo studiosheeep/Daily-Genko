@@ -555,6 +555,7 @@ h1 {
   width: 100%;
   height: 100%;
   display: block;
+  touch-action: none; /* ← これを追加（ペンタブ / タッチでスクロールさせない） */
 }
 
 /* ツールバー */
@@ -916,7 +917,7 @@ h1 {
     const DRAW_STORAGE_KEY = "mangaBoardDraw_v1";
 
     const BALLOON_RX = 60;
-    const BALLOON_RY = 110;
+    const BALLOON_RY = 80;
 
     function createEmptyDrawPage() {
       return {
@@ -1425,22 +1426,46 @@ h1 {
         redrawCanvas();
       }
 
-      if (currentPanelMode === "text") {
-        drawingCanvas.onmousedown = textMouseDown;
-        drawingCanvas.onmousemove = textMouseMove;
-        drawingCanvas.onmouseup   = textMouseUp;
-        drawingCanvas.onmouseleave= textMouseUp;
-        drawingCanvas.oncontextmenu = textContextMenu;
-      } else {
-        drawingCanvas.onmousedown = handleDown;
-        drawingCanvas.onmousemove = handleMove;
-        drawingCanvas.onmouseup   = handleUp;
-        drawingCanvas.onmouseleave= handleUp;
-        drawingCanvas.ontouchstart= handleDown;
-        drawingCanvas.ontouchmove = handleMove;
-        drawingCanvas.ontouchend  = handleUp;
-      }
+// リスナー設定
+if (currentPanelMode === "text") {
+  // pointer 系（ペンタブ / タッチ / マウス共通）
+  drawingCanvas.onpointerdown = evt => {
+    drawingCanvas.setPointerCapture(evt.pointerId);
+    textMouseDown(evt);
+  };
+  drawingCanvas.onpointermove = textMouseMove;
+  drawingCanvas.onpointerup = evt => {
+    textMouseUp(evt);
+    drawingCanvas.releasePointerCapture(evt.pointerId);
+  };
+  drawingCanvas.onpointercancel = drawingCanvas.onpointerup;
 
+  // 既存 mouse/touch は保険として残しておいてOK
+  drawingCanvas.onmousedown = textMouseDown;
+  drawingCanvas.onmousemove = textMouseMove;
+  drawingCanvas.onmouseup   = textMouseUp;
+  drawingCanvas.onmouseleave= textMouseUp;
+  drawingCanvas.oncontextmenu = textContextMenu;
+} else {
+  drawingCanvas.onpointerdown = evt => {
+    drawingCanvas.setPointerCapture(evt.pointerId);
+    handleDown(evt);
+  };
+  drawingCanvas.onpointermove = handleMove;
+  drawingCanvas.onpointerup = evt => {
+    handleUp(evt);
+    drawingCanvas.releasePointerCapture(evt.pointerId);
+  };
+  drawingCanvas.onpointercancel = drawingCanvas.onpointerup;
+
+  drawingCanvas.onmousedown = handleDown;
+  drawingCanvas.onmousemove = handleMove;
+  drawingCanvas.onmouseup   = handleUp;
+  drawingCanvas.onmouseleave= handleUp;
+  drawingCanvas.ontouchstart= handleDown;
+  drawingCanvas.ontouchmove = handleMove;
+  drawingCanvas.ontouchend  = handleUp;
+}
       redrawCanvas();
     }
 
@@ -1515,51 +1540,56 @@ h1 {
       drawStrokeLayer(pageData.rough, roughStroke, 2);
       drawStrokeLayer(pageData.pen, "#111827", 3);
 
-      // 吹き出し＋台詞
+// 吹き出し＋台詞
+ctx.save();
+for (const [panelIndex, balloons] of Object.entries(pageData.text)) {
+  const rect = pageData.frames[panelIndex];
+  balloons.forEach(b => {
+    if (rect) {
       ctx.save();
-      for (const [panelIndex, balloons] of Object.entries(pageData.text)) {
-        const rect = pageData.frames[panelIndex];
-        balloons.forEach(b => {
-          if (rect) {
-            ctx.save();
-            ctx.beginPath();
-            ctx.rect(rect.x, rect.y, rect.w, rect.h);
-            ctx.clip();
-          }
-          ctx.beginPath();
-          ctx.ellipse(b.x, b.y, BALLOON_RX, BALLOON_RY, 0, 0, Math.PI * 2);
-          ctx.fillStyle = "rgba(255,255,255,0.97)";
-          ctx.fill();
-          ctx.strokeStyle = "#111827";
-          ctx.lineWidth = 2;
-          ctx.stroke();
+      ctx.beginPath();
+      ctx.rect(rect.x, rect.y, rect.w, rect.h);
+      ctx.clip();
+    }
+    // 吹き出し本体
+    ctx.beginPath();
+    ctx.ellipse(b.x, b.y, BALLOON_RX, BALLOON_RY, 0, 0, Math.PI * 2);
+    ctx.fillStyle = "rgba(255,255,255,0.97)";
+    ctx.fill();
+    ctx.strokeStyle = "#111827";
+    ctx.lineWidth = 2;
+    ctx.stroke();
 
-          // 縦書き・上揃い・中央寄せ（/ や ｜ で列分け）
-          ctx.fillStyle = "#111827";
-          const fontSize = 19;
-          ctx.font = `${fontSize}px "Yu Mincho", "Hiragino Mincho ProN", serif`;
-          ctx.textAlign = "center";
-          ctx.textBaseline = "top";
+    // 縦書き：上揃え・中央配置（/｜で列分割）
+    ctx.fillStyle = "#111827";
+    const fontSize = 19;                 // +3px
+    ctx.font = `${fontSize}px "Yu Mincho", "Hiragino Mincho ProN", serif`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "top";
 
-          const lines = String(b.text).split(/[\/|｜]/);
-          const topMargin = 12;
-          const columnGap = 4;
-          const startY = b.y - BALLOON_RY + topMargin;
+    const lines = String(b.text).split(/[\/|｜]/);
+    const topMargin = 10;
+    const columnGap = 4;
 
-          lines.forEach((line, lineIndex) => {
-            const chars = [...line];
-            const x = b.x - lineIndex * (fontSize + columnGap);
-            let y = startY;
-            for (const ch of chars) {
-              ctx.fillText(ch, x, y);
-              y += fontSize;
-            }
-          });
+    // 列全体の幅を計算して中央に配置
+    const totalWidth = (lines.length - 1) * (fontSize + columnGap);
+    const firstX = b.x - totalWidth / 2;
+    const startY = b.y - BALLOON_RY + topMargin;
 
-          if (rect) ctx.restore();
-        });
+    lines.forEach((line, lineIndex) => {
+      const chars = [...line];
+      const x = firstX + lineIndex * (fontSize + columnGap);
+      let y = startY;
+      for (const ch of chars) {
+        ctx.fillText(ch, x, y);
+        y += fontSize;
       }
-      ctx.restore();
+    });
+
+    if (rect) ctx.restore();
+  });
+}
+ctx.restore();
 
       // 作業中のコマ以外をグレーアウト
       const activeRect = currentPanelIndex && pageData.frames[currentPanelIndex];
@@ -1792,51 +1822,51 @@ h1 {
       drawStrokeLayer(pageData.rough, roughStroke, 2);
       drawStrokeLayer(pageData.pen, "#111827", 3);
 
+ctx.save();
+for (const [panelIndex, balloons] of Object.entries(pageData.text)) {
+  const rect = pageData.frames[panelIndex];
+  balloons.forEach(b => {
+    if (rect) {
       ctx.save();
-      for (const [panelIndex, balloons] of Object.entries(pageData.text)) {
-        const rect = pageData.frames[panelIndex];
-        balloons.forEach(b => {
-          if (rect) {
-            ctx.save();
-            ctx.beginPath();
-            ctx.rect(rect.x, rect.y, rect.w, rect.h);
-            ctx.clip();
-          }
-          ctx.beginPath();
-          ctx.ellipse(b.x, b.y, BALLOON_RX, BALLOON_RY, 0, 0, Math.PI * 2);
-          ctx.fillStyle = "rgba(255,255,255,0.97)";
-          ctx.fill();
-          ctx.strokeStyle = "#111827";
-          ctx.lineWidth = 2;
-          ctx.stroke();
+      ctx.beginPath();
+      ctx.rect(rect.x, rect.y, rect.w, rect.h);
+      ctx.clip();
+    }
+    ctx.beginPath();
+    ctx.ellipse(b.x, b.y, BALLOON_RX, BALLOON_RY, 0, 0, Math.PI * 2);
+    ctx.fillStyle = "rgba(255,255,255,0.97)";
+    ctx.fill();
+    ctx.strokeStyle = "#111827";
+    ctx.lineWidth = 2;
+    ctx.stroke();
 
-          const fontSize = 19;
-          ctx.font = `${fontSize}px "Yu Mincho", "Hiragino Mincho ProN", serif`;
-          ctx.fillStyle = "#111827";
-          ctx.textAlign = "center";
-          ctx.textBaseline = "top";
+    const fontSize = 19;
+    ctx.font = `${fontSize}px "Yu Mincho", "Hiragino Mincho ProN", serif`;
+    ctx.fillStyle = "#111827";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "top";
 
-          const lines = String(b.text).split(/[\/|｜]/);
-          const topMargin = 12;
-          const columnGap = 4;
-          const startY = b.y - BALLOON_RY + topMargin;
+    const lines = String(b.text).split(/[\/|｜]/);
+    const topMargin = 10;
+    const columnGap = 4;
+    const totalWidth = (lines.length - 1) * (fontSize + columnGap);
+    const firstX = b.x - totalWidth / 2;
+    const startY = b.y - BALLOON_RY + topMargin;
 
-          lines.forEach((line, lineIndex) => {
-            const chars = [...line];
-            const x = b.x - lineIndex * (fontSize + columnGap);
-            let y = startY;
-            for (const ch of chars) {
-              ctx.fillText(ch, x, y);
-              y += fontSize;
-            }
-          });
-
-          if (rect) ctx.restore();
-        });
+    lines.forEach((line, lineIndex) => {
+      const chars = [...line];
+      const x = firstX + lineIndex * (fontSize + columnGap);
+      let y = startY;
+      for (const ch of chars) {
+        ctx.fillText(ch, x, y);
+        y += fontSize;
       }
-      ctx.restore();
+    });
 
-      ctx.restore();
+    if (rect) ctx.restore();
+  });
+}
+ctx.restore();
 
       const url = off.toDataURL("image/png");
       const a = document.createElement("a");
