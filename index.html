@@ -546,6 +546,24 @@ h1 {
   box-shadow: 0 1px 0 rgba(30,64,175,0.8);
 }
 
+@media (max-width: 600px) {
+  .side-panel {
+    width: 100vw;
+    max-width: 100vw;
+    max-height: 92vh;          /* 画面内に収める */
+    box-sizing: border-box;
+    padding: 10px 10px 12px;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .side-panel-body {
+    flex: 1 1 auto;
+    overflow: auto;            /* 中身（原稿用紙）だけスクロール可能に */
+  }
+}
+    
 /* スマホ（幅480px以下）はパネルをほぼ全画面に */
 @media (max-width: 480px) {
   .side-panel {
@@ -570,13 +588,19 @@ h1 {
 /* ===== 原稿用紙キャンバス ===== */
 .canvas-wrapper {
   width: 100%;
+  aspect-ratio: 4441 / 6213;          /* 比率で高さ決定（B5縦） */
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  background: #f9fafb;
+  overflow: hidden;
+  box-shadow: inset 0 0 0 1px rgba(148,163,184,0.25);
 }
 
 .canvas-wrapper canvas {
   width: 100%;
   height: 100%;
   display: block;
-  touch-action: none; /* ← これを追加（ペンタブ / タッチでスクロールさせない） */
+  touch-action: none; /* ペンタブ・指描画で背面がスクロールしないように */
 }
 
 /* ツールバー */
