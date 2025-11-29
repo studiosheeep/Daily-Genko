@@ -498,10 +498,15 @@ h1 {
 .side-panel-body {
   font-size: 14px;
   color: #374151;
-  line-height: 1.4;   /* 1.6 → 1.4 にして行間を少し詰める */
+  line-height: 1.4;     /* 1.6 → 1.4 くらいに */
   white-space: pre-wrap;
 }
 
+ /* 説明文直後の余白をゼロにする */
+.side-panel-body > div:first-child {
+  margin-bottom: 0 !important;
+}   
+    
 /* フッター（進めた＋書き出す） */
 .side-panel-footer {
   display: flex;
@@ -559,13 +564,14 @@ h1 {
   display: block;
 }
 
+/* ツールバーの余白も最小限に */
 .canvas-toolbar {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
   align-items: center;
-  margin-top: 2px;    /* ここを追加（上の説明とほぼくっつく） */
-  margin-bottom: 4px; /* 既存のまま or 好みで 2px にしてもOK */
+  margin-top: 2px;      /* 説明文とほぼくっつく */
+  margin-bottom: 4px;   /* 下方向だけ少し余白 */
   font-size: 12px;
   color: #4b5563;
 }
@@ -620,17 +626,17 @@ h1 {
   </div>
 
   <!-- サイドパネル -->
-  <div id="sidePanel" class="side-panel">
-    <div class="side-panel-header">
-      <div id="sidePanelTitle" class="side-panel-title"></div>
-      <button id="sidePanelClose" class="side-panel-close">×</button>
-    </div>
-    <div id="sidePanelBody" class="side-panel-body"></div>
-    <div class="side-panel-footer">
-      <button id="sidePanelDoneBtn" class="side-panel-done-btn">進めた</button>
-      <button id="sidePanelExportBtn" class="side-panel-export-btn">書き出す</button>
-    </div>
+<div id="sidePanel" class="side-panel">
+  <div class="side-panel-header">
+    <div id="sidePanelTitle" class="side-panel-title"></div>
+    <button id="sidePanelClose" class="side-panel-close">×</button>
   </div>
+  <div id="sidePanelBody" class="side-panel-body"></div>
+  <div class="side-panel-footer">
+    <button id="sidePanelDoneBtn" class="side-panel-done-btn">進めた</button>
+    <button id="sidePanelExportBtn" class="side-panel-export-btn">書き出す</button>
+  </div>
+</div>
 
   <script>
     /* ===== すごろく構成 ===== */
