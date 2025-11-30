@@ -550,7 +550,7 @@ h1 {
   .side-panel {
     width: 100vw;
     max-width: 100vw;
-    max-height: 92vh;          /* 画面内に収める */
+    max-height: 92vh;
     box-sizing: border-box;
     padding: 10px 10px 12px;
     border-radius: 12px;
@@ -560,35 +560,34 @@ h1 {
 
   .side-panel-body {
     flex: 1 1 auto;
-    overflow: auto;            /* 中身（原稿用紙）だけスクロール可能に */
+    overflow: auto;
   }
 }
-    
+
 /* スマホ（幅480px以下）はパネルをほぼ全画面に */
 @media (max-width: 480px) {
-
   .canvas-wrapper {
     width: 100%;
-    max-height: 70vh;     /* ← 画面高の 70% に制限 */
-    overflow: auto;        /* ← 中身のキャンバスをスクロール */
+    max-height: 70vh;
+    overflow: auto;
     border-radius: 8px;
   }
 
   .canvas-wrapper canvas {
     width: 100%;
-    height: auto;          /* ← 比率は維持したまま縮小して表示 */
+    height: auto;
   }
 
   .side-panel-body {
-    max-height: 80vh;      /* ← 原稿用紙ごとパネル内に収める */
+    max-height: 80vh;
     overflow: auto;
   }
 }
-    
+
 /* ===== 原稿用紙キャンバス ===== */
 .canvas-wrapper {
   width: 100%;
-  aspect-ratio: 4441 / 6213;          /* 比率で高さ決定（B5縦） */
+  aspect-ratio: 4441 / 6213;          /* B5縦の比率 */
   border-radius: 12px;
   border: 1px solid #e5e7eb;
   background: #f9fafb;
@@ -964,6 +963,9 @@ h1 {
     const BALLOON_RX = 60;
     const BALLOON_RY = 80;
 
+    // 8bitpaintweb 風のペン入れ用ピクセルサイズ
+    const PEN_PIXEL_SIZE = 6;  // 4〜10 くらいで好みに応じて調整
+
     function createEmptyDrawPage() {
       return {
         frames: {},
@@ -1130,96 +1132,79 @@ h1 {
     }
 
     /* ===== 原稿用紙ベース ===== */
-  function drawPaperBase(ctx, w, h) {
-  ctx.save();
-  ctx.fillStyle = "#ffffff";
-  ctx.fillRect(0, 0, w, h);
+    function drawPaperBase(ctx, w, h) {
+      ctx.save();
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, w, h);
 
-  ctx.strokeStyle = "#3b82f6";
-  ctx.lineWidth = 1;
+      ctx.strokeStyle = "#3b82f6";
+      ctx.lineWidth = 1;
 
-  // 外枠：安全に大き目（仕上がり）
-  const outerMargin = Math.min(w, h) * 0.04;   // 4%
+      const outerMargin = Math.min(w, h) * 0.04;
+      const basicMargin = Math.min(w, h) * 0.12;
+      const innerMargin = Math.min(w, h) * 0.18;
 
-  // 基本枠：セリフや人物が入る推奨範囲
-  const basicMargin = Math.min(w, h) * 0.12;   // 12%
+      ctx.strokeRect(
+        outerMargin,
+        outerMargin,
+        w - outerMargin * 2,
+        h - outerMargin * 2
+      );
 
-  // 内枠：実際の作画範囲（もっと狭い）
-  const innerMargin = Math.min(w, h) * 0.18;   // 18%
+      ctx.strokeRect(
+        basicMargin,
+        basicMargin,
+        w - basicMargin * 2,
+        h - basicMargin * 2
+      );
 
-  // ---- 外枠（仕上がり） ----
-  ctx.strokeRect(
-    outerMargin,
-    outerMargin,
-    w - outerMargin * 2,
-    h - outerMargin * 2
-  );
+      ctx.strokeRect(
+        innerMargin,
+        innerMargin,
+        w - innerMargin * 2,
+        h - innerMargin * 2
+      );
 
-  // ---- 基本枠（推奨範囲） ----
-  ctx.strokeRect(
-    basicMargin,
-    basicMargin,
-    w - basicMargin * 2,
-    h - basicMargin * 2
-  );
+      const markLen = Math.min(w, h) * 0.03;
+      const cornerLen = Math.min(w, h) * 0.025;
 
-  // ---- 内枠（実際の作画範囲）----
-  ctx.strokeRect(
-    innerMargin,
-    innerMargin,
-    w - innerMargin * 2,
-    h - innerMargin * 2
-  );
+      const cx = w / 2;
+      const cy = h / 2;
 
-  // ---- トンボ ----
-  const markLen = Math.min(w, h) * 0.03;
-  const cornerLen = Math.min(w, h) * 0.025;
+      ctx.beginPath();
 
-  const cx = w / 2;
-  const cy = h / 2;
+      ctx.moveTo(cx, outerMargin - markLen);
+      ctx.lineTo(cx, outerMargin);
 
-  ctx.beginPath();
+      ctx.moveTo(cx, h - outerMargin);
+      ctx.lineTo(cx, h - outerMargin + markLen);
 
-  // 上中央
-  ctx.moveTo(cx, outerMargin - markLen);
-  ctx.lineTo(cx, outerMargin);
+      ctx.moveTo(outerMargin - markLen, cy);
+      ctx.lineTo(outerMargin, cy);
 
-  // 下中央
-  ctx.moveTo(cx, h - outerMargin);
-  ctx.lineTo(cx, h - outerMargin + markLen);
+      ctx.moveTo(w - outerMargin, cy);
+      ctx.lineTo(w - outerMargin + markLen, cy);
 
-  // 左中央
-  ctx.moveTo(outerMargin - markLen, cy);
-  ctx.lineTo(outerMargin, cy);
+      ctx.moveTo(outerMargin, outerMargin - cornerLen);
+      ctx.lineTo(outerMargin, outerMargin);
+      ctx.lineTo(outerMargin - cornerLen, outerMargin);
 
-  // 右中央
-  ctx.moveTo(w - outerMargin, cy);
-  ctx.lineTo(w - outerMargin + markLen, cy);
+      ctx.moveTo(w - outerMargin, outerMargin - cornerLen);
+      ctx.lineTo(w - outerMargin, outerMargin);
+      ctx.lineTo(w - outerMargin + cornerLen, outerMargin);
 
-  // 4隅 L字
-  // 左上
-  ctx.moveTo(outerMargin, outerMargin - cornerLen);
-  ctx.lineTo(outerMargin, outerMargin);
-  ctx.lineTo(outerMargin - cornerLen, outerMargin);
+      ctx.moveTo(outerMargin, h - outerMargin + cornerLen);
+      ctx.lineTo(outerMargin, h - outerMargin);
+      ctx.lineTo(outerMargin - cornerLen, h - outerMargin);
 
-  // 右上
-  ctx.moveTo(w - outerMargin, outerMargin - cornerLen);
-  ctx.lineTo(w - outerMargin, outerMargin);
-  ctx.lineTo(w - outerMargin + cornerLen, outerMargin);
+      ctx.moveTo(w - outerMargin, h - outerMargin + cornerLen);
+      ctx.lineTo(w - outerMargin, h - outerMargin);
+      ctx.lineTo(w - outerMargin + cornerLen, h - outerMargin);
 
-  // 左下
-  ctx.moveTo(outerMargin, h - outerMargin + cornerLen);
-  ctx.lineTo(outerMargin, h - outerMargin);
-  ctx.lineTo(outerMargin - cornerLen, h - outerMargin);
+      ctx.stroke();
+      ctx.restore();
+    }
 
-  // 右下
-  ctx.moveTo(w - outerMargin, h - outerMargin + cornerLen);
-  ctx.lineTo(w - outerMargin, h - outerMargin);
-  ctx.lineTo(w - outerMargin + cornerLen, h - outerMargin);
-
-  ctx.stroke();
-  ctx.restore();
-}
     /* ===== 「進めた」処理 ===== */
     function advanceLesson(lessonId) {
       const { data, progress } = loadPageProgress(currentPage);
@@ -1270,6 +1255,7 @@ h1 {
       canvas.onmousedown = canvas.onmousemove = canvas.onmouseup = canvas.onmouseleave = null;
       canvas.ontouchstart = canvas.ontouchmove = canvas.ontouchend = null;
       canvas.oncontextmenu = null;
+      canvas.onpointerdown = canvas.onpointermove = canvas.onpointerup = canvas.onpointercancel = null;
     }
 
     function getPanelIndexFromLesson(lessonId) {
@@ -1279,12 +1265,12 @@ h1 {
       return isNaN(n) ? null : n;
     }
 
-function getStrokeWidth(evt, mode) {
-  const base = mode === "pen" ? 3.2 : 2.2; // ペン入れの方を少し太め
-  const p = evt.pressure && evt.pressure > 0 ? evt.pressure : 0.5; // 0〜1
-  return base * (0.3 + p * 0.7); // ある程度メリハリをつける
-}
-    
+    function getStrokeWidth(evt, mode) {
+      const base = mode === "pen" ? 3.2 : 2.2;
+      const p = evt.pressure && evt.pressure > 0 ? evt.pressure : 0.5;
+      return base * (0.3 + p * 0.7);
+    }
+
     function setupCanvasForLesson(lesson) {
       const panelBody = document.getElementById("sidePanelBody");
       const exportBtn = document.getElementById("sidePanelExportBtn");
@@ -1381,50 +1367,63 @@ function getStrokeWidth(evt, mode) {
         if (delBtn)  delBtn.onclick  = () => { pageData.rough = {}; saveDrawPage(pageData); redrawCanvas(); };
       }
 
-function getCanvasPos(evt) {
-  const rect = drawingCanvas.getBoundingClientRect();
-  let clientX, clientY;
+      function getCanvasPos(evt) {
+        const rect = drawingCanvas.getBoundingClientRect();
+        let clientX, clientY;
 
-  // 指が画面に乗っているとき
-  if (evt.touches && evt.touches.length > 0) {
-    clientX = evt.touches[0].clientX;
-    clientY = evt.touches[0].clientY;
-  }
-  // 指を離した瞬間（touchend）は changedTouches に入る
-  else if (evt.changedTouches && evt.changedTouches.length > 0) {
-    clientX = evt.changedTouches[0].clientX;
-    clientY = evt.changedTouches[0].clientY;
-  } else {
-    // マウス操作用
-    clientX = evt.clientX;
-    clientY = evt.clientY;
-  }
+        if (evt.touches && evt.touches.length > 0) {
+          clientX = evt.touches[0].clientX;
+          clientY = evt.touches[0].clientY;
+        } else if (evt.changedTouches && evt.changedTouches.length > 0) {
+          clientX = evt.changedTouches[0].clientX;
+          clientY = evt.changedTouches[0].clientY;
+        } else {
+          clientX = evt.clientX;
+          clientY = evt.clientY;
+        }
 
-  const x = (clientX - rect.left) * (drawingCanvas.width / rect.width);
-  const y = (clientY - rect.top) * (drawingCanvas.height / rect.height);
-  return { x, y };
-}
+        const x = (clientX - rect.left) * (drawingCanvas.width / rect.width);
+        const y = (clientY - rect.top) * (drawingCanvas.height / rect.height);
+        return { x, y };
+      }
+
+      // ペン入れ用：座標をピクセルグリッドにスナップ
+      function snapToPenGrid(x, y) {
+        const gx = Math.round(x / PEN_PIXEL_SIZE) * PEN_PIXEL_SIZE;
+        const gy = Math.round(y / PEN_PIXEL_SIZE) * PEN_PIXEL_SIZE;
+        return { x: gx, y: gy };
+      }
+
       let frameStart = null;
 
       function handleDown(evt) {
         evt.preventDefault();
-        const { x, y } = getCanvasPos(evt);
+        let { x, y } = getCanvasPos(evt);
 
         if (currentPanelMode === "frame") {
           frameStart = { x, y };
         } else if (currentPanelMode === "rough" || currentPanelMode === "pen") {
           isDrawing = true;
-          lastX = x; lastY = y;
+
+          if (currentPanelMode === "pen") {
+            const snapped = snapToPenGrid(x, y);
+            x = snapped.x;
+            y = snapped.y;
+          }
+
+          lastX = x;
+          lastY = y;
 
           const layer = currentPanelMode === "rough" ? pageData.rough : pageData.pen;
           if (!layer[currentPanelIndex]) layer[currentPanelIndex] = [];
 
-          // ペン入れだけ筆圧／入り抜き、ラフは一定太さ
           let w;
           if (currentPanelMode === "pen") {
-            w = getStrokeWidth(evt, "pen");
+            // 8bit 風：ほぼ一定の太さ
+            w = PEN_PIXEL_SIZE * 0.9;
           } else {
-            w = 2.0;  // ラフ線の固定太さ
+            // ラフは今まで通り一定太さ
+            w = 2.0;
           }
 
           layer[currentPanelIndex].push({ points: [{ x, y, w }] });
@@ -1445,9 +1444,14 @@ function getCanvasPos(evt) {
           drawingCtx.strokeRect(frameStart.x, frameStart.y, x - frameStart.x, y - frameStart.y);
           drawingCtx.restore();
         } else if ((currentPanelMode === "rough" || currentPanelMode === "pen") && isDrawing) {
-          const { x, y } = getCanvasPos(evt);
+          let { x, y } = getCanvasPos(evt);
 
-          // 動きが小さいときはスキップして負荷軽減
+          if (currentPanelMode === "pen") {
+            const snapped = snapToPenGrid(x, y);
+            x = snapped.x;
+            y = snapped.y;
+          }
+
           const dx = x - lastX;
           const dy = y - lastY;
           if (dx * dx + dy * dy < 4) return;
@@ -1463,10 +1467,9 @@ function getCanvasPos(evt) {
           if (!paths || paths.length === 0) return;
           const path = paths[paths.length - 1];
 
-          // ペン入れだけ筆圧／入り抜き、ラフは一定太さ
           let w;
           if (currentPanelMode === "pen") {
-            w = getStrokeWidth(evt, "pen");
+            w = PEN_PIXEL_SIZE * 0.9;
           } else {
             w = 2.0;
           }
@@ -1507,33 +1510,29 @@ function getCanvasPos(evt) {
         return -1;
       }
 
-function textMouseDown(evt) {
-  evt.preventDefault();
-  const { x, y } = getCanvasPos(evt);
-  const idx = findBalloonAt(x, y);
+      function textMouseDown(evt) {
+        evt.preventDefault();
+        const { x, y } = getCanvasPos(evt);
+        const idx = findBalloonAt(x, y);
 
-  // PointerEvent なら pointerType、古いブラウザ用に touches も見る
-  const isTouch =
-    evt.pointerType === "touch" ||
-    (evt.touches && evt.touches.length > 0);
+        const isTouch =
+          evt.pointerType === "touch" ||
+          (evt.touches && evt.touches.length > 0);
 
-  if (isTouch) {
-    if (idx !== -1) {
-      // 既存の吹き出しの上：ドラッグで移動
-      draggingBalloon = { index: idx };
-    } else {
-      // 何もない場所をタップ：その位置に新規吹き出し追加
-      textContextMenu(evt);
-    }
-    return;
-  }
+        if (isTouch) {
+          if (idx !== -1) {
+            draggingBalloon = { index: idx };
+          } else {
+            textContextMenu(evt);
+          }
+          return;
+        }
 
-  // マウス操作（PC）の場合は従来どおり：
-  // 左ドラッグで移動、右クリック（contextmenu）は textContextMenu が担当
-  if (idx !== -1) {
-    draggingBalloon = { index: idx };
-  }
-}
+        if (idx !== -1) {
+          draggingBalloon = { index: idx };
+        }
+      }
+
       function textMouseMove(evt) {
         if (!draggingBalloon) return;
         evt.preventDefault();
@@ -1570,46 +1569,45 @@ function textMouseDown(evt) {
         redrawCanvas();
       }
 
-// リスナー設定
-if (currentPanelMode === "text") {
-  // pointer 系（ペンタブ / タッチ / マウス共通）
-  drawingCanvas.onpointerdown = evt => {
-    drawingCanvas.setPointerCapture(evt.pointerId);
-    textMouseDown(evt);
-  };
-  drawingCanvas.onpointermove = textMouseMove;
-  drawingCanvas.onpointerup = evt => {
-    textMouseUp(evt);
-    drawingCanvas.releasePointerCapture(evt.pointerId);
-  };
-  drawingCanvas.onpointercancel = drawingCanvas.onpointerup;
+      // リスナー設定
+      if (currentPanelMode === "text") {
+        drawingCanvas.onpointerdown = evt => {
+          drawingCanvas.setPointerCapture(evt.pointerId);
+          textMouseDown(evt);
+        };
+        drawingCanvas.onpointermove = textMouseMove;
+        drawingCanvas.onpointerup = evt => {
+          textMouseUp(evt);
+          drawingCanvas.releasePointerCapture(evt.pointerId);
+        };
+        drawingCanvas.onpointercancel = drawingCanvas.onpointerup;
 
-  // 既存 mouse/touch は保険として残しておいてOK
-  drawingCanvas.onmousedown = textMouseDown;
-  drawingCanvas.onmousemove = textMouseMove;
-  drawingCanvas.onmouseup   = textMouseUp;
-  drawingCanvas.onmouseleave= textMouseUp;
-  drawingCanvas.oncontextmenu = textContextMenu;
-} else {
-  drawingCanvas.onpointerdown = evt => {
-    drawingCanvas.setPointerCapture(evt.pointerId);
-    handleDown(evt);
-  };
-  drawingCanvas.onpointermove = handleMove;
-  drawingCanvas.onpointerup = evt => {
-    handleUp(evt);
-    drawingCanvas.releasePointerCapture(evt.pointerId);
-  };
-  drawingCanvas.onpointercancel = drawingCanvas.onpointerup;
+        drawingCanvas.onmousedown = textMouseDown;
+        drawingCanvas.onmousemove = textMouseMove;
+        drawingCanvas.onmouseup   = textMouseUp;
+        drawingCanvas.onmouseleave= textMouseUp;
+        drawingCanvas.oncontextmenu = textContextMenu;
+      } else {
+        drawingCanvas.onpointerdown = evt => {
+          drawingCanvas.setPointerCapture(evt.pointerId);
+          handleDown(evt);
+        };
+        drawingCanvas.onpointermove = handleMove;
+        drawingCanvas.onpointerup = evt => {
+          handleUp(evt);
+          drawingCanvas.releasePointerCapture(evt.pointerId);
+        };
+        drawingCanvas.onpointercancel = drawingCanvas.onpointerup;
 
-  drawingCanvas.onmousedown = handleDown;
-  drawingCanvas.onmousemove = handleMove;
-  drawingCanvas.onmouseup   = handleUp;
-  drawingCanvas.onmouseleave= handleUp;
-  drawingCanvas.ontouchstart= handleDown;
-  drawingCanvas.ontouchmove = handleMove;
-  drawingCanvas.ontouchend  = handleUp;
-}
+        drawingCanvas.onmousedown = handleDown;
+        drawingCanvas.onmousemove = handleMove;
+        drawingCanvas.onmouseup   = handleUp;
+        drawingCanvas.onmouseleave= handleUp;
+        drawingCanvas.ontouchstart= handleDown;
+        drawingCanvas.ontouchmove = handleMove;
+        drawingCanvas.ontouchend  = handleUp;
+      }
+
       redrawCanvas();
     }
 
@@ -1631,71 +1629,64 @@ if (currentPanelMode === "text") {
       saveDrawAll(all);
     }
 
-// 句読点・三点リーダ専用の縦書き描画
-function drawVerticalBalloonText(ctx, text, centerX, centerY) {
-  const fontSize = 18;
+    // 句読点・三点リーダ専用の縦書き描画
+    function drawVerticalBalloonText(ctx, text, centerX, centerY) {
+      const fontSize = 18;
 
-  ctx.save();
-  ctx.font =
-    `${fontSize}px ` +
-    `"やさしさアンチック","新コミック体","源暎アンチック","ノバンチカ源",` +
-    `"Yu Mincho","Hiragino Mincho ProN",serif`;
-  ctx.fillStyle = "#111827";
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
+      ctx.save();
+      ctx.font =
+        `${fontSize}px ` +
+        `"やさしさアンチック","新コミック体","源暎アンチック","ノバンチカ源",` +
+        `"Yu Mincho","Hiragino Mincho ProN",serif`;
+      ctx.fillStyle = "#111827";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
 
-  // 段分け（右の段から左へ）
-  const lineTexts = String(text).split(/[\/\n]/);
+      const lineTexts = String(text).split(/[\/\n]/);
+      const columns = lineTexts.map(line => Array.from(line));
 
-  // ここで三点リーダは展開しない → そのまま 1 文字扱い
-  const columns = lineTexts.map(line => Array.from(line));
+      let maxLen = 0;
+      columns.forEach(chars => {
+        if (chars.length > maxLen) maxLen = chars.length;
+      });
 
-  // 縦方向の最大文字数（中央寄せ用）
-  let maxLen = 0;
-  columns.forEach(chars => {
-    if (chars.length > maxLen) maxLen = chars.length;
-  });
+      const lineHeight  = fontSize * 1.1;
+      const totalHeight = lineHeight * (maxLen - 1);
+      const topY        = centerY - totalHeight / 2;
 
-  const lineHeight  = fontSize * 1.1;
-  const totalHeight = lineHeight * (maxLen - 1);
-  const topY        = centerY - totalHeight / 2;
+      const colGap     = fontSize + 4;
+      const totalWidth = colGap * (columns.length - 1);
+      const rightX     = centerX + totalWidth / 2;
 
-  // 段の左右間隔
-  const colGap     = fontSize + 4;
-  const totalWidth = colGap * (columns.length - 1);
-  const rightX     = centerX + totalWidth / 2; // 1 段目が一番右
+      columns.forEach((chars, colIndex) => {
+        const x = rightX - colGap * colIndex;
 
-  columns.forEach((chars, colIndex) => {
-    const x = rightX - colGap * colIndex; // 右 → 左
+        chars.forEach((ch, i) => {
+          const baseY = topY + lineHeight * i;
+          let drawX   = x;
+          let drawY   = baseY;
 
-    chars.forEach((ch, i) => {
-      const baseY = topY + lineHeight * i;
-      let drawX   = x;
-      let drawY   = baseY;
+          if (ch === "、" || ch === "。") {
+            drawX = x - fontSize * 0.12;
+            drawY = baseY + fontSize * 0.15;
+            ctx.fillText(ch, drawX, drawY);
+          } else if (ch === "…") {
+            const dotGap = fontSize * 0.32;
+            const r      = fontSize * 0.07;
+            for (let k = -1; k <= 1; k++) {
+              ctx.beginPath();
+              ctx.arc(drawX, baseY + dotGap * k, r, 0, Math.PI * 2);
+              ctx.fill();
+            }
+          } else {
+            ctx.fillText(ch, baseY ? drawX : x, baseY);
+          }
+        });
+      });
 
-      if (ch === "、" || ch === "。") {
-        // 句読点：少し内側＆下に寄せる（ズレを小さめに）
-        drawX = x - fontSize * 0.12;
-        drawY = baseY + fontSize * 0.15;
-        ctx.fillText(ch, drawX, drawY);
-      } else if (ch === "…") {
-        // 三点リーダは自前で 3 つの小さい点を縦に打つ
-        const dotGap = fontSize * 0.32;   // 点どうしの間隔
-        const r      = fontSize * 0.07;   // 点の大きさ
-        for (let k = -1; k <= 1; k++) {
-          ctx.beginPath();
-          ctx.arc(drawX, baseY + dotGap * k, r, 0, Math.PI * 2);
-          ctx.fill();
-        }
-      } else {
-        ctx.fillText(ch, drawX, baseY);
-      }
-    });
-  });
+      ctx.restore();
+    }
 
-  ctx.restore();
-}
-    
     function redrawCanvas() {
       if (!drawingCanvas || !drawingCtx) return;
       const pageData = activeDrawPageData || getDrawPage(currentPage).pageData;
@@ -1737,7 +1728,6 @@ function drawVerticalBalloonText(ctx, text, centerX, centerY) {
             if (!pts || pts.length < 2) return;
 
             if (!useVariableWidth) {
-              // ラフ：一定太さ
               ctx.lineWidth = defaultWidth;
               ctx.beginPath();
               ctx.moveTo(pts[0].x, pts[0].y);
@@ -1746,12 +1736,10 @@ function drawVerticalBalloonText(ctx, text, centerX, centerY) {
               }
               ctx.stroke();
             } else {
-              // ペン入れ：入り抜き
               for (let i = 0; i < pts.length - 1; i++) {
                 const p0 = pts[i];
                 const p1 = pts[i + 1];
                 const w = p0.w || defaultWidth;
-
                 ctx.lineWidth = w;
                 ctx.beginPath();
                 ctx.moveTo(p0.x, p0.y);
@@ -1767,40 +1755,36 @@ function drawVerticalBalloonText(ctx, text, centerX, centerY) {
         ctx.restore();
       }
 
-      // 呼び出しも同様に変更
+      // ラフ：滑らか、ペン：8bit風（座標はスナップ済み）
       drawStrokeLayer(pageData.rough, roughStroke, 2, false);
-      drawStrokeLayer(pageData.pen,   "#111827",   3, true);
+      drawStrokeLayer(pageData.pen,   "#111827",   PEN_PIXEL_SIZE * 0.9, true);
 
-// 吹き出し＋台詞（書き出し時も縦書きロジックを共通化）
-ctx.save();
-for (const [panelIndex, balloons] of Object.entries(pageData.text)) {
-  const rect = pageData.frames[panelIndex];
-  balloons.forEach(b => {
-    if (rect) {
       ctx.save();
-      ctx.beginPath();
-      ctx.rect(rect.x, rect.y, rect.w, rect.h);
-      ctx.clip();
-    }
+      for (const [panelIndex, balloons] of Object.entries(pageData.text)) {
+        const rect = pageData.frames[panelIndex];
+        balloons.forEach(b => {
+          if (rect) {
+            ctx.save();
+            ctx.beginPath();
+            ctx.rect(rect.x, rect.y, rect.w, rect.h);
+            ctx.clip();
+          }
 
-    // 吹き出し本体
-    ctx.beginPath();
-    ctx.ellipse(b.x, b.y, BALLOON_RX, BALLOON_RY, 0, 0, Math.PI * 2);
-    ctx.fillStyle = "rgba(255,255,255,0.97)";
-    ctx.fill();
-    ctx.strokeStyle = "#111827";
-    ctx.lineWidth = 2;
-    ctx.stroke();
+          ctx.beginPath();
+          ctx.ellipse(b.x, b.y, BALLOON_RX, BALLOON_RY, 0, 0, Math.PI * 2);
+          ctx.fillStyle = "rgba(255,255,255,0.97)";
+          ctx.fill();
+          ctx.strokeStyle = "#111827";
+          ctx.lineWidth = 2;
+          ctx.stroke();
 
-    // 縦書き台詞（編集時と同じ描画）
-    drawVerticalBalloonText(ctx, b.text, b.x, b.y);
+          drawVerticalBalloonText(ctx, b.text, b.x, b.y);
 
-    if (rect) ctx.restore();
-  });
-}
-ctx.restore();
+          if (rect) ctx.restore();
+        });
+      }
+      ctx.restore();
 
-      // 作業中のコマ以外をグレーアウト
       const activeRect = currentPanelIndex && pageData.frames[currentPanelIndex];
       if (activeRect) {
         ctx.save();
@@ -1811,7 +1795,6 @@ ctx.restore();
         ctx.fill("evenodd");
         ctx.restore();
 
-        // アクティブ枠を強調
         ctx.save();
         ctx.strokeStyle = "#22c55e";
         ctx.lineWidth = 3;
@@ -2019,7 +2002,6 @@ ctx.restore();
             if (!pts || pts.length < 2) return;
 
             if (!useVariableWidth) {
-              // ラフ：一定太さ
               ctx.lineWidth = defaultWidth;
               ctx.beginPath();
               ctx.moveTo(pts[0].x, pts[0].y);
@@ -2028,12 +2010,10 @@ ctx.restore();
               }
               ctx.stroke();
             } else {
-              // ペン入れ：入り抜き（筆圧を使用）
               for (let i = 0; i < pts.length - 1; i++) {
                 const p0 = pts[i];
                 const p1 = pts[i + 1];
-                const w  = p0.w || defaultWidth; // 古いデータには w が無いので fallback
-
+                const w  = p0.w || defaultWidth;
                 ctx.lineWidth = w;
                 ctx.beginPath();
                 ctx.moveTo(p0.x, p0.y);
@@ -2049,55 +2029,54 @@ ctx.restore();
         ctx.restore();
       }
 
-      // ラフは一定太さ、ペン入れは入り抜き
       drawStrokeLayer(pageData.rough, roughStroke, 2, false);
-      drawStrokeLayer(pageData.pen,   "#111827",   3, true);
+      drawStrokeLayer(pageData.pen,   "#111827",   PEN_PIXEL_SIZE * 0.9, true);
 
-ctx.save();
-for (const [panelIndex, balloons] of Object.entries(pageData.text)) {
-  const rect = pageData.frames[panelIndex];
-  balloons.forEach(b => {
-    if (rect) {
       ctx.save();
-      ctx.beginPath();
-      ctx.rect(rect.x, rect.y, rect.w, rect.h);
-      ctx.clip();
-    }
-    ctx.beginPath();
-    ctx.ellipse(b.x, b.y, BALLOON_RX, BALLOON_RY, 0, 0, Math.PI * 2);
-    ctx.fillStyle = "rgba(255,255,255,0.97)";
-    ctx.fill();
-    ctx.strokeStyle = "#111827";
-    ctx.lineWidth = 2;
-    ctx.stroke();
+      for (const [panelIndex, balloons] of Object.entries(pageData.text)) {
+        const rect = pageData.frames[panelIndex];
+        balloons.forEach(b => {
+          if (rect) {
+            ctx.save();
+            ctx.beginPath();
+            ctx.rect(rect.x, rect.y, rect.w, rect.h);
+            ctx.clip();
+          }
+          ctx.beginPath();
+          ctx.ellipse(b.x, b.y, BALLOON_RX, BALLOON_RY, 0, 0, Math.PI * 2);
+          ctx.fillStyle = "rgba(255,255,255,0.97)";
+          ctx.fill();
+          ctx.strokeStyle = "#111827";
+          ctx.lineWidth = 2;
+          ctx.stroke();
 
-    const fontSize = 19;
-    ctx.font = `${fontSize}px "Yu Mincho", "Hiragino Mincho ProN", serif`;
-    ctx.fillStyle = "#111827";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "top";
+          const fontSize = 19;
+          ctx.font = `${fontSize}px "Yu Mincho", "Hiragino Mincho ProN", serif`;
+          ctx.fillStyle = "#111827";
+          ctx.textAlign = "center";
+          ctx.textBaseline = "top";
 
-    const lines = String(b.text).split(/[\/|｜]/);
-    const columnGap = 4;
-    const totalWidth = (lines.length - 1) * (fontSize + columnGap);
-    const firstX = b.x - totalWidth / 2;
+          const lines = String(b.text).split(/[\/|｜]/);
+          const columnGap = 4;
+          const totalWidth = (lines.length - 1) * (fontSize + columnGap);
+          const firstX = b.x - totalWidth / 2;
 
-    lines.forEach((line, lineIndex) => {
-      const chars = [...line];
-      const columnHeight = chars.length * fontSize;
-      let y = b.y - columnHeight / 2;
+          lines.forEach((line, lineIndex) => {
+            const chars = [...line];
+            const columnHeight = chars.length * fontSize;
+            let y = b.y - columnHeight / 2;
 
-      const x = firstX + lineIndex * (fontSize + columnGap);
-      for (const ch of chars) {
-        ctx.fillText(ch, x, y);
-        y += fontSize;
+            const x = firstX + lineIndex * (fontSize + columnGap);
+            for (const ch of chars) {
+              ctx.fillText(ch, x, y);
+              y += fontSize;
+            }
+          });
+
+          if (rect) ctx.restore();
+        });
       }
-    });
-
-    if (rect) ctx.restore();
-  });
-}
-ctx.restore();
+      ctx.restore();
 
       const url = off.toDataURL("image/png");
       const a = document.createElement("a");
