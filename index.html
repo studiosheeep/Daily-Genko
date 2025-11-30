@@ -393,7 +393,7 @@ h1 {
 }
 
 .success-toast.show {
-  animation: success-pop 0.9s ease-out forwards;
+  animation: success-pop 0.9s.ease-out forwards;
 }
 
 @keyframes success-pop {
@@ -963,9 +963,6 @@ h1 {
     const BALLOON_RX = 60;
     const BALLOON_RY = 80;
 
-    // 8bitpaintweb 風のペン入れ用ピクセルサイズ
-    const PEN_PIXEL_SIZE = 6;  // 4〜10 くらいで好みに応じて調整
-
     function createEmptyDrawPage() {
       return {
         frames: {},
@@ -1387,13 +1384,6 @@ h1 {
         return { x, y };
       }
 
-      // ペン入れ用：座標をピクセルグリッドにスナップ
-      function snapToPenGrid(x, y) {
-        const gx = Math.round(x / PEN_PIXEL_SIZE) * PEN_PIXEL_SIZE;
-        const gy = Math.round(y / PEN_PIXEL_SIZE) * PEN_PIXEL_SIZE;
-        return { x: gx, y: gy };
-      }
-
       let frameStart = null;
 
       function handleDown(evt) {
@@ -1404,13 +1394,6 @@ h1 {
           frameStart = { x, y };
         } else if (currentPanelMode === "rough" || currentPanelMode === "pen") {
           isDrawing = true;
-
-          if (currentPanelMode === "pen") {
-            const snapped = snapToPenGrid(x, y);
-            x = snapped.x;
-            y = snapped.y;
-          }
-
           lastX = x;
           lastY = y;
 
@@ -1419,10 +1402,8 @@ h1 {
 
           let w;
           if (currentPanelMode === "pen") {
-            // 8bit 風：ほぼ一定の太さ
-            w = PEN_PIXEL_SIZE * 0.9;
+            w = getStrokeWidth(evt, "pen");
           } else {
-            // ラフは今まで通り一定太さ
             w = 2.0;
           }
 
@@ -1444,13 +1425,9 @@ h1 {
           drawingCtx.strokeRect(frameStart.x, frameStart.y, x - frameStart.x, y - frameStart.y);
           drawingCtx.restore();
         } else if ((currentPanelMode === "rough" || currentPanelMode === "pen") && isDrawing) {
-          let { x, y } = getCanvasPos(evt);
-
-          if (currentPanelMode === "pen") {
-            const snapped = snapToPenGrid(x, y);
-            x = snapped.x;
-            y = snapped.y;
-          }
+          const pos = getCanvasPos(evt);
+          let x = pos.x;
+          let y = pos.y;
 
           const dx = x - lastX;
           const dy = y - lastY;
@@ -1469,7 +1446,7 @@ h1 {
 
           let w;
           if (currentPanelMode === "pen") {
-            w = PEN_PIXEL_SIZE * 0.9;
+            w = getStrokeWidth(evt, "pen");
           } else {
             w = 2.0;
           }
@@ -1629,6 +1606,32 @@ h1 {
       saveDrawAll(all);
     }
 
+    // ===== ペン線のスムージング／入り抜き =====
+    function smoothStrokePoints(pts) {
+      if (!pts || pts.length <= 2) return pts || [];
+      const res = [];
+      for (let i = 0; i < pts.length; i++) {
+        const p0 = pts[i - 1] || pts[i];
+        const p1 = pts[i];
+        const p2 = pts[i + 1] || pts[i];
+        res.push({
+          x: (p0.x + p1.x + p2.x) / 3,
+          y: (p0.y + p1.y + p2.y) / 3,
+          w: p1.w
+        });
+      }
+      return res;
+    }
+
+    function taperFactor(i, n) {
+      if (n <= 1) return 1;
+      const t = i / (n - 1);
+      const edge = 0.2;
+      if (t < edge) return t / edge;
+      if (t > 1 - edge) return (1 - t) / edge;
+      return 1;
+    }
+
     // 句読点・三点リーダ専用の縦書き描画
     function drawVerticalBalloonText(ctx, text, centerX, centerY) {
       const fontSize = 18;
@@ -1679,7 +1682,7 @@ h1 {
               ctx.fill();
             }
           } else {
-            ctx.fillText(ch, baseY ? drawX : x, baseY);
+            ctx.fillText(ch, drawX, baseY);
           }
         });
       });
@@ -1724,22 +1727,29 @@ h1 {
           }
 
           paths.forEach(path => {
-            const pts = path.points;
+            let pts = path.points;
             if (!pts || pts.length < 2) return;
+
+            if (useVariableWidth) {
+              pts = smoothStrokePoints(pts);
+            }
+
+            const n = pts.length;
 
             if (!useVariableWidth) {
               ctx.lineWidth = defaultWidth;
               ctx.beginPath();
               ctx.moveTo(pts[0].x, pts[0].y);
-              for (let i = 1; i < pts.length; i++) {
+              for (let i = 1; i < n; i++) {
                 ctx.lineTo(pts[i].x, pts[i].y);
               }
               ctx.stroke();
             } else {
-              for (let i = 0; i < pts.length - 1; i++) {
+              for (let i = 0; i < n - 1; i++) {
                 const p0 = pts[i];
                 const p1 = pts[i + 1];
-                const w = p0.w || defaultWidth;
+                const baseW = p0.w != null ? p0.w : defaultWidth;
+                const w = Math.max(0.5, baseW * taperFactor(i, n));
                 ctx.lineWidth = w;
                 ctx.beginPath();
                 ctx.moveTo(p0.x, p0.y);
@@ -1755,9 +1765,8 @@ h1 {
         ctx.restore();
       }
 
-      // ラフ：滑らか、ペン：8bit風（座標はスナップ済み）
       drawStrokeLayer(pageData.rough, roughStroke, 2, false);
-      drawStrokeLayer(pageData.pen,   "#111827",   PEN_PIXEL_SIZE * 0.9, true);
+      drawStrokeLayer(pageData.pen,   "#111827",   3, true);
 
       ctx.save();
       for (const [panelIndex, balloons] of Object.entries(pageData.text)) {
@@ -1811,22 +1820,19 @@ h1 {
 
       if (!isLessonUnlocked(lesson, progress)) {
         logMessage(`「${lesson.title}」はまだ先のマスです。手前のマスから順番に進めてください。`);
-        return;
-      }
-      if (isLessonCompleted(lesson, progress)) {
+      } else if (isLessonCompleted(lesson, progress)) {
         logMessage(`「${lesson.title}」は既にクリアしています。`);
-        return;
+      } else {
+        const panel = document.getElementById("sidePanel");
+        const titleEl = document.getElementById("sidePanelTitle");
+        if (!panel || !titleEl) return;
+
+        titleEl.textContent = lesson.title;
+
+        pendingLessonId = lessonId;
+        setupCanvasForLesson(lesson);
+        panel.classList.add("open");
       }
-
-      const panel = document.getElementById("sidePanel");
-      const titleEl = document.getElementById("sidePanelTitle");
-      if (!panel || !titleEl) return;
-
-      titleEl.textContent = lesson.title;
-
-      pendingLessonId = lessonId;
-      setupCanvasForLesson(lesson);
-      panel.classList.add("open");
     }
 
     function closeLessonPanel() {
@@ -1998,22 +2004,29 @@ h1 {
           }
 
           paths.forEach(path => {
-            const pts = path.points;
+            let pts = path.points;
             if (!pts || pts.length < 2) return;
+
+            if (useVariableWidth) {
+              pts = smoothStrokePoints(pts);
+            }
+
+            const n = pts.length;
 
             if (!useVariableWidth) {
               ctx.lineWidth = defaultWidth;
               ctx.beginPath();
               ctx.moveTo(pts[0].x, pts[0].y);
-              for (let i = 1; i < pts.length; i++) {
+              for (let i = 1; i < n; i++) {
                 ctx.lineTo(pts[i].x, pts[i].y);
               }
               ctx.stroke();
             } else {
-              for (let i = 0; i < pts.length - 1; i++) {
+              for (let i = 0; i < n - 1; i++) {
                 const p0 = pts[i];
                 const p1 = pts[i + 1];
-                const w  = p0.w || defaultWidth;
+                const baseW = p0.w != null ? p0.w : defaultWidth;
+                const w  = Math.max(0.5, baseW * taperFactor(i, n));
                 ctx.lineWidth = w;
                 ctx.beginPath();
                 ctx.moveTo(p0.x, p0.y);
@@ -2030,7 +2043,7 @@ h1 {
       }
 
       drawStrokeLayer(pageData.rough, roughStroke, 2, false);
-      drawStrokeLayer(pageData.pen,   "#111827",   PEN_PIXEL_SIZE * 0.9, true);
+      drawStrokeLayer(pageData.pen,   "#111827",   3, true);
 
       ctx.save();
       for (const [panelIndex, balloons] of Object.entries(pageData.text)) {
