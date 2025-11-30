@@ -1247,33 +1247,56 @@ h1 {
   let lastX = 0, lastY = 0;
   let draggingBalloon = null;
 
-  /* ★ ズーム用グローバル ★ */
-  let currentZoom = 1;
-  let zoomMin = 1;
-  let zoomMax = 3;
+/* ★ ズーム用グローバル ★ */
+let currentZoom = 1;
+let zoomMin = 1;
+let zoomMax = 3;
 
-  function applyCanvasZoom() {
-    if (!drawingCanvas) return;
-    drawingCanvas.style.transformOrigin = "center center";
-    drawingCanvas.style.transform = `scale(${currentZoom})`;
+/* ★ パン関連 ★ */
+let panX = 0;
+let panY = 0;
+let isPanning = false;
+let panStartClientX = 0;
+let panStartClientY = 0;
+let panStartX = 0;
+let panStartY = 0;
+
+/* ★ ピンチ用 ★ */
+let pinchBalloonIndex = null;
+let pinchStartDistance = null;
+let pinchStartZoom = 1;
+let pinchStartCenter = null;
+let pinchStartPanX = 0;
+let pinchStartPanY = 0;
+
+function applyCanvasZoom() {
+  if (!drawingCanvas) return;
+  drawingCanvas.style.transformOrigin = "center center";
+  drawingCanvas.style.transform =
+    `translate(${panX}px, ${panY}px) scale(${currentZoom})`;
+}
+
+function resetZoomForMode() {
+  if (currentPanelMode === "text") {
+    zoomMin = 0.5;
+    zoomMax = 3;
+    currentZoom = 1;
+  } else if (currentPanelMode === "rough" || currentPanelMode === "pen") {
+    zoomMin = 1;
+    zoomMax = 3;
+    currentZoom = 1;
+  } else {
+    zoomMin = 1;
+    zoomMax = 1;
+    currentZoom = 1;
   }
 
-  function resetZoomForMode() {
-    if (currentPanelMode === "text") {
-      zoomMin = 0.5;
-      zoomMax = 3;
-      currentZoom = 1;
-    } else if (currentPanelMode === "rough" || currentPanelMode === "pen") {
-      zoomMin = 1;
-      zoomMax = 3;
-      currentZoom = 1;
-    } else {
-      zoomMin = 1;
-      zoomMax = 1;
-      currentZoom = 1;
-    }
-    applyCanvasZoom();
-  }
+  // ★ 追加：パンリセット
+  panX = 0;
+  panY = 0;
+
+  applyCanvasZoom();
+}
 
   function clearCanvasListeners(canvas) {
     if (!canvas) return;
@@ -1627,32 +1650,46 @@ function onWheelZoom(evt) {
 let pinchStartDistance = null;
 let pinchStartZoom = 1;
 
+function distanceTouches(t1, t2) {
+  const dx = t1.clientX - t2.clientX;
+  const dy = t1.clientY - t2.clientY;
+  return Math.sqrt(dx*dx + dy*dy);
+}
+
+function centerTouches(t1, t2) {
+  return {
+    x: (t1.clientX + t2.clientX) / 2,
+    y: (t1.clientY + t2.clientY) / 2
+  };
+}
+
 function onTouchStartZoom(evt) {
   if (evt.touches.length === 2) {
     evt.preventDefault();
     pinchStartDistance = distanceTouches(evt.touches[0], evt.touches[1]);
+    pinchStartCenter = centerTouches(evt.touches[0], evt.touches[1]);
+    pinchStartPanX = panX;
+    pinchStartPanY = panY;
 
     const pageData = activeDrawPageData;
 
     if (currentPanelMode === "text") {
-      // 2本指の中点にあるフキダシを探す
       const rect = drawingCanvas.getBoundingClientRect();
-      const midX = (evt.touches[0].clientX + evt.touches[1].clientX) / 2;
-      const midY = (evt.touches[0].clientY + evt.touches[1].clientY) / 2;
+      const midX = pinchStartCenter.x;
+      const midY = pinchStartCenter.y;
       const x = (midX - rect.left) * (drawingCanvas.width  / rect.width);
       const y = (midY - rect.top)  * (drawingCanvas.height / rect.height);
 
       const arr = pageData.text[currentPanelIndex] || [];
       const idx = findBalloonAt(x, y);
+
       if (idx !== -1) {
         pinchBalloonIndex = idx;
-        const b = arr[idx];
-        pinchStartZoom = b.scale || 1;   // フキダシの元スケール
+        pinchStartZoom = arr[idx].scale || 1;
         return;
       }
     }
 
-    // フキダシ対象が無い or text 以外 → キャンバスズーム
     pinchBalloonIndex = null;
     pinchStartZoom = currentZoom;
   }
@@ -1662,25 +1699,30 @@ function onTouchMoveZoom(evt) {
   if (evt.touches.length === 2 && pinchStartDistance) {
     evt.preventDefault();
     const newDist = distanceTouches(evt.touches[0], evt.touches[1]);
+    const newCenter = centerTouches(evt.touches[0], evt.touches[1]);
     const scale = newDist / pinchStartDistance;
 
     const pageData = activeDrawPageData;
 
-    // 台詞モードかつ対象フキダシがある → フキダシ拡大縮小
     if (currentPanelMode === "text" && pinchBalloonIndex != null) {
       const arr = pageData.text[currentPanelIndex] || [];
       const b = arr[pinchBalloonIndex];
       if (!b) return;
+
       b.scale = Math.min(3, Math.max(0.3, pinchStartZoom * scale));
       saveDrawPage(pageData);
       redrawCanvas();
       return;
     }
 
-    // それ以外 → キャンバス拡大縮小
     currentZoom = pinchStartZoom * scale;
-    if (currentZoom < zoomMin) currentZoom = zoomMin;
-    if (currentZoom > zoomMax) currentZoom = zoomMax;
+    currentZoom = Math.min(zoomMax, Math.max(zoomMin, currentZoom));
+
+    const dx = newCenter.x - pinchStartCenter.x;
+    const dy = newCenter.y - pinchStartCenter.y;
+    panX = pinchStartPanX + dx;
+    panY = pinchStartPanY + dy;
+
     applyCanvasZoom();
   }
 }
@@ -1688,55 +1730,10 @@ function onTouchMoveZoom(evt) {
 function onTouchEndZoom(evt) {
   if (evt.touches.length < 2) {
     pinchStartDistance = null;
+    pinchStartCenter = null;
     pinchBalloonIndex = null;
   }
 }
-    drawingCanvas.addEventListener("wheel", onWheelZoom, { passive: false });
-    drawingCanvas.addEventListener("touchstart", onTouchStartZoom, { passive: false });
-    drawingCanvas.addEventListener("touchmove", onTouchMoveZoom, { passive: false });
-    drawingCanvas.addEventListener("touchend", onTouchEndZoom);
-
-    // リスナー設定
-    if (currentPanelMode === "text") {
-      drawingCanvas.onpointerdown = evt => {
-        drawingCanvas.setPointerCapture(evt.pointerId);
-        textMouseDown(evt);
-      };
-      drawingCanvas.onpointermove = textMouseMove;
-      drawingCanvas.onpointerup = evt => {
-        textMouseUp(evt);
-        drawingCanvas.releasePointerCapture(evt.pointerId);
-      };
-      drawingCanvas.onpointercancel = drawingCanvas.onpointerup;
-
-      drawingCanvas.onmousedown = textMouseDown;
-      drawingCanvas.onmousemove = textMouseMove;
-      drawingCanvas.onmouseup   = textMouseUp;
-      drawingCanvas.onmouseleave= textMouseUp;
-      drawingCanvas.oncontextmenu = textContextMenu;
-    } else {
-      drawingCanvas.onpointerdown = evt => {
-        drawingCanvas.setPointerCapture(evt.pointerId);
-        handleDown(evt);
-      };
-      drawingCanvas.onpointermove = handleMove;
-      drawingCanvas.onpointerup = evt => {
-        handleUp(evt);
-        drawingCanvas.releasePointerCapture(evt.pointerId);
-      };
-      drawingCanvas.onpointercancel = drawingCanvas.onpointerup;
-
-      drawingCanvas.onmousedown = handleDown;
-      drawingCanvas.onmousemove = handleMove;
-      drawingCanvas.onmouseup   = handleUp;
-      drawingCanvas.onmouseleave= handleUp;
-      drawingCanvas.ontouchstart= handleDown;
-      drawingCanvas.ontouchmove = handleMove;
-      drawingCanvas.ontouchend  = handleUp;
-    }
-
-    redrawCanvas();
-  }
 
   function normalizeRect(x1, y1, x2, y2) {
     const x = Math.min(x1, x2);
@@ -1970,6 +1967,36 @@ ctx.restore();
     }
   }
 
+    // ========= ペン入れモードのパン操作（ホイール押し or 指スワイプ） =========
+    drawingCanvas.onpointerdown = evt => {
+      if (currentPanelMode !== "pen") return;
+      if (evt.button === 1) {
+        isPanning = true;
+        panStartClientX = evt.clientX;
+        panStartClientY = evt.clientY;
+        panStartX = panX;
+        panStartY = panY;
+      }
+    };
+
+    drawingCanvas.onpointermove = evt => {
+      if (currentPanelMode !== "pen") return;
+      if (isPanning) {
+        const dx = evt.clientX - panStartClientX;
+        const dy = evt.clientY - panStartClientY;
+        panX = panStartX + dx;
+        panY = panStartY + dy;
+        applyCanvasZoom();
+      }
+    };
+
+    drawingCanvas.onpointerup = evt => {
+      if (currentPanelMode !== "pen") return;
+      isPanning = false;
+    };
+
+    drawingCanvas.onpointercancel = drawingCanvas.onpointerup;
+    
   /* ===== サイドパネル開閉 ===== */
   function openLessonPanel(lessonId) {
     const { progress } = loadPageProgress(currentPage);
