@@ -1578,59 +1578,119 @@ h1 {
       const text = window.prompt("台詞（縦書き）を入力してください\n（/ や ｜ で簡易改行）", "");
       if (!text) return;
       if (!pageData.text[currentPanelIndex]) pageData.text[currentPanelIndex] = [];
-      pageData.text[currentPanelIndex].push({ x, y, text });
+      pageData.text[currentPanelIndex].push({ x, y, text, scale: 1 });
       saveDrawPage(pageData);
       redrawCanvas();
     }
 
     // ===== ズーム（ホイール + ピンチ） =====
-    function onWheelZoom(evt) {
-      evt.preventDefault();
-      if (!drawingCanvas) return;
-      let delta = -evt.deltaY;
-      const step = 0.1;
-      const factor = delta > 0 ? (1 + step) : (1 - step);
-      currentZoom *= factor;
-      if (currentZoom < zoomMin) currentZoom = zoomMin;
-      if (currentZoom > zoomMax) currentZoom = zoomMax;
-      applyCanvasZoom();
-    }
+function onWheelZoom(evt) {
+  evt.preventDefault();
+  if (!drawingCanvas) return;
 
+  const rect = drawingCanvas.getBoundingClientRect();
+  const x = (evt.clientX - rect.left) * (drawingCanvas.width  / rect.width);
+  const y = (evt.clientY - rect.top)  * (drawingCanvas.height / rect.height);
+
+  const delta = -evt.deltaY;
+  const step  = 0.1;
+  const factor = delta > 0 ? (1 + step) : (1 - step);
+
+  const pageData = activeDrawPageData;
+
+  // 台詞モード → フキダシ拡大縮小
+  if (currentPanelMode === "text") {
+    const arr = pageData.text[currentPanelIndex] || [];
+    const idx = findBalloonAt(x, y);
+    if (idx === -1) return;
+
+    const b = arr[idx];
+    const base = b.scale || 1;
+    b.scale = Math.min(3, Math.max(0.3, base * factor));
+    saveDrawPage(pageData);
+    redrawCanvas();
+    return;
+  }
+
+  // それ以外 → キャンバス拡大縮小
+  currentZoom *= factor;
+  if (currentZoom < zoomMin) currentZoom = zoomMin;
+  if (currentZoom > zoomMax) currentZoom = zoomMax;
+  applyCanvasZoom();
+}
     function distanceTouches(t1, t2) {
       const dx = t1.clientX - t2.clientX;
       const dy = t1.clientY - t2.clientY;
       return Math.sqrt(dx*dx + dy*dy);
     }
 
-    let pinchStartDistance = null;
-    let pinchStartZoom = 1;
+let pinchStartDistance = null;
+let pinchStartZoom = 1;
 
-    function onTouchStartZoom(evt) {
-      if (evt.touches.length === 2) {
-        evt.preventDefault();
-        pinchStartDistance = distanceTouches(evt.touches[0], evt.touches[1]);
-        pinchStartZoom = currentZoom;
+function onTouchStartZoom(evt) {
+  if (evt.touches.length === 2) {
+    evt.preventDefault();
+    pinchStartDistance = distanceTouches(evt.touches[0], evt.touches[1]);
+
+    const pageData = activeDrawPageData;
+
+    if (currentPanelMode === "text") {
+      // 2本指の中点にあるフキダシを探す
+      const rect = drawingCanvas.getBoundingClientRect();
+      const midX = (evt.touches[0].clientX + evt.touches[1].clientX) / 2;
+      const midY = (evt.touches[0].clientY + evt.touches[1].clientY) / 2;
+      const x = (midX - rect.left) * (drawingCanvas.width  / rect.width);
+      const y = (midY - rect.top)  * (drawingCanvas.height / rect.height);
+
+      const arr = pageData.text[currentPanelIndex] || [];
+      const idx = findBalloonAt(x, y);
+      if (idx !== -1) {
+        pinchBalloonIndex = idx;
+        const b = arr[idx];
+        pinchStartZoom = b.scale || 1;   // フキダシの元スケール
+        return;
       }
     }
 
-    function onTouchMoveZoom(evt) {
-      if (evt.touches.length === 2 && pinchStartDistance) {
-        evt.preventDefault();
-        const newDist = distanceTouches(evt.touches[0], evt.touches[1]);
-        const scale = newDist / pinchStartDistance;
-        currentZoom = pinchStartZoom * scale;
-        if (currentZoom < zoomMin) currentZoom = zoomMin;
-        if (currentZoom > zoomMax) currentZoom = zoomMax;
-        applyCanvasZoom();
-      }
+    // フキダシ対象が無い or text 以外 → キャンバスズーム
+    pinchBalloonIndex = null;
+    pinchStartZoom = currentZoom;
+  }
+}
+
+function onTouchMoveZoom(evt) {
+  if (evt.touches.length === 2 && pinchStartDistance) {
+    evt.preventDefault();
+    const newDist = distanceTouches(evt.touches[0], evt.touches[1]);
+    const scale = newDist / pinchStartDistance;
+
+    const pageData = activeDrawPageData;
+
+    // 台詞モードかつ対象フキダシがある → フキダシ拡大縮小
+    if (currentPanelMode === "text" && pinchBalloonIndex != null) {
+      const arr = pageData.text[currentPanelIndex] || [];
+      const b = arr[pinchBalloonIndex];
+      if (!b) return;
+      b.scale = Math.min(3, Math.max(0.3, pinchStartZoom * scale));
+      saveDrawPage(pageData);
+      redrawCanvas();
+      return;
     }
 
-    function onTouchEndZoom(evt) {
-      if (evt.touches.length < 2) {
-        pinchStartDistance = null;
-      }
-    }
+    // それ以外 → キャンバス拡大縮小
+    currentZoom = pinchStartZoom * scale;
+    if (currentZoom < zoomMin) currentZoom = zoomMin;
+    if (currentZoom > zoomMax) currentZoom = zoomMax;
+    applyCanvasZoom();
+  }
+}
 
+function onTouchEndZoom(evt) {
+  if (evt.touches.length < 2) {
+    pinchStartDistance = null;
+    pinchBalloonIndex = null;
+  }
+}
     drawingCanvas.addEventListener("wheel", onWheelZoom, { passive: false });
     drawingCanvas.addEventListener("touchstart", onTouchStartZoom, { passive: false });
     drawingCanvas.addEventListener("touchmove", onTouchMoveZoom, { passive: false });
@@ -1858,31 +1918,39 @@ h1 {
     drawStrokeLayer(pageData.rough, roughStroke, 2, false);
     drawStrokeLayer(pageData.pen,   "#111827",   3, true);
 
-    ctx.save();
-    for (const [panelIndex, balloons] of Object.entries(pageData.text)) {
-      const rect = pageData.frames[panelIndex];
-      balloons.forEach(b => {
-        if (rect) {
-          ctx.save();
-          ctx.beginPath();
-          ctx.rect(rect.x, rect.y, rect.w, rect.h);
-          ctx.clip();
-        }
-
-        ctx.beginPath();
-        ctx.ellipse(b.x, b.y, BALLOON_RX, BALLOON_RY, 0, 0, Math.PI * 2);
-        ctx.fillStyle = "rgba(255,255,255,0.97)";
-        ctx.fill();
-        ctx.strokeStyle = "#111827";
-        ctx.lineWidth = 2;
-        ctx.stroke();
-
-        drawVerticalBalloonText(ctx, b.text, b.x, b.y);
-
-        if (rect) ctx.restore();
-      });
+ctx.save();
+for (const [panelIndex, balloons] of Object.entries(pageData.text)) {
+  const rect = pageData.frames[panelIndex];
+  balloons.forEach(b => {
+    if (rect) {
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(rect.x, rect.y, rect.w, rect.h);
+      ctx.clip();
     }
+
+    const scaleB = b.scale || 1;
+    const rx = BALLOON_RX * scaleB;
+    const ry = BALLOON_RY * scaleB;
+
+    ctx.beginPath();
+    ctx.ellipse(b.x, b.y, rx, ry, 0, 0, Math.PI * 2);
+    ctx.fillStyle = "rgba(255,255,255,0.97)";
+    ctx.fill();
+    ctx.strokeStyle = "#111827";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    ctx.save();
+    ctx.translate(b.x, b.y);
+    ctx.scale(scaleB, scaleB);
+    drawVerticalBalloonText(ctx, b.text, 0, 0);
     ctx.restore();
+
+    if (rect) ctx.restore();
+  });
+}
+ctx.restore();
 
     const activeRect = currentPanelIndex && pageData.frames[currentPanelIndex];
     if (activeRect) {
