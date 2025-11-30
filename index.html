@@ -1399,6 +1399,8 @@ function resetZoomForMode() {
     /* ★ モードに応じてズーム範囲リセット ★ */
     resetZoomForMode();
 
+    redrawCanvas();
+
     if (currentPanelMode === "frame") {
       const clearBtn = document.getElementById("clearFrameBtn");
       if (clearBtn) {
