@@ -676,1509 +676,1599 @@ h1 {
     </div>
   </div>
 
-  <script>
-    /* ===== すごろく構成 ===== */
-    const frameCount   = 6;
-    const roughCount   = 6;
-    const textCount    = 6;
-    const penCount     = 6;
-    const betaCount    = 6;
-    const toneCount    = 6;
-    const finishCount  = 6;
+<script>
+  /* ===== すごろく構成 ===== */
+  const frameCount   = 6;
+  const roughCount   = 6;
+  const textCount    = 6;
+  const penCount     = 6;
+  const betaCount    = 6;
+  const toneCount    = 6;
+  const finishCount  = 6;
 
-    const LESSONS = [];
+  const LESSONS = [];
 
-    function addGroup(prefix, label, descBase, count, prevId) {
-      let lastId = prevId;
-      for (let i = 1; i <= count; i++) {
-        const id = `${prefix}${i}`;
-        const title = `${label}${i}コマ目`;
-        LESSONS.push({
-          id,
-          title,
-          description: descBase.replace("{n}", i),
-          maxProgress: 1,
-          prereqId: lastId
-        });
-        lastId = id;
-      }
-      return lastId;
+  function addGroup(prefix, label, descBase, count, prevId) {
+    let lastId = prevId;
+    for (let i = 1; i <= count; i++) {
+      const id = `${prefix}${i}`;
+      const title = `${label}${i}コマ目`;
+      LESSONS.push({
+        id,
+        title,
+        description: descBase.replace("{n}", i),
+        maxProgress: 1,
+        prereqId: lastId
+      });
+      lastId = id;
     }
+    return lastId;
+  }
 
-    let last = null;
-    last = addGroup("frame_",  "枠線",   "枠線 {n}コマ目。",      frameCount, last);
-    last = addGroup("rough_",  "下書き", "下書き {n}コマ目。",    roughCount, last);
-    last = addGroup("text_",   "台詞",   "台詞 {n}コマ目。",      textCount,  last);
-    last = addGroup("pen_",    "ペン入れ", "ペン入れ {n}コマ目。", penCount,   last);
-    last = addGroup("beta_",   "ベタ",     "ベタ {n}コマ目。",     betaCount,  last);
-    last = addGroup("tone_",   "トーン",   "トーン {n}コマ目。",   toneCount,  last);
-    last = addGroup("finish_", "仕上げ",   "仕上げ {n}コマ目。",   finishCount,last);
+  let last = null;
+  last = addGroup("frame_",  "枠線",   "枠線 {n}コマ目。",      frameCount, last);
+  last = addGroup("rough_",  "下書き", "下書き {n}コマ目。",    roughCount, last);
+  last = addGroup("text_",   "台詞",   "台詞 {n}コマ目。",      textCount,  last);
+  last = addGroup("pen_",    "ペン入れ", "ペン入れ {n}コマ目。", penCount,   last);
+  last = addGroup("beta_",   "ベタ",     "ベタ {n}コマ目。",     betaCount,  last);
+  last = addGroup("tone_",   "トーン",   "トーン {n}コマ目。",   toneCount,  last);
+  last = addGroup("finish_", "仕上げ",   "仕上げ {n}コマ目。",   finishCount,last);
 
-    let currentPage = 1;
-    const STORAGE_KEY = "mangaLessonProgress_v8_pages";
-    const STREAK_KEY  = "mangaLessonStreak_v1";
+  let currentPage = 1;
+  const STORAGE_KEY = "mangaLessonProgress_v8_pages";
+  const STREAK_KEY  = "mangaLessonStreak_v1";
 
-    /* ===== 進捗保存 ===== */
-    function createInitialProgressMap() {
-      const obj = {};
-      for (const lesson of LESSONS) {
-        obj[lesson.id] = 0;
-      }
-      return obj;
+  /* ===== 進捗保存 ===== */
+  function createInitialProgressMap() {
+    const obj = {};
+    for (const lesson of LESSONS) {
+      obj[lesson.id] = 0;
     }
+    return obj;
+  }
 
-    function createNewData() {
-      return {
-        maxPage: 1,
-        pages: { "1": createInitialProgressMap() }
-      };
-    }
+  function createNewData() {
+    return {
+      maxPage: 1,
+      pages: { "1": createInitialProgressMap() }
+    };
+  }
 
-    function migrateLegacyProgress(legacyObj) {
-      const base = createInitialProgressMap();
-      for (const id of Object.keys(base)) {
-        if (typeof legacyObj[id] === "number") {
-          base[id] = legacyObj[id];
-        }
-      }
-      return base;
-    }
-
-    function loadAllProgress() {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) {
-        const data = createNewData();
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-        return data;
-      }
-      try {
-        const parsed = JSON.parse(raw);
-        if (parsed && parsed.pages) {
-          for (let p = 1; p <= (parsed.maxPage || 1); p++) {
-            const key = String(p);
-            if (!parsed.pages[key]) parsed.pages[key] = createInitialProgressMap();
-            else {
-              const base = createInitialProgressMap();
-              const src = parsed.pages[key];
-              for (const id of Object.keys(base)) {
-                base[id] = typeof src[id] === "number" ? src[id] : 0;
-              }
-              parsed.pages[key] = base;
-            }
-          }
-          return parsed;
-        } else {
-          const legacy = (parsed && typeof parsed === "object") ? parsed : {};
-          const data = createNewData();
-          data.pages["1"] = migrateLegacyProgress(legacy);
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-          return data;
-        }
-      } catch {
-        const data = createNewData();
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-        return data;
+  function migrateLegacyProgress(legacyObj) {
+    const base = createInitialProgressMap();
+    for (const id of Object.keys(base)) {
+      if (typeof legacyObj[id] === "number") {
+        base[id] = legacyObj[id];
       }
     }
+    return base;
+  }
 
-    function saveAllProgress(data) {
+  function loadAllProgress() {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) {
+      const data = createNewData();
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      return data;
     }
-
-    function loadPageProgress(page) {
-      const data = loadAllProgress();
-      const key = String(page);
-      if (!data.pages[key]) {
-        data.pages[key] = createInitialProgressMap();
-        if (page > data.maxPage) data.maxPage = page;
-        saveAllProgress(data);
+    try {
+      const parsed = JSON.parse(raw);
+      if (parsed && parsed.pages) {
+        for (let p = 1; p <= (parsed.maxPage || 1); p++) {
+          const key = String(p);
+          if (!parsed.pages[key]) parsed.pages[key] = createInitialProgressMap();
+          else {
+            const base = createInitialProgressMap();
+            const src = parsed.pages[key];
+            for (const id of Object.keys(base)) {
+              base[id] = typeof src[id] === "number" ? src[id] : 0;
+            }
+            parsed.pages[key] = base;
+          }
+        }
+        return parsed;
+      } else {
+        const legacy = (parsed && typeof parsed === "object") ? parsed : {};
+        const data = createNewData();
+        data.pages["1"] = migrateLegacyProgress(legacy);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        return data;
       }
-      return { data, progress: data.pages[key] };
+    } catch {
+      const data = createNewData();
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      return data;
     }
+  }
 
-    function resetAllPagesProgress() {
-      const data = loadAllProgress();
-      for (let p = 1; p <= data.maxPage; p++) {
-        data.pages[String(p)] = createInitialProgressMap();
-      }
+  function saveAllProgress(data) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  }
+
+  function loadPageProgress(page) {
+    const data = loadAllProgress();
+    const key = String(page);
+    if (!data.pages[key]) {
+      data.pages[key] = createInitialProgressMap();
+      if (page > data.maxPage) data.maxPage = page;
       saveAllProgress(data);
     }
+    return { data, progress: data.pages[key] };
+  }
 
-    function getPerRow() {
-      return window.innerWidth <= 600 ? 3 : 6;
+  function resetAllPagesProgress() {
+    const data = loadAllProgress();
+    for (let p = 1; p <= data.maxPage; p++) {
+      data.pages[String(p)] = createInitialProgressMap();
     }
+    saveAllProgress(data);
+  }
 
-    function computeGridPositions(count, perRow) {
-      const positions = [];
-      const rows = Math.ceil(count / perRow);
+  function getPerRow() {
+    return window.innerWidth <= 600 ? 3 : 6;
+  }
 
-      let marginX = (perRow === 3) ? 12 : 8;
-      const usableX = 100 - marginX * 2;
-      const stepX   = perRow > 1 ? usableX / (perRow - 1) : 0;
+  function computeGridPositions(count, perRow) {
+    const positions = [];
+    const rows = Math.ceil(count / perRow);
 
-      let marginTop, totalY;
-      if (perRow === 3) {
-        marginTop = 5;
-        totalY    = 90;
+    let marginX = (perRow === 3) ? 12 : 8;
+    const usableX = 100 - marginX * 2;
+    const stepX   = perRow > 1 ? usableX / (perRow - 1) : 0;
+
+    let marginTop, totalY;
+    if (perRow === 3) {
+      marginTop = 5;
+      totalY    = 90;
+    } else {
+      marginTop = 8;
+      totalY    = 70;
+    }
+    const rowStep = rows > 1 ? totalY / (rows - 1) : 0;
+
+    for (let i = 0; i < count; i++) {
+      const row = Math.floor(i / perRow);
+      const indexInRow = i % perRow;
+      const isEvenRow = (row % 2 === 0);
+      const col = isEvenRow ? indexInRow : perRow - 1 - indexInRow;
+
+      const x = marginX + stepX * col;
+      const y = marginTop + rowStep * row;
+      positions.push({ x, y });
+    }
+    return positions;
+  }
+
+  /* ===== 連続日数 ===== */
+  function getLogicalDateKey(date = new Date()) {
+    const d = new Date(date.getTime());
+    const hour = d.getHours();
+    if (hour < 5) d.setDate(d.getDate() - 1);
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${y}-${m}-${day}`;
+  }
+
+  function keyToDate(key) {
+    const [y, m, d] = key.split("-").map(Number);
+    return new Date(y, m - 1, d);
+  }
+
+  function dateToKey(date) {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, "0");
+    const d = String(date.getDate()).padStart(2, "0");
+    return `${y}-${m}-${d}`;
+  }
+
+  function loadStreakData() {
+    const raw = localStorage.getItem(STREAK_KEY);
+    if (!raw) return {};
+    try {
+      const obj = JSON.parse(raw);
+      return obj && typeof obj === "object" ? obj : {};
+    } catch {
+      return {};
+    }
+  }
+
+  function saveStreakData(data) {
+    localStorage.setItem(STREAK_KEY, JSON.stringify(data));
+  }
+
+  function resetStreakData() {
+    saveStreakData({});
+  }
+
+  function registerActivity() {
+    const data = loadStreakData();
+    const todayKey = getLogicalDateKey();
+    if (!data[todayKey]) {
+      data[todayKey] = true;
+      saveStreakData(data);
+    }
+  }
+
+  function calcCurrentStreak() {
+    const data = loadStreakData();
+    const keys = Object.keys(data);
+    if (keys.length === 0) return 0;
+    const set = new Set(keys);
+    let streak = 0;
+    let d = keyToDate(getLogicalDateKey());
+    while (true) {
+      const key = dateToKey(d);
+      if (set.has(key)) {
+        streak += 1;
+        d.setDate(d.getDate() - 1);
       } else {
-        marginTop = 8;
-        totalY    = 70;
-      }
-      const rowStep = rows > 1 ? totalY / (rows - 1) : 0;
-
-      for (let i = 0; i < count; i++) {
-        const row = Math.floor(i / perRow);
-        const indexInRow = i % perRow;
-        const isEvenRow = (row % 2 === 0);
-        const col = isEvenRow ? indexInRow : perRow - 1 - indexInRow;
-
-        const x = marginX + stepX * col;
-        const y = marginTop + rowStep * row;
-        positions.push({ x, y });
-      }
-      return positions;
-    }
-
-    /* ===== 連続日数 ===== */
-    function getLogicalDateKey(date = new Date()) {
-      const d = new Date(date.getTime());
-      const hour = d.getHours();
-      if (hour < 5) d.setDate(d.getDate() - 1);
-      const y = d.getFullYear();
-      const m = String(d.getMonth() + 1).padStart(2, "0");
-      const day = String(d.getDate()).padStart(2, "0");
-      return `${y}-${m}-${day}`;
-    }
-
-    function keyToDate(key) {
-      const [y, m, d] = key.split("-").map(Number);
-      return new Date(y, m - 1, d);
-    }
-
-    function dateToKey(date) {
-      const y = date.getFullYear();
-      const m = String(date.getMonth() + 1).padStart(2, "0");
-      const d = String(date.getDate()).padStart(2, "0");
-      return `${y}-${m}-${d}`;
-    }
-
-    function loadStreakData() {
-      const raw = localStorage.getItem(STREAK_KEY);
-      if (!raw) return {};
-      try {
-        const obj = JSON.parse(raw);
-        return obj && typeof obj === "object" ? obj : {};
-      } catch {
-        return {};
+        break;
       }
     }
+    return streak;
+  }
 
-    function saveStreakData(data) {
-      localStorage.setItem(STREAK_KEY, JSON.stringify(data));
-    }
+  function updateStreakDisplay() {
+    const el = document.getElementById("streakValue");
+    if (!el) return;
+    el.textContent = `${calcCurrentStreak()} 日`;
+  }
 
-    function resetStreakData() {
-      saveStreakData({});
-    }
+  /* ===== ページラベル ===== */
+  function updatePageLabel(dataOpt) {
+    const labelEl = document.getElementById("pageLabel");
+    const prevBtn = document.getElementById("prevPageBtn");
+    const nextBtn = document.getElementById("nextPageBtn");
+    const data = dataOpt || loadAllProgress();
+    if (!labelEl) return;
+    labelEl.textContent = `${currentPage}ページ目 / 全${data.maxPage}ページ`;
+    if (prevBtn) prevBtn.disabled = currentPage <= 1;
+    if (nextBtn) nextBtn.disabled = currentPage >= data.maxPage;
+  }
 
-    function registerActivity() {
-      const data = loadStreakData();
-      const todayKey = getLogicalDateKey();
-      if (!data[todayKey]) {
-        data[todayKey] = true;
-        saveStreakData(data);
+  /* ===== 次のタスク表示 ===== */
+  function getNextIncompleteLesson(progress) {
+    for (const lesson of LESSONS) {
+      if (!isLessonCompleted(lesson, progress)) {
+        return lesson;
       }
     }
+    return null;
+  }
 
-    function calcCurrentStreak() {
-      const data = loadStreakData();
-      const keys = Object.keys(data);
-      if (keys.length === 0) return 0;
-      const set = new Set(keys);
-      let streak = 0;
-      let d = keyToDate(getLogicalDateKey());
-      while (true) {
-        const key = dateToKey(d);
-        if (set.has(key)) {
-          streak += 1;
-          d.setDate(d.getDate() - 1);
-        } else {
-          break;
+  function updateNextTaskDisplay(progress) {
+    const titleEl = document.getElementById("nextTaskTitle");
+    const infoEl  = document.getElementById("nextTaskInfo");
+    if (!titleEl || !infoEl) return;
+
+    const next = getNextIncompleteLesson(progress);
+
+    if (next) {
+      titleEl.textContent = `${next.title}を進めよう！`;
+      infoEl.textContent  = `次のマスは「${next.title}」です。クリックして進めていきましょう。`;
+    } else {
+      titleEl.textContent = "このページは全部クリアしました！";
+      infoEl.textContent  = "お疲れさまでした。新しいページを追加して続きの原稿を進めましょう。";
+    }
+  }
+
+  /* ===== 原稿用紙描画データ ===== */
+  const EDIT_CANVAS_WIDTH  = 1000;
+  const EDIT_CANVAS_HEIGHT = Math.round(EDIT_CANVAS_WIDTH * 6213 / 4441);
+  const EXPORT_WIDTH  = 4961;
+  const EXPORT_HEIGHT = 7016;
+  const DRAW_STORAGE_KEY = "mangaBoardDraw_v1";
+
+  const BALLOON_RX = 60;
+  const BALLOON_RY = 80;
+
+  function createEmptyDrawPage() {
+    return {
+      frames: {},
+      rough: {},
+      pen: {},
+      text: {},
+      roughColor: "black"
+    };
+  }
+
+  function loadDrawAll() {
+    const raw = localStorage.getItem(DRAW_STORAGE_KEY);
+    if (!raw) return {};
+    try {
+      const obj = JSON.parse(raw);
+      return obj && typeof obj === "object" ? obj : {};
+    } catch {
+      return {};
+    }
+  }
+
+  function saveDrawAll(data) {
+    localStorage.setItem(DRAW_STORAGE_KEY, JSON.stringify(data));
+  }
+
+  function getDrawPage(page) {
+    const all = loadDrawAll();
+    const key = String(page);
+    if (!all[key]) {
+      all[key] = createEmptyDrawPage();
+      saveDrawAll(all);
+    }
+    return { all, pageData: all[key] };
+  }
+
+  function resetAllDrawData() {
+    localStorage.removeItem(DRAW_STORAGE_KEY);
+  }
+
+  /* 描画中のページデータをキャッシュして高速化 */
+  let activeDrawPageData = null;
+
+  /* ===== 成功エフェクトなど ===== */
+  let audioCtx = null;
+
+  function showSuccessEffect() {
+    const toast = document.getElementById("successToast");
+    if (!toast) return;
+    toast.classList.remove("show");
+    void toast.offsetWidth;
+    toast.classList.add("show");
+  }
+
+  function triggerConfetti(targetNode) {
+    const mapEl = document.getElementById("map");
+    if (!mapEl) return;
+
+    const mapRect = mapEl.getBoundingClientRect();
+
+    let baseXPercent = 50;
+    let baseYPercent = 20;
+
+    if (targetNode) {
+      const nodeRect = targetNode.getBoundingClientRect();
+      const centerX = (nodeRect.left + nodeRect.right) / 2 - mapRect.left;
+      const centerY = (nodeRect.top + nodeRect.bottom) / 2 - mapRect.top;
+      baseXPercent = (centerX / mapRect.width) * 100;
+      baseYPercent = (centerY / mapRect.height) * 100;
+    }
+
+    const count  = 45;
+    const colors = ["#22c55e", "#facc15", "#38bdf8", "#f97316", "#a855f7"];
+
+    for (let i = 0; i < count; i++) {
+      const piece = document.createElement("div");
+      piece.className = "confetti";
+
+      const offsetX = (Math.random() * 30) - 15;
+      piece.style.left = (baseXPercent + offsetX) + "%";
+      piece.style.top  = baseYPercent + "%";
+
+      piece.style.backgroundColor = colors[i % colors.length];
+      piece.style.animationDelay  = (Math.random() * 0.18) + "s";
+
+      mapEl.appendChild(piece);
+      setTimeout(() => piece.remove(), 1000);
+    }
+  }
+
+  function playSuccessSound(isFinal) {
+    try {
+      const Ctx = window.AudioContext || window.webkitAudioContext;
+      if (!Ctx) return;
+      if (!audioCtx) audioCtx = new Ctx();
+      const ctx = audioCtx;
+      const now = ctx.currentTime;
+
+      function tone(freq, start, duration, volume, type = "sine") {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, start);
+        gain.gain.setValueAtTime(0.0001, start);
+        gain.gain.exponentialRampToValueAtTime(volume, start + 0.03);
+        gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+        osc.connect(gain).connect(ctx.destination);
+        osc.start(start);
+        osc.stop(start + duration + 0.02);
+      }
+
+      function sparkleNoise(start, duration, volume) {
+        const bufferSize = duration * ctx.sampleRate;
+        const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+        const data = noiseBuffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+          data[i] = (Math.random() * 2 - 1) * 0.4;
         }
-      }
-      return streak;
-    }
-
-    function updateStreakDisplay() {
-      const el = document.getElementById("streakValue");
-      if (!el) return;
-      el.textContent = `${calcCurrentStreak()} 日`;
-    }
-
-    /* ===== ページラベル ===== */
-    function updatePageLabel(dataOpt) {
-      const labelEl = document.getElementById("pageLabel");
-      const prevBtn = document.getElementById("prevPageBtn");
-      const nextBtn = document.getElementById("nextPageBtn");
-      const data = dataOpt || loadAllProgress();
-      if (!labelEl) return;
-      labelEl.textContent = `${currentPage}ページ目 / 全${data.maxPage}ページ`;
-      if (prevBtn) prevBtn.disabled = currentPage <= 1;
-      if (nextBtn) nextBtn.disabled = currentPage >= data.maxPage;
-    }
-
-    /* ===== 次のタスク表示 ===== */
-    function getNextIncompleteLesson(progress) {
-      for (const lesson of LESSONS) {
-        if (!isLessonCompleted(lesson, progress)) {
-          return lesson;
-        }
-      }
-      return null;
-    }
-
-    function updateNextTaskDisplay(progress) {
-      const titleEl = document.getElementById("nextTaskTitle");
-      const infoEl  = document.getElementById("nextTaskInfo");
-      if (!titleEl || !infoEl) return;
-
-      const next = getNextIncompleteLesson(progress);
-
-      if (next) {
-        titleEl.textContent = `${next.title}を進めよう！`;
-        infoEl.textContent  = `次のマスは「${next.title}」です。クリックして進めていきましょう。`;
-      } else {
-        titleEl.textContent = "このページは全部クリアしました！";
-        infoEl.textContent  = "お疲れさまでした。新しいページを追加して続きの原稿を進めましょう。";
-      }
-    }
-
-    /* ===== 原稿用紙描画データ ===== */
-    const EDIT_CANVAS_WIDTH  = 1000;
-    const EDIT_CANVAS_HEIGHT = Math.round(EDIT_CANVAS_WIDTH * 6213 / 4441);
-    const EXPORT_WIDTH  = 4961;
-    const EXPORT_HEIGHT = 7016;
-    const DRAW_STORAGE_KEY = "mangaBoardDraw_v1";
-
-    const BALLOON_RX = 60;
-    const BALLOON_RY = 80;
-
-    function createEmptyDrawPage() {
-      return {
-        frames: {},
-        rough: {},
-        pen: {},
-        text: {},
-        roughColor: "black"
-      };
-    }
-
-    function loadDrawAll() {
-      const raw = localStorage.getItem(DRAW_STORAGE_KEY);
-      if (!raw) return {};
-      try {
-        const obj = JSON.parse(raw);
-        return obj && typeof obj === "object" ? obj : {};
-      } catch {
-        return {};
-      }
-    }
-
-    function saveDrawAll(data) {
-      localStorage.setItem(DRAW_STORAGE_KEY, JSON.stringify(data));
-    }
-
-    function getDrawPage(page) {
-      const all = loadDrawAll();
-      const key = String(page);
-      if (!all[key]) {
-        all[key] = createEmptyDrawPage();
-        saveDrawAll(all);
-      }
-      return { all, pageData: all[key] };
-    }
-
-    function resetAllDrawData() {
-      localStorage.removeItem(DRAW_STORAGE_KEY);
-    }
-
-    /* 描画中のページデータをキャッシュして高速化 */
-    let activeDrawPageData = null;
-
-    /* ===== 成功エフェクトなど ===== */
-    let audioCtx = null;
-
-    function showSuccessEffect() {
-      const toast = document.getElementById("successToast");
-      if (!toast) return;
-      toast.classList.remove("show");
-      void toast.offsetWidth;
-      toast.classList.add("show");
-    }
-
-    function triggerConfetti(targetNode) {
-      const mapEl = document.getElementById("map");
-      if (!mapEl) return;
-
-      const mapRect = mapEl.getBoundingClientRect();
-
-      let baseXPercent = 50;
-      let baseYPercent = 20;
-
-      if (targetNode) {
-        const nodeRect = targetNode.getBoundingClientRect();
-        const centerX = (nodeRect.left + nodeRect.right) / 2 - mapRect.left;
-        const centerY = (nodeRect.top + nodeRect.bottom) / 2 - mapRect.top;
-        baseXPercent = (centerX / mapRect.width) * 100;
-        baseYPercent = (centerY / mapRect.height) * 100;
+        const noise = ctx.createBufferSource();
+        noise.buffer = noiseBuffer;
+        const gain = ctx.createGain();
+        gain.gain.setValueAtTime(volume, start);
+        gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+        noise.connect(gain).connect(ctx.destination);
+        noise.start(start);
+        noise.stop(start + duration + 0.05);
       }
 
-      const count  = 45;
-      const colors = ["#22c55e", "#facc15", "#38bdf8", "#f97316", "#a855f7"];
-
-      for (let i = 0; i < count; i++) {
-        const piece = document.createElement("div");
-        piece.className = "confetti";
-
-        const offsetX = (Math.random() * 30) - 15;
-        piece.style.left = (baseXPercent + offsetX) + "%";
-        piece.style.top  = baseYPercent + "%";
-
-        piece.style.backgroundColor = colors[i % colors.length];
-        piece.style.animationDelay  = (Math.random() * 0.18) + "s";
-
-        mapEl.appendChild(piece);
-        setTimeout(() => piece.remove(), 1000);
-      }
-    }
-
-    function playSuccessSound(isFinal) {
-      try {
-        const Ctx = window.AudioContext || window.webkitAudioContext;
-        if (!Ctx) return;
-        if (!audioCtx) audioCtx = new Ctx();
-        const ctx = audioCtx;
-        const now = ctx.currentTime;
-
-        function tone(freq, start, duration, volume, type = "sine") {
-          const osc = ctx.createOscillator();
-          const gain = ctx.createGain();
-          osc.type = type;
-          osc.frequency.setValueAtTime(freq, start);
-          gain.gain.setValueAtTime(0.0001, start);
-          gain.gain.exponentialRampToValueAtTime(volume, start + 0.03);
-          gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
-          osc.connect(gain).connect(ctx.destination);
-          osc.start(start);
-          osc.stop(start + duration + 0.02);
-        }
-
-        function sparkleNoise(start, duration, volume) {
-          const bufferSize = duration * ctx.sampleRate;
-          const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-          const data = noiseBuffer.getChannelData(0);
-          for (let i = 0; i < bufferSize; i++) {
-            data[i] = (Math.random() * 2 - 1) * 0.4;
-          }
-          const noise = ctx.createBufferSource();
-          noise.buffer = noiseBuffer;
-          const gain = ctx.createGain();
-          gain.gain.setValueAtTime(volume, start);
-          gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
-          noise.connect(gain).connect(ctx.destination);
-          noise.start(start);
-          noise.stop(start + duration + 0.05);
-        }
-
-        if (!isFinal) {
-          tone(1320, now, 0.25, 0.25, "sine");
-          tone(660,  now + 0.02, 0.35, 0.18, "triangle");
-          tone(880,  now + 0.02, 0.35, 0.18, "triangle");
-          sparkleNoise(now, 0.25, 0.08);
-          return;
-        }
-
-        const base = 523.25;
-        const step = 0.12;
-        tone(base,           now + 0.00, 0.4, 0.26, "triangle");
-        tone(base * 1.25,    now + step, 0.4, 0.24, "triangle");
-        tone(base * 1.5,     now + step*2, 0.4, 0.22, "triangle");
-        tone(base * 2,       now + step*3, 0.5, 0.28, "sine");
-
-        tone(261.63, now, 0.6, 0.20, "sine");
-        sparkleNoise(now, 0.45, 0.12);
-
-      } catch (e) {
-        console.warn("audio error", e);
-      }
-    }
-
-    function isLessonUnlocked(lesson, progress) {
-      if (!lesson.prereqId) return true;
-      const prereq = LESSONS.find(l => l.id === lesson.prereqId);
-      if (!prereq) return true;
-      return progress[prereq.id] >= prereq.maxProgress;
-    }
-
-    function isLessonCompleted(lesson, progress) {
-      return progress[lesson.id] >= lesson.maxProgress;
-    }
-
-    function logMessage(text) {
-      console.log(text);
-    }
-
-    /* ===== 原稿用紙ベース ===== */
-    function drawPaperBase(ctx, w, h) {
-      ctx.save();
-      ctx.fillStyle = "#ffffff";
-      ctx.fillRect(0, 0, w, h);
-
-      ctx.strokeStyle = "#3b82f6";
-      ctx.lineWidth = 1;
-
-      const outerMargin = Math.min(w, h) * 0.04;
-      const basicMargin = Math.min(w, h) * 0.12;
-      const innerMargin = Math.min(w, h) * 0.18;
-
-      ctx.strokeRect(
-        outerMargin,
-        outerMargin,
-        w - outerMargin * 2,
-        h - outerMargin * 2
-      );
-
-      ctx.strokeRect(
-        basicMargin,
-        basicMargin,
-        w - basicMargin * 2,
-        h - basicMargin * 2
-      );
-
-      ctx.strokeRect(
-        innerMargin,
-        innerMargin,
-        w - innerMargin * 2,
-        h - innerMargin * 2
-      );
-
-      const markLen = Math.min(w, h) * 0.03;
-      const cornerLen = Math.min(w, h) * 0.025;
-
-      const cx = w / 2;
-      const cy = h / 2;
-
-      ctx.beginPath();
-
-      ctx.moveTo(cx, outerMargin - markLen);
-      ctx.lineTo(cx, outerMargin);
-
-      ctx.moveTo(cx, h - outerMargin);
-      ctx.lineTo(cx, h - outerMargin + markLen);
-
-      ctx.moveTo(outerMargin - markLen, cy);
-      ctx.lineTo(outerMargin, cy);
-
-      ctx.moveTo(w - outerMargin, cy);
-      ctx.lineTo(w - outerMargin + markLen, cy);
-
-      ctx.moveTo(outerMargin, outerMargin - cornerLen);
-      ctx.lineTo(outerMargin, outerMargin);
-      ctx.lineTo(outerMargin - cornerLen, outerMargin);
-
-      ctx.moveTo(w - outerMargin, outerMargin - cornerLen);
-      ctx.lineTo(w - outerMargin, outerMargin);
-      ctx.lineTo(w - outerMargin + cornerLen, outerMargin);
-
-      ctx.moveTo(outerMargin, h - outerMargin + cornerLen);
-      ctx.lineTo(outerMargin, h - outerMargin);
-      ctx.lineTo(outerMargin - cornerLen, h - outerMargin);
-
-      ctx.moveTo(w - outerMargin, h - outerMargin + cornerLen);
-      ctx.lineTo(w - outerMargin, h - outerMargin);
-      ctx.lineTo(w - outerMargin + cornerLen, h - outerMargin);
-
-      ctx.stroke();
-      ctx.restore();
-    }
-
-    /* ===== 「進めた」処理 ===== */
-    function advanceLesson(lessonId) {
-      const { data, progress } = loadPageProgress(currentPage);
-      const lesson = LESSONS.find(l => l.id === lessonId);
-      if (!lesson) return;
-
-      if (!isLessonUnlocked(lesson, progress)) {
-        logMessage(`「${lesson.title}」はまだ先のマスです。手前のマスから順番に進めてください。`);
-        return;
-      }
-      if (progress[lesson.id] >= lesson.maxProgress) {
-        logMessage(`「${lesson.title}」は既にクリアしています。`);
+      if (!isFinal) {
+        tone(1320, now, 0.25, 0.25, "sine");
+        tone(660,  now + 0.02, 0.35, 0.18, "triangle");
+        tone(880,  now + 0.02, 0.35, 0.18, "triangle");
+        sparkleNoise(now, 0.25, 0.08);
         return;
       }
 
-      progress[lesson.id] += 1;
-      saveAllProgress(data);
+      const base = 523.25;
+      const step = 0.12;
+      tone(base,           now + 0.00, 0.4, 0.26, "triangle");
+      tone(base * 1.25,    now + step, 0.4, 0.24, "triangle");
+      tone(base * 1.5,     now + step*2, 0.4, 0.22, "triangle");
+      tone(base * 2,       now + step*3, 0.5, 0.28, "sine");
 
-      logMessage(`「${lesson.title}」をクリアしました。（${currentPage}ページ目）`);
-      registerActivity();
-      updateStreakDisplay();
+      tone(261.63, now, 0.6, 0.20, "sine");
+      sparkleNoise(now, 0.45, 0.12);
 
-      const isFinal = lesson.id === "finish_6";
-      renderAll();
+    } catch (e) {
+      console.warn("audio error", e);
+    }
+  }
 
-      const mapEl = document.getElementById("map");
-      const targetNode = mapEl
-        ? mapEl.querySelector(`.node[data-lesson-id="${lessonId}"]`)
-        : null;
+  function isLessonUnlocked(lesson, progress) {
+    if (!lesson.prereqId) return true;
+    const prereq = LESSONS.find(l => l.id === lesson.prereqId);
+    if (!prereq) return true;
+    return progress[prereq.id] >= prereq.maxProgress;
+  }
 
-      showSuccessEffect();
-      triggerConfetti(targetNode);
-      playSuccessSound(isFinal);
+  function isLessonCompleted(lesson, progress) {
+    return progress[lesson.id] >= lesson.maxProgress;
+  }
+
+  function logMessage(text) {
+    console.log(text);
+  }
+
+  /* ===== 原稿用紙ベース ===== */
+  function drawPaperBase(ctx, w, h) {
+    ctx.save();
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, w, h);
+
+    ctx.strokeStyle = "#3b82f6";
+    ctx.lineWidth = 1;
+
+    const outerMargin = Math.min(w, h) * 0.04;
+    const basicMargin = Math.min(w, h) * 0.12;
+    const innerMargin = Math.min(w, h) * 0.18;
+
+    ctx.strokeRect(
+      outerMargin,
+      outerMargin,
+      w - outerMargin * 2,
+      h - outerMargin * 2
+    );
+
+    ctx.strokeRect(
+      basicMargin,
+      basicMargin,
+      w - basicMargin * 2,
+      h - basicMargin * 2
+    );
+
+    ctx.strokeRect(
+      innerMargin,
+      innerMargin,
+      w - innerMargin * 2,
+      h - innerMargin * 2
+    );
+
+    const markLen = Math.min(w, h) * 0.03;
+    const cornerLen = Math.min(w, h) * 0.025;
+
+    const cx = w / 2;
+    const cy = h / 2;
+
+    ctx.beginPath();
+
+    ctx.moveTo(cx, outerMargin - markLen);
+    ctx.lineTo(cx, outerMargin);
+
+    ctx.moveTo(cx, h - outerMargin);
+    ctx.lineTo(cx, h - outerMargin + markLen);
+
+    ctx.moveTo(outerMargin - markLen, cy);
+    ctx.lineTo(outerMargin, cy);
+
+    ctx.moveTo(w - outerMargin, cy);
+    ctx.lineTo(w - outerMargin + markLen, cy);
+
+    ctx.moveTo(outerMargin, outerMargin - cornerLen);
+    ctx.lineTo(outerMargin, outerMargin);
+    ctx.lineTo(outerMargin - cornerLen, outerMargin);
+
+    ctx.moveTo(w - outerMargin, outerMargin - cornerLen);
+    ctx.lineTo(w - outerMargin, outerMargin);
+    ctx.lineTo(w - outerMargin + cornerLen, outerMargin);
+
+    ctx.moveTo(outerMargin, h - outerMargin + cornerLen);
+    ctx.lineTo(outerMargin, h - outerMargin);
+    ctx.lineTo(outerMargin - cornerLen, h - outerMargin);
+
+    ctx.moveTo(w - outerMargin, h - outerMargin + cornerLen);
+    ctx.lineTo(w - outerMargin, h - outerMargin);
+    ctx.lineTo(w - outerMargin + cornerLen, h - outerMargin);
+
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  /* ===== 「進めた」処理 ===== */
+  function advanceLesson(lessonId) {
+    const { data, progress } = loadPageProgress(currentPage);
+    const lesson = LESSONS.find(l => l.id === lessonId);
+    if (!lesson) return;
+
+    if (!isLessonUnlocked(lesson, progress)) {
+      logMessage(`「${lesson.title}」はまだ先のマスです。手前のマスから順番に進めてください。`);
+      return;
+    }
+    if (progress[lesson.id] >= lesson.maxProgress) {
+      logMessage(`「${lesson.title}」は既にクリアしています。`);
+      return;
     }
 
-    /* ===== キャンバス関連 ===== */
-    let pendingLessonId = null;
-    let currentPanelMode = null;
-    let currentPanelIndex = null;
-    let drawingCanvas = null;
-    let drawingCtx = null;
-    let isDrawing = false;
-    let lastX = 0, lastY = 0;
-    let draggingBalloon = null;
+    progress[lesson.id] += 1;
+    saveAllProgress(data);
 
-    function clearCanvasListeners(canvas) {
-      if (!canvas) return;
-      canvas.onmousedown = canvas.onmousemove = canvas.onmouseup = canvas.onmouseleave = null;
-      canvas.ontouchstart = canvas.ontouchmove = canvas.ontouchend = null;
-      canvas.oncontextmenu = null;
-      canvas.onpointerdown = canvas.onpointermove = canvas.onpointerup = canvas.onpointercancel = null;
+    logMessage(`「${lesson.title}」をクリアしました。（${currentPage}ページ目）`);
+    registerActivity();
+    updateStreakDisplay();
+
+    const isFinal = lesson.id === "finish_6";
+    renderAll();
+
+    const mapEl = document.getElementById("map");
+    const targetNode = mapEl
+      ? mapEl.querySelector(`.node[data-lesson-id="${lessonId}"]`)
+      : null;
+
+    showSuccessEffect();
+    triggerConfetti(targetNode);
+    playSuccessSound(isFinal);
+  }
+
+  /* ===== キャンバス関連 ===== */
+  let pendingLessonId = null;
+  let currentPanelMode = null;
+  let currentPanelIndex = null;
+  let drawingCanvas = null;
+  let drawingCtx = null;
+  let isDrawing = false;
+  let lastX = 0, lastY = 0;
+  let draggingBalloon = null;
+
+  /* ★ ズーム用グローバル ★ */
+  let currentZoom = 1;
+  let zoomMin = 1;
+  let zoomMax = 3;
+
+  function applyCanvasZoom() {
+    if (!drawingCanvas) return;
+    drawingCanvas.style.transformOrigin = "center center";
+    drawingCanvas.style.transform = `scale(${currentZoom})`;
+  }
+
+  function resetZoomForMode() {
+    if (currentPanelMode === "text") {
+      zoomMin = 0.5;
+      zoomMax = 3;
+      currentZoom = 1;
+    } else if (currentPanelMode === "rough" || currentPanelMode === "pen") {
+      zoomMin = 1;
+      zoomMax = 3;
+      currentZoom = 1;
+    } else {
+      zoomMin = 1;
+      zoomMax = 1;
+      currentZoom = 1;
+    }
+    applyCanvasZoom();
+  }
+
+  function clearCanvasListeners(canvas) {
+    if (!canvas) return;
+    canvas.onmousedown = canvas.onmousemove = canvas.onmouseup = canvas.onmouseleave = null;
+    canvas.ontouchstart = canvas.ontouchmove = canvas.ontouchend = null;
+    canvas.oncontextmenu = null;
+    canvas.onpointerdown = canvas.onpointermove = canvas.onpointerup = canvas.onpointercancel = null;
+    // wheel / touch の addEventListener は新しい canvas 作成ごとに張り直すのでここでは放置
+  }
+
+  function getPanelIndexFromLesson(lessonId) {
+    const parts = lessonId.split("_");
+    if (parts.length < 2) return null;
+    const n = parseInt(parts[1], 10);
+    return isNaN(n) ? null : n;
+  }
+
+  function getStrokeWidth(evt, mode) {
+    const base = mode === "pen" ? 3.2 : 2.2;
+    const p = evt.pressure && evt.pressure > 0 ? evt.pressure : 0.5;
+    return base * (0.3 + p * 0.7);
+  }
+
+  function setupCanvasForLesson(lesson) {
+    const panelBody = document.getElementById("sidePanelBody");
+    const exportBtn = document.getElementById("sidePanelExportBtn");
+    const [group] = lesson.id.split("_");
+    const index = getPanelIndexFromLesson(lesson.id);
+    currentPanelIndex = index;
+
+    if (group === "frame")      currentPanelMode = "frame";
+    else if (group === "rough") currentPanelMode = "rough";
+    else if (group === "text")  currentPanelMode = "text";
+    else if (group === "pen")   currentPanelMode = "pen";
+    else                        currentPanelMode = "info";
+
+    if (["beta", "tone", "finish"].includes(group)) {
+      exportBtn.style.display = "inline-block";
+    } else {
+      exportBtn.style.display = "none";
     }
 
-    function getPanelIndexFromLesson(lessonId) {
-      const parts = lessonId.split("_");
-      if (parts.length < 2) return null;
-      const n = parseInt(parts[1], 10);
-      return isNaN(n) ? null : n;
+    if (currentPanelMode === "info") {
+      panelBody.innerHTML =
+        "この後の作業は描画ソフトやアプリをご利用ください。\n" +
+        "「書き出す」ボタンを押し、書き出した画像データをソフトやアプリに読み込んで作業を行ってください。";
+      drawingCanvas = null;
+      drawingCtx = null;
+      activeDrawPageData = null;
+      return;
     }
 
-    function getStrokeWidth(evt, mode) {
-      const base = mode === "pen" ? 3.2 : 2.2;
-      const p = evt.pressure && evt.pressure > 0 ? evt.pressure : 0.5;
-      return base * (0.3 + p * 0.7);
+    let infoText = "";
+    let toolbarHtml = "";
+
+    if (currentPanelMode === "frame") {
+      infoText = "ドラッグしてこのコマの枠線を引きます。（後の下描き・台詞・ペン入れの作業範囲になります）";
+      toolbarHtml = `
+        <div class="canvas-toolbar">
+          <span>ドラッグで枠線作成 / このコマのみ保存されます。</span>
+          <button id="clearFrameBtn">このコマの枠を消す</button>
+        </div>`;
+    } else if (currentPanelMode === "rough") {
+      infoText = `マウス・ペン・指で下描きを行います。「${lesson.title}」のコマ内のみ描けます。`;
+      toolbarHtml = `
+        <div class="canvas-toolbar">
+          <span>コマ内にラフを描いてください。</span>
+        </div>`;
+    } else if (currentPanelMode === "text") {
+      infoText = `右クリック位置に吹き出しと縦書き台詞を追加します。左ドラッグで吹き出しを移動できます。`;
+      toolbarHtml = `
+        <div class="canvas-toolbar">
+          <span>このコマ内だけ編集されます。（/ や ｜ を入れると簡易改行）</span>
+        </div>`;
+    } else if (currentPanelMode === "pen") {
+      infoText = `下描きを元にペン入れします。ラフ色を変更したり、不要になったら削除できます。`;
+      toolbarHtml = `
+        <div class="canvas-toolbar">
+          <button id="draftBlueBtn">下描きを水色にする</button>
+          <button id="draftGrayBtn">下描きをグレーにする</button>
+          <button id="draftDeleteBtn">下描きを削除する</button>
+        </div>`;
     }
 
-    function setupCanvasForLesson(lesson) {
-      const panelBody = document.getElementById("sidePanelBody");
-      const exportBtn = document.getElementById("sidePanelExportBtn");
-      const [group] = lesson.id.split("_");
-      const index = getPanelIndexFromLesson(lesson.id);
-      currentPanelIndex = index;
+    panelBody.innerHTML = `
+      <div style="margin-bottom:0; font-size:13px;">${infoText}</div>
+      ${toolbarHtml}
+      <div class="canvas-wrapper">
+        <canvas id="pageCanvas" width="${EDIT_CANVAS_WIDTH}" height="${EDIT_CANVAS_HEIGHT}"></canvas>
+      </div>
+    `;
 
-      if (group === "frame")      currentPanelMode = "frame";
-      else if (group === "rough") currentPanelMode = "rough";
-      else if (group === "text")  currentPanelMode = "text";
-      else if (group === "pen")   currentPanelMode = "pen";
-      else                        currentPanelMode = "info";
+    drawingCanvas = document.getElementById("pageCanvas");
+    drawingCtx = drawingCanvas.getContext("2d");
+    clearCanvasListeners(drawingCanvas);
 
-      if (["beta", "tone", "finish"].includes(group)) {
-        exportBtn.style.display = "inline-block";
+    const { pageData } = getDrawPage(currentPage);
+    activeDrawPageData = pageData;
+
+    /* ★ モードに応じてズーム範囲リセット ★ */
+    resetZoomForMode();
+
+    if (currentPanelMode === "frame") {
+      const clearBtn = document.getElementById("clearFrameBtn");
+      if (clearBtn) {
+        clearBtn.onclick = () => {
+          delete pageData.frames[currentPanelIndex];
+          const all = loadDrawAll();
+          all[String(currentPage)] = pageData;
+          saveDrawAll(all);
+          redrawCanvas();
+        };
+      }
+    } else if (currentPanelMode === "pen") {
+      const blueBtn = document.getElementById("draftBlueBtn");
+      const grayBtn = document.getElementById("draftGrayBtn");
+      const delBtn  = document.getElementById("draftDeleteBtn");
+      if (blueBtn) blueBtn.onclick = () => { pageData.roughColor = "blue"; saveDrawPage(pageData); redrawCanvas(); };
+      if (grayBtn) grayBtn.onclick = () => { pageData.roughColor = "gray"; saveDrawPage(pageData); redrawCanvas(); };
+      if (delBtn)  delBtn.onclick  = () => { pageData.rough = {}; saveDrawPage(pageData); redrawCanvas(); };
+    }
+
+    function getCanvasPos(evt) {
+      const rect = drawingCanvas.getBoundingClientRect();
+      let clientX, clientY;
+
+      if (evt.touches && evt.touches.length > 0) {
+        clientX = evt.touches[0].clientX;
+        clientY = evt.touches[0].clientY;
+      } else if (evt.changedTouches && evt.changedTouches.length > 0) {
+        clientX = evt.changedTouches[0].clientX;
+        clientY = evt.changedTouches[0].clientY;
       } else {
-        exportBtn.style.display = "none";
+        clientX = evt.clientX;
+        clientY = evt.clientY;
       }
 
-      if (currentPanelMode === "info") {
-        panelBody.innerHTML =
-          "この後の作業は描画ソフトやアプリをご利用ください。\n" +
-          "「書き出す」ボタンを押し、書き出した画像データをソフトやアプリに読み込んで作業を行ってください。";
-        drawingCanvas = null;
-        drawingCtx = null;
-        activeDrawPageData = null;
-        return;
-      }
+      const x = (clientX - rect.left) * (drawingCanvas.width / rect.width);
+      const y = (clientY - rect.top) * (drawingCanvas.height / rect.height);
+      return { x, y };
+    }
 
-      let infoText = "";
-      let toolbarHtml = "";
+    let frameStart = null;
+
+    function handleDown(evt) {
+      if (evt.touches && evt.touches.length > 1) return; // ピンチ中は描かない
+      evt.preventDefault();
+      let { x, y } = getCanvasPos(evt);
 
       if (currentPanelMode === "frame") {
-        infoText = "ドラッグしてこのコマの枠線を引きます。（後の下描き・台詞・ペン入れの作業範囲になります）";
-        toolbarHtml = `
-          <div class="canvas-toolbar">
-            <span>ドラッグで枠線作成 / このコマのみ保存されます。</span>
-            <button id="clearFrameBtn">このコマの枠を消す</button>
-          </div>`;
-      } else if (currentPanelMode === "rough") {
-        infoText = `マウス・ペン・指で下描きを行います。「${lesson.title}」のコマ内のみ描けます。`;
-        toolbarHtml = `
-          <div class="canvas-toolbar">
-            <span>コマ内にラフを描いてください。</span>
-          </div>`;
-      } else if (currentPanelMode === "text") {
-        infoText = `右クリック位置に吹き出しと縦書き台詞を追加します。左ドラッグで吹き出しを移動できます。`;
-        toolbarHtml = `
-          <div class="canvas-toolbar">
-            <span>このコマ内だけ編集されます。（/ や ｜ を入れると簡易改行）</span>
-          </div>`;
-      } else if (currentPanelMode === "pen") {
-        infoText = `下描きを元にペン入れします。ラフ色を変更したり、不要になったら削除できます。`;
-        toolbarHtml = `
-          <div class="canvas-toolbar">
-            <button id="draftBlueBtn">下描きを水色にする</button>
-            <button id="draftGrayBtn">下描きをグレーにする</button>
-            <button id="draftDeleteBtn">下描きを削除する</button>
-          </div>`;
+        frameStart = { x, y };
+      } else if (currentPanelMode === "rough" || currentPanelMode === "pen") {
+        isDrawing = true;
+        lastX = x;
+        lastY = y;
+
+        const layer = currentPanelMode === "rough" ? pageData.rough : pageData.pen;
+        if (!layer[currentPanelIndex]) layer[currentPanelIndex] = [];
+
+        let w;
+        if (currentPanelMode === "pen") {
+          w = getStrokeWidth(evt, "pen");
+        } else {
+          w = 2.0;
+        }
+
+        layer[currentPanelIndex].push({ points: [{ x, y, w }] });
       }
+    }
 
-      panelBody.innerHTML = `
-        <div style="margin-bottom:0; font-size:13px;">${infoText}</div>
-        ${toolbarHtml}
-        <div class="canvas-wrapper">
-          <canvas id="pageCanvas" width="${EDIT_CANVAS_WIDTH}" height="${EDIT_CANVAS_HEIGHT}"></canvas>
-        </div>
-      `;
-
-      drawingCanvas = document.getElementById("pageCanvas");
-      drawingCtx = drawingCanvas.getContext("2d");
-      clearCanvasListeners(drawingCanvas);
-
-      const { pageData } = getDrawPage(currentPage);
-      activeDrawPageData = pageData;
+    function handleMove(evt) {
+      if (!drawingCanvas) return;
 
       if (currentPanelMode === "frame") {
-        const clearBtn = document.getElementById("clearFrameBtn");
-        if (clearBtn) {
-          clearBtn.onclick = () => {
-            delete pageData.frames[currentPanelIndex];
-            const all = loadDrawAll();
-            all[String(currentPage)] = pageData;
-            saveDrawAll(all);
-            redrawCanvas();
-          };
-        }
-      } else if (currentPanelMode === "pen") {
-        const blueBtn = document.getElementById("draftBlueBtn");
-        const grayBtn = document.getElementById("draftGrayBtn");
-        const delBtn  = document.getElementById("draftDeleteBtn");
-        if (blueBtn) blueBtn.onclick = () => { pageData.roughColor = "blue"; saveDrawPage(pageData); redrawCanvas(); };
-        if (grayBtn) grayBtn.onclick = () => { pageData.roughColor = "gray"; saveDrawPage(pageData); redrawCanvas(); };
-        if (delBtn)  delBtn.onclick  = () => { pageData.rough = {}; saveDrawPage(pageData); redrawCanvas(); };
-      }
-
-      function getCanvasPos(evt) {
-        const rect = drawingCanvas.getBoundingClientRect();
-        let clientX, clientY;
-
-        if (evt.touches && evt.touches.length > 0) {
-          clientX = evt.touches[0].clientX;
-          clientY = evt.touches[0].clientY;
-        } else if (evt.changedTouches && evt.changedTouches.length > 0) {
-          clientX = evt.changedTouches[0].clientX;
-          clientY = evt.changedTouches[0].clientY;
-        } else {
-          clientX = evt.clientX;
-          clientY = evt.clientY;
-        }
-
-        const x = (clientX - rect.left) * (drawingCanvas.width / rect.width);
-        const y = (clientY - rect.top) * (drawingCanvas.height / rect.height);
-        return { x, y };
-      }
-
-      let frameStart = null;
-
-      function handleDown(evt) {
-        evt.preventDefault();
-        let { x, y } = getCanvasPos(evt);
-
-        if (currentPanelMode === "frame") {
-          frameStart = { x, y };
-        } else if (currentPanelMode === "rough" || currentPanelMode === "pen") {
-          isDrawing = true;
-          lastX = x;
-          lastY = y;
-
-          const layer = currentPanelMode === "rough" ? pageData.rough : pageData.pen;
-          if (!layer[currentPanelIndex]) layer[currentPanelIndex] = [];
-
-          let w;
-          if (currentPanelMode === "pen") {
-            w = getStrokeWidth(evt, "pen");
-          } else {
-            w = 2.0;
-          }
-
-          layer[currentPanelIndex].push({ points: [{ x, y, w }] });
-        }
-      }
-
-      function handleMove(evt) {
-        if (!drawingCanvas) return;
-
-        if (currentPanelMode === "frame") {
-          if (!frameStart) return;
-          const { x, y } = getCanvasPos(evt);
-          redrawCanvas();
-          drawingCtx.save();
-          drawingCtx.strokeStyle = "#22c55e";
-          drawingCtx.lineWidth = 2;
-          drawingCtx.setLineDash([8, 4]);
-          drawingCtx.strokeRect(frameStart.x, frameStart.y, x - frameStart.x, y - frameStart.y);
-          drawingCtx.restore();
-        } else if ((currentPanelMode === "rough" || currentPanelMode === "pen") && isDrawing) {
-          const pos = getCanvasPos(evt);
-          let x = pos.x;
-          let y = pos.y;
-
-          const dx = x - lastX;
-          const dy = y - lastY;
-          if (dx * dx + dy * dy < 4) return;
-
-          const rect = pageData.frames[currentPanelIndex];
-          if (rect && !pointInRect(x, y, rect)) {
-            lastX = x; lastY = y;
-            return;
-          }
-
-          const layer = currentPanelMode === "rough" ? pageData.rough : pageData.pen;
-          const paths = layer[currentPanelIndex];
-          if (!paths || paths.length === 0) return;
-          const path = paths[paths.length - 1];
-
-          let w;
-          if (currentPanelMode === "pen") {
-            w = getStrokeWidth(evt, "pen");
-          } else {
-            w = 2.0;
-          }
-
-          path.points.push({ x, y, w });
-          lastX = x; lastY = y;
-          redrawCanvas();
-        }
-      }
-
-      function handleUp(evt) {
-        if (currentPanelMode === "frame") {
-          if (frameStart) {
-            const { x, y } = getCanvasPos(evt);
-            const rect = normalizeRect(frameStart.x, frameStart.y, x, y);
-            pageData.frames[currentPanelIndex] = rect;
-            saveDrawPage(pageData);
-            frameStart = null;
-            redrawCanvas();
-          }
-        } else if (currentPanelMode === "rough" || currentPanelMode === "pen") {
-          if (isDrawing) {
-            isDrawing = false;
-            saveDrawPage(pageData);
-          }
-        }
-      }
-
-      function findBalloonAt(x, y) {
-        const arr = pageData.text[currentPanelIndex] || [];
-        for (let i = arr.length - 1; i >= 0; i--) {
-          const b = arr[i];
-          const dx = x - b.x;
-          const dy = y - b.y;
-          const v = (dx*dx)/(BALLOON_RX*BALLOON_RX) + (dy*dy)/(BALLOON_RY*BALLOON_RY);
-          if (v <= 1) return i;
-        }
-        return -1;
-      }
-
-      function textMouseDown(evt) {
-        evt.preventDefault();
+        if (!frameStart) return;
         const { x, y } = getCanvasPos(evt);
-        const idx = findBalloonAt(x, y);
+        redrawCanvas();
+        drawingCtx.save();
+        drawingCtx.strokeStyle = "#22c55e";
+        drawingCtx.lineWidth = 2;
+        drawingCtx.setLineDash([8, 4]);
+        drawingCtx.strokeRect(frameStart.x, frameStart.y, x - frameStart.x, y - frameStart.y);
+        drawingCtx.restore();
+      } else if ((currentPanelMode === "rough" || currentPanelMode === "pen") && isDrawing) {
+        const pos = getCanvasPos(evt);
+        let x = pos.x;
+        let y = pos.y;
 
-        const isTouch =
-          evt.pointerType === "touch" ||
-          (evt.touches && evt.touches.length > 0);
+        const dx = x - lastX;
+        const dy = y - lastY;
+        if (dx * dx + dy * dy < 4) return;
 
-        if (isTouch) {
-          if (idx !== -1) {
-            draggingBalloon = { index: idx };
-          } else {
-            textContextMenu(evt);
-          }
-          return;
-        }
-
-        if (idx !== -1) {
-          draggingBalloon = { index: idx };
-        }
-      }
-
-      function textMouseMove(evt) {
-        if (!draggingBalloon) return;
-        evt.preventDefault();
-        const { x, y } = getCanvasPos(evt);
-        const arr = pageData.text[currentPanelIndex] || [];
-        const b = arr[draggingBalloon.index];
-        if (!b) return;
         const rect = pageData.frames[currentPanelIndex];
         if (rect && !pointInRect(x, y, rect)) {
+          lastX = x; lastY = y;
           return;
         }
-        b.x = x;
-        b.y = y;
-        saveDrawPage(pageData);
+
+        const layer = currentPanelMode === "rough" ? pageData.rough : pageData.pen;
+        const paths = layer[currentPanelIndex];
+        if (!paths || paths.length === 0) return;
+        const path = paths[paths.length - 1];
+
+        let w;
+        if (currentPanelMode === "pen") {
+          w = getStrokeWidth(evt, "pen");
+        } else {
+          w = 2.0;
+        }
+
+        path.points.push({ x, y, w });
+        lastX = x; lastY = y;
         redrawCanvas();
       }
+    }
 
-      function textMouseUp(evt) {
-        if (draggingBalloon) {
-          draggingBalloon = null;
+    function handleUp(evt) {
+      if (currentPanelMode === "frame") {
+        if (frameStart) {
+          const { x, y } = getCanvasPos(evt);
+          const rect = normalizeRect(frameStart.x, frameStart.y, x, y);
+          pageData.frames[currentPanelIndex] = rect;
+          saveDrawPage(pageData);
+          frameStart = null;
+          redrawCanvas();
+        }
+      } else if (currentPanelMode === "rough" || currentPanelMode === "pen") {
+        if (isDrawing) {
+          isDrawing = false;
+          saveDrawPage(pageData);
         }
       }
+    }
 
-      function textContextMenu(evt) {
-        evt.preventDefault();
-        const { x, y } = getCanvasPos(evt);
-        const rect = pageData.frames[currentPanelIndex];
-        if (rect && !pointInRect(x, y, rect)) return;
-        const text = window.prompt("台詞（縦書き）を入力してください\n（/ や ｜ で簡易改行）", "");
-        if (!text) return;
-        if (!pageData.text[currentPanelIndex]) pageData.text[currentPanelIndex] = [];
-        pageData.text[currentPanelIndex].push({ x, y, text });
-        saveDrawPage(pageData);
-        redrawCanvas();
+    function findBalloonAt(x, y) {
+      const arr = pageData.text[currentPanelIndex] || [];
+      for (let i = arr.length - 1; i >= 0; i--) {
+        const b = arr[i];
+        const dx = x - b.x;
+        const dy = y - b.y;
+        const v = (dx*dx)/(BALLOON_RX*BALLOON_RX) + (dy*dy)/(BALLOON_RY*BALLOON_RY);
+        if (v <= 1) return i;
+      }
+      return -1;
+    }
+
+    function textMouseDown(evt) {
+      evt.preventDefault();
+      const { x, y } = getCanvasPos(evt);
+      const idx = findBalloonAt(x, y);
+
+      const isTouch =
+        evt.pointerType === "touch" ||
+        (evt.touches && evt.touches.length > 0);
+
+      if (isTouch) {
+        if (evt.touches && evt.touches.length > 1) {
+          // 2本指以上はピンチ用
+          return;
+        }
+        if (idx !== -1) {
+          draggingBalloon = { index: idx };
+        } else {
+          textContextMenu(evt);
+        }
+        return;
       }
 
-      // リスナー設定
-      if (currentPanelMode === "text") {
-        drawingCanvas.onpointerdown = evt => {
-          drawingCanvas.setPointerCapture(evt.pointerId);
-          textMouseDown(evt);
-        };
-        drawingCanvas.onpointermove = textMouseMove;
-        drawingCanvas.onpointerup = evt => {
-          textMouseUp(evt);
-          drawingCanvas.releasePointerCapture(evt.pointerId);
-        };
-        drawingCanvas.onpointercancel = drawingCanvas.onpointerup;
-
-        drawingCanvas.onmousedown = textMouseDown;
-        drawingCanvas.onmousemove = textMouseMove;
-        drawingCanvas.onmouseup   = textMouseUp;
-        drawingCanvas.onmouseleave= textMouseUp;
-        drawingCanvas.oncontextmenu = textContextMenu;
-      } else {
-        drawingCanvas.onpointerdown = evt => {
-          drawingCanvas.setPointerCapture(evt.pointerId);
-          handleDown(evt);
-        };
-        drawingCanvas.onpointermove = handleMove;
-        drawingCanvas.onpointerup = evt => {
-          handleUp(evt);
-          drawingCanvas.releasePointerCapture(evt.pointerId);
-        };
-        drawingCanvas.onpointercancel = drawingCanvas.onpointerup;
-
-        drawingCanvas.onmousedown = handleDown;
-        drawingCanvas.onmousemove = handleMove;
-        drawingCanvas.onmouseup   = handleUp;
-        drawingCanvas.onmouseleave= handleUp;
-        drawingCanvas.ontouchstart= handleDown;
-        drawingCanvas.ontouchmove = handleMove;
-        drawingCanvas.ontouchend  = handleUp;
+      if (idx !== -1) {
+        draggingBalloon = { index: idx };
       }
+    }
 
+    function textMouseMove(evt) {
+      if (!draggingBalloon) return;
+      evt.preventDefault();
+      const { x, y } = getCanvasPos(evt);
+      const arr = pageData.text[currentPanelIndex] || [];
+      const b = arr[draggingBalloon.index];
+      if (!b) return;
+      const rect = pageData.frames[currentPanelIndex];
+      if (rect && !pointInRect(x, y, rect)) {
+        return;
+      }
+      b.x = x;
+      b.y = y;
+      saveDrawPage(pageData);
       redrawCanvas();
     }
 
-    function normalizeRect(x1, y1, x2, y2) {
-      const x = Math.min(x1, x2);
-      const y = Math.min(y1, y2);
-      const w = Math.abs(x2 - x1);
-      const h = Math.abs(y2 - y1);
-      return { x, y, w, h };
-    }
-
-    function pointInRect(x, y, rect) {
-      return x >= rect.x && y >= rect.y && x <= rect.x + rect.w && y <= rect.y + rect.h;
-    }
-
-    function saveDrawPage(pageData) {
-      const all = loadDrawAll();
-      all[String(currentPage)] = pageData;
-      saveDrawAll(all);
-    }
-
-    // ===== ペン線のスムージング／入り抜き =====
-    function smoothStrokePoints(pts) {
-      if (!pts || pts.length <= 2) return pts || [];
-      const res = [];
-      for (let i = 0; i < pts.length; i++) {
-        const p0 = pts[i - 1] || pts[i];
-        const p1 = pts[i];
-        const p2 = pts[i + 1] || pts[i];
-        res.push({
-          x: (p0.x + p1.x + p2.x) / 3,
-          y: (p0.y + p1.y + p2.y) / 3,
-          w: p1.w
-        });
+    function textMouseUp(evt) {
+      if (draggingBalloon) {
+        draggingBalloon = null;
       }
-      return res;
     }
 
-    function taperFactor(i, n) {
-      if (n <= 1) return 1;
-      const t = i / (n - 1);
-      const edge = 0.2;
-      if (t < edge) return t / edge;
-      if (t > 1 - edge) return (1 - t) / edge;
-      return 1;
+    function textContextMenu(evt) {
+      evt.preventDefault();
+      const { x, y } = getCanvasPos(evt);
+      const rect = pageData.frames[currentPanelIndex];
+      if (rect && !pointInRect(x, y, rect)) return;
+      const text = window.prompt("台詞（縦書き）を入力してください\n（/ や ｜ で簡易改行）", "");
+      if (!text) return;
+      if (!pageData.text[currentPanelIndex]) pageData.text[currentPanelIndex] = [];
+      pageData.text[currentPanelIndex].push({ x, y, text });
+      saveDrawPage(pageData);
+      redrawCanvas();
     }
 
-    // 句読点・三点リーダ専用の縦書き描画
-    function drawVerticalBalloonText(ctx, text, centerX, centerY) {
-      const fontSize = 18;
-
-      ctx.save();
-      ctx.font =
-        `${fontSize}px ` +
-        `"やさしさアンチック","新コミック体","源暎アンチック","ノバンチカ源",` +
-        `"Yu Mincho","Hiragino Mincho ProN",serif`;
-      ctx.fillStyle = "#111827";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-
-      const lineTexts = String(text).split(/[\/\n]/);
-      const columns = lineTexts.map(line => Array.from(line));
-
-      let maxLen = 0;
-      columns.forEach(chars => {
-        if (chars.length > maxLen) maxLen = chars.length;
-      });
-
-      const lineHeight  = fontSize * 1.1;
-      const totalHeight = lineHeight * (maxLen - 1);
-      const topY        = centerY - totalHeight / 2;
-
-      const colGap     = fontSize + 4;
-      const totalWidth = colGap * (columns.length - 1);
-      const rightX     = centerX + totalWidth / 2;
-
-      columns.forEach((chars, colIndex) => {
-        const x = rightX - colGap * colIndex;
-
-        chars.forEach((ch, i) => {
-          const baseY = topY + lineHeight * i;
-          let drawX   = x;
-          let drawY   = baseY;
-
-          if (ch === "、" || ch === "。") {
-            drawX = x - fontSize * 0.12;
-            drawY = baseY + fontSize * 0.15;
-            ctx.fillText(ch, drawX, drawY);
-          } else if (ch === "…") {
-            const dotGap = fontSize * 0.32;
-            const r      = fontSize * 0.07;
-            for (let k = -1; k <= 1; k++) {
-              ctx.beginPath();
-              ctx.arc(drawX, baseY + dotGap * k, r, 0, Math.PI * 2);
-              ctx.fill();
-            }
-          } else {
-            ctx.fillText(ch, drawX, baseY);
-          }
-        });
-      });
-
-      ctx.restore();
+    // ===== ズーム（ホイール + ピンチ） =====
+    function onWheelZoom(evt) {
+      evt.preventDefault();
+      if (!drawingCanvas) return;
+      let delta = -evt.deltaY;
+      const step = 0.1;
+      const factor = delta > 0 ? (1 + step) : (1 - step);
+      currentZoom *= factor;
+      if (currentZoom < zoomMin) currentZoom = zoomMin;
+      if (currentZoom > zoomMax) currentZoom = zoomMax;
+      applyCanvasZoom();
     }
 
-    function redrawCanvas() {
-      if (!drawingCanvas || !drawingCtx) return;
-      const pageData = activeDrawPageData || getDrawPage(currentPage).pageData;
-      const ctx = drawingCtx;
-      ctx.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height);
+    function distanceTouches(t1, t2) {
+      const dx = t1.clientX - t2.clientX;
+      const dy = t1.clientY - t2.clientY;
+      return Math.sqrt(dx*dx + dy*dy);
+    }
 
-      drawPaperBase(ctx, drawingCanvas.width, drawingCanvas.height);
+    let pinchStartDistance = null;
+    let pinchStartZoom = 1;
 
-      ctx.save();
-      ctx.strokeStyle = "#111827";
-      ctx.lineWidth = 3;
-      Object.values(pageData.frames).forEach(rect => {
-        ctx.strokeRect(rect.x, rect.y, rect.w, rect.h);
+    function onTouchStartZoom(evt) {
+      if (evt.touches.length === 2) {
+        evt.preventDefault();
+        pinchStartDistance = distanceTouches(evt.touches[0], evt.touches[1]);
+        pinchStartZoom = currentZoom;
+      }
+    }
+
+    function onTouchMoveZoom(evt) {
+      if (evt.touches.length === 2 && pinchStartDistance) {
+        evt.preventDefault();
+        const newDist = distanceTouches(evt.touches[0], evt.touches[1]);
+        const scale = newDist / pinchStartDistance;
+        currentZoom = pinchStartZoom * scale;
+        if (currentZoom < zoomMin) currentZoom = zoomMin;
+        if (currentZoom > zoomMax) currentZoom = zoomMax;
+        applyCanvasZoom();
+      }
+    }
+
+    function onTouchEndZoom(evt) {
+      if (evt.touches.length < 2) {
+        pinchStartDistance = null;
+      }
+    }
+
+    drawingCanvas.addEventListener("wheel", onWheelZoom, { passive: false });
+    drawingCanvas.addEventListener("touchstart", onTouchStartZoom, { passive: false });
+    drawingCanvas.addEventListener("touchmove", onTouchMoveZoom, { passive: false });
+    drawingCanvas.addEventListener("touchend", onTouchEndZoom);
+
+    // リスナー設定
+    if (currentPanelMode === "text") {
+      drawingCanvas.onpointerdown = evt => {
+        drawingCanvas.setPointerCapture(evt.pointerId);
+        textMouseDown(evt);
+      };
+      drawingCanvas.onpointermove = textMouseMove;
+      drawingCanvas.onpointerup = evt => {
+        textMouseUp(evt);
+        drawingCanvas.releasePointerCapture(evt.pointerId);
+      };
+      drawingCanvas.onpointercancel = drawingCanvas.onpointerup;
+
+      drawingCanvas.onmousedown = textMouseDown;
+      drawingCanvas.onmousemove = textMouseMove;
+      drawingCanvas.onmouseup   = textMouseUp;
+      drawingCanvas.onmouseleave= textMouseUp;
+      drawingCanvas.oncontextmenu = textContextMenu;
+    } else {
+      drawingCanvas.onpointerdown = evt => {
+        drawingCanvas.setPointerCapture(evt.pointerId);
+        handleDown(evt);
+      };
+      drawingCanvas.onpointermove = handleMove;
+      drawingCanvas.onpointerup = evt => {
+        handleUp(evt);
+        drawingCanvas.releasePointerCapture(evt.pointerId);
+      };
+      drawingCanvas.onpointercancel = drawingCanvas.onpointerup;
+
+      drawingCanvas.onmousedown = handleDown;
+      drawingCanvas.onmousemove = handleMove;
+      drawingCanvas.onmouseup   = handleUp;
+      drawingCanvas.onmouseleave= handleUp;
+      drawingCanvas.ontouchstart= handleDown;
+      drawingCanvas.ontouchmove = handleMove;
+      drawingCanvas.ontouchend  = handleUp;
+    }
+
+    redrawCanvas();
+  }
+
+  function normalizeRect(x1, y1, x2, y2) {
+    const x = Math.min(x1, x2);
+    const y = Math.min(y1, y2);
+    const w = Math.abs(x2 - x1);
+    const h = Math.abs(y2 - y1);
+    return { x, y, w, h };
+  }
+
+  function pointInRect(x, y, rect) {
+    return x >= rect.x && y >= rect.y && x <= rect.x + rect.w && y <= rect.y + rect.h;
+  }
+
+  function saveDrawPage(pageData) {
+    const all = loadDrawAll();
+    all[String(currentPage)] = pageData;
+    saveDrawAll(all);
+  }
+
+  // ===== ペン線のスムージング／入り抜き =====
+  function smoothStrokePoints(pts) {
+    if (!pts || pts.length <= 2) return pts || [];
+    const res = [];
+    for (let i = 0; i < pts.length; i++) {
+      const p0 = pts[i - 1] || pts[i];
+      const p1 = pts[i];
+      const p2 = pts[i + 1] || pts[i];
+      res.push({
+        x: (p0.x + p1.x + p2.x) / 3,
+        y: (p0.y + p1.y + p2.y) / 3,
+        w: p1.w
       });
-      ctx.restore();
+    }
+    return res;
+  }
 
-      const roughColor = pageData.roughColor || "black";
-      let roughStroke = "#111827";
-      if (roughColor === "blue") roughStroke = "#60a5fa";
-      if (roughColor === "gray") roughStroke = "#9ca3af";
+  function taperFactor(i, n) {
+    if (n <= 1) return 1;
+    const t = i / (n - 1);
+    const edge = 0.2;
+    if (t < edge) return t / edge;
+    if (t > 1 - edge) return (1 - t) / edge;
+    return 1;
+  }
 
-      function drawStrokeLayer(layer, strokeStyle, defaultWidth, useVariableWidth) {
-        ctx.save();
-        ctx.lineJoin = "round";
-        ctx.lineCap = "round";
-        ctx.strokeStyle = strokeStyle;
+  // 句読点・三点リーダ専用の縦書き描画
+  function drawVerticalBalloonText(ctx, text, centerX, centerY) {
+    const fontSize = 18;
 
-        for (const [panelIndex, paths] of Object.entries(layer)) {
-          const rect = pageData.frames[panelIndex];
-          if (rect) {
-            ctx.save();
+    ctx.save();
+    ctx.font =
+      `${fontSize}px ` +
+      `"やさしさアンチック","新コミック体","源暎アンチック","ノバンチカ源",` +
+      `"Yu Mincho","Hiragino Mincho ProN",serif`;
+    ctx.fillStyle = "#111827";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+
+    const lineTexts = String(text).split(/[\/\n]/);
+    const columns = lineTexts.map(line => Array.from(line));
+
+    let maxLen = 0;
+    columns.forEach(chars => {
+      if (chars.length > maxLen) maxLen = chars.length;
+    });
+
+    const lineHeight  = fontSize * 1.1;
+    const totalHeight = lineHeight * (maxLen - 1);
+    const topY        = centerY - totalHeight / 2;
+
+    const colGap     = fontSize + 4;
+    const totalWidth = colGap * (columns.length - 1);
+    const rightX     = centerX + totalWidth / 2;
+
+    columns.forEach((chars, colIndex) => {
+      const x = rightX - colGap * colIndex;
+
+      chars.forEach((ch, i) => {
+        const baseY = topY + lineHeight * i;
+        let drawX   = x;
+        let drawY   = baseY;
+
+        if (ch === "、" || ch === "。") {
+          drawX = x - fontSize * 0.12;
+          drawY = baseY + fontSize * 0.15;
+          ctx.fillText(ch, drawX, drawY);
+        } else if (ch === "…") {
+          const dotGap = fontSize * 0.32;
+          const r      = fontSize * 0.07;
+          for (let k = -1; k <= 1; k++) {
             ctx.beginPath();
-            ctx.rect(rect.x, rect.y, rect.w, rect.h);
-            ctx.clip();
+            ctx.arc(drawX, baseY + dotGap * k, r, 0, Math.PI * 2);
+            ctx.fill();
           }
-
-          paths.forEach(path => {
-            let pts = path.points;
-            if (!pts || pts.length < 2) return;
-
-            if (useVariableWidth) {
-              pts = smoothStrokePoints(pts);
-            }
-
-            const n = pts.length;
-
-            if (!useVariableWidth) {
-              ctx.lineWidth = defaultWidth;
-              ctx.beginPath();
-              ctx.moveTo(pts[0].x, pts[0].y);
-              for (let i = 1; i < n; i++) {
-                ctx.lineTo(pts[i].x, pts[i].y);
-              }
-              ctx.stroke();
-            } else {
-              for (let i = 0; i < n - 1; i++) {
-                const p0 = pts[i];
-                const p1 = pts[i + 1];
-                const baseW = p0.w != null ? p0.w : defaultWidth;
-                const w = Math.max(0.5, baseW * taperFactor(i, n));
-                ctx.lineWidth = w;
-                ctx.beginPath();
-                ctx.moveTo(p0.x, p0.y);
-                ctx.lineTo(p1.x, p1.y);
-                ctx.stroke();
-              }
-            }
-          });
-
-          if (rect) ctx.restore();
-        }
-
-        ctx.restore();
-      }
-
-      drawStrokeLayer(pageData.rough, roughStroke, 2, false);
-      drawStrokeLayer(pageData.pen,   "#111827",   3, true);
-
-      ctx.save();
-      for (const [panelIndex, balloons] of Object.entries(pageData.text)) {
-        const rect = pageData.frames[panelIndex];
-        balloons.forEach(b => {
-          if (rect) {
-            ctx.save();
-            ctx.beginPath();
-            ctx.rect(rect.x, rect.y, rect.w, rect.h);
-            ctx.clip();
-          }
-
-          ctx.beginPath();
-          ctx.ellipse(b.x, b.y, BALLOON_RX, BALLOON_RY, 0, 0, Math.PI * 2);
-          ctx.fillStyle = "rgba(255,255,255,0.97)";
-          ctx.fill();
-          ctx.strokeStyle = "#111827";
-          ctx.lineWidth = 2;
-          ctx.stroke();
-
-          drawVerticalBalloonText(ctx, b.text, b.x, b.y);
-
-          if (rect) ctx.restore();
-        });
-      }
-      ctx.restore();
-
-      const activeRect = currentPanelIndex && pageData.frames[currentPanelIndex];
-      if (activeRect) {
-        ctx.save();
-        ctx.fillStyle = "rgba(0,0,0,0.15)";
-        ctx.beginPath();
-        ctx.rect(0, 0, drawingCanvas.width, drawingCanvas.height);
-        ctx.rect(activeRect.x, activeRect.y, activeRect.w, activeRect.h);
-        ctx.fill("evenodd");
-        ctx.restore();
-
-        ctx.save();
-        ctx.strokeStyle = "#22c55e";
-        ctx.lineWidth = 3;
-        ctx.strokeRect(activeRect.x, activeRect.y, activeRect.w, activeRect.h);
-        ctx.restore();
-      }
-    }
-
-    /* ===== サイドパネル開閉 ===== */
-    function openLessonPanel(lessonId) {
-      const { progress } = loadPageProgress(currentPage);
-      const lesson = LESSONS.find(l => l.id === lessonId);
-      if (!lesson) return;
-
-      if (!isLessonUnlocked(lesson, progress)) {
-        logMessage(`「${lesson.title}」はまだ先のマスです。手前のマスから順番に進めてください。`);
-      } else if (isLessonCompleted(lesson, progress)) {
-        logMessage(`「${lesson.title}」は既にクリアしています。`);
-      } else {
-        const panel = document.getElementById("sidePanel");
-        const titleEl = document.getElementById("sidePanelTitle");
-        if (!panel || !titleEl) return;
-
-        titleEl.textContent = lesson.title;
-
-        pendingLessonId = lessonId;
-        setupCanvasForLesson(lesson);
-        panel.classList.add("open");
-      }
-    }
-
-    function closeLessonPanel() {
-      const panel = document.getElementById("sidePanel");
-      if (panel) panel.classList.remove("open");
-      pendingLessonId = null;
-      drawingCanvas = null;
-      drawingCtx = null;
-      draggingBalloon = null;
-      activeDrawPageData = null;
-    }
-
-    /* ===== マップ描画 ===== */
-    function renderMap(progress) {
-      const mapEl = document.getElementById("map");
-      mapEl.innerHTML = "";
-
-      const perRow = getPerRow();
-      const positions = computeGridPositions(LESSONS.length, perRow);
-
-      const nextLesson = getNextIncompleteLesson(progress);
-
-      LESSONS.forEach((lesson, index) => {
-        const unlocked  = isLessonUnlocked(lesson, progress);
-        const completed = isLessonCompleted(lesson, progress);
-        const pos = positions[index];
-
-        const node = document.createElement("div");
-        node.className = "node";
-        node.dataset.lessonId = lesson.id;
-        node.style.left = pos.x + "%";
-        node.style.top  = pos.y + "%";
-
-        if (!unlocked) node.classList.add("locked");
-        if (unlocked)  node.classList.add("unlocked");
-        if (completed) node.classList.add("completed");
-
-        if (nextLesson && lesson.id === nextLesson.id) {
-          node.classList.add("next-node");
-        }
-
-        const circle = document.createElement("div");
-        circle.className = "node-circle";
-        circle.textContent = index + 1;
-
-        const title = document.createElement("div");
-        title.className = "node-title";
-        title.textContent = lesson.title;
-
-        const progressText = document.createElement("div");
-        progressText.className = "node-progress";
-        if (completed) {
-          progressText.textContent = "クリア済み";
-        } else if (unlocked) {
-          progressText.textContent = "クリックして進む";
         } else {
-          progressText.textContent = "ロック中";
+          ctx.fillText(ch, drawX, baseY);
         }
-
-        node.appendChild(circle);
-        node.appendChild(title);
-        node.appendChild(progressText);
-
-        node.addEventListener("click", () => openLessonPanel(lesson.id));
-        mapEl.appendChild(node);
-      });
-
-      requestAnimationFrame(drawLinesFromDom);
-    }
-
-    function drawLinesFromDom() {
-      const mapEl = document.getElementById("map");
-      if (!mapEl) return;
-
-      const oldSvg = mapEl.querySelector(".map-lines");
-      if (oldSvg) oldSvg.remove();
-
-      const nodes = Array.from(mapEl.querySelectorAll(".node"));
-      if (nodes.length < 2) return;
-
-      const mapRect = mapEl.getBoundingClientRect();
-      const centers = nodes.map(node => {
-        const r = node.getBoundingClientRect();
-        const cx = (r.left + r.right) / 2 - mapRect.left;
-        const cy = (r.top + r.bottom) / 2 - mapRect.top;
-        return { x: cx, y: cy };
-      });
-
-      const svgNS = "http://www.w3.org/2000/svg";
-      const svg = document.createElementNS(svgNS, "svg");
-      svg.setAttribute("class", "map-lines");
-      svg.setAttribute("width", "100%");
-      svg.setAttribute("height", "100%");
-      svg.setAttribute("viewBox", `0 0 ${mapRect.width} ${mapRect.height}`);
-      svg.setAttribute("preserveAspectRatio", "none");
-
-      for (let i = 0; i < centers.length - 1; i++) {
-        const p1 = centers[i];
-        const p2 = centers[i + 1];
-        const path = document.createElementNS(svgNS, "path");
-        const d = `M ${p1.x} ${p1.y} L ${p2.x} ${p2.y}`;
-        path.setAttribute("d", d);
-        path.setAttribute("class", "map-line");
-        svg.appendChild(path);
-      }
-
-      mapEl.insertBefore(svg, mapEl.firstChild);
-    }
-
-    function renderAll() {
-      const { data, progress } = loadPageProgress(currentPage);
-      renderMap(progress);
-      updateStreakDisplay();
-      updatePageLabel(data);
-      updateNextTaskDisplay(progress);
-    }
-
-    /* ===== 書き出し ===== */
-    function exportCurrentPageImage() {
-      const off = document.createElement("canvas");
-      off.width = EXPORT_WIDTH;
-      off.height = EXPORT_HEIGHT;
-      const ctx = off.getContext("2d");
-
-      const { pageData } = getDrawPage(currentPage);
-
-      ctx.fillStyle = "#ffffff";
-      ctx.fillRect(0, 0, off.width, off.height);
-
-      const scale = Math.min(
-        off.width / EDIT_CANVAS_WIDTH,
-        off.height / EDIT_CANVAS_HEIGHT
-      );
-      const offsetX = (off.width  - EDIT_CANVAS_WIDTH  * scale) / 2;
-      const offsetY = (off.height - EDIT_CANVAS_HEIGHT * scale) / 2;
-
-      ctx.save();
-      ctx.translate(offsetX, offsetY);
-      ctx.scale(scale, scale);
-
-      drawPaperBase(ctx, EDIT_CANVAS_WIDTH, EDIT_CANVAS_HEIGHT);
-
-      ctx.save();
-      ctx.strokeStyle = "#111827";
-      ctx.lineWidth = 3;
-      Object.values(pageData.frames).forEach(rect => {
-        ctx.strokeRect(rect.x, rect.y, rect.w, rect.h);
-      });
-      ctx.restore();
-
-      const roughColor = pageData.roughColor || "black";
-      let roughStroke = "#111827";
-      if (roughColor === "blue") roughStroke = "#60a5fa";
-      if (roughColor === "gray") roughStroke = "#9ca3af";
-
-      function drawStrokeLayer(layer, strokeStyle, defaultWidth, useVariableWidth) {
-        ctx.save();
-        ctx.lineJoin = "round";
-        ctx.lineCap  = "round";
-        ctx.strokeStyle = strokeStyle;
-
-        for (const [panelIndex, paths] of Object.entries(layer)) {
-          const rect = pageData.frames[panelIndex];
-          if (rect) {
-            ctx.save();
-            ctx.beginPath();
-            ctx.rect(rect.x, rect.y, rect.w, rect.h);
-            ctx.clip();
-          }
-
-          paths.forEach(path => {
-            let pts = path.points;
-            if (!pts || pts.length < 2) return;
-
-            if (useVariableWidth) {
-              pts = smoothStrokePoints(pts);
-            }
-
-            const n = pts.length;
-
-            if (!useVariableWidth) {
-              ctx.lineWidth = defaultWidth;
-              ctx.beginPath();
-              ctx.moveTo(pts[0].x, pts[0].y);
-              for (let i = 1; i < n; i++) {
-                ctx.lineTo(pts[i].x, pts[i].y);
-              }
-              ctx.stroke();
-            } else {
-              for (let i = 0; i < n - 1; i++) {
-                const p0 = pts[i];
-                const p1 = pts[i + 1];
-                const baseW = p0.w != null ? p0.w : defaultWidth;
-                const w  = Math.max(0.5, baseW * taperFactor(i, n));
-                ctx.lineWidth = w;
-                ctx.beginPath();
-                ctx.moveTo(p0.x, p0.y);
-                ctx.lineTo(p1.x, p1.y);
-                ctx.stroke();
-              }
-            }
-          });
-
-          if (rect) ctx.restore();
-        }
-
-        ctx.restore();
-      }
-
-      drawStrokeLayer(pageData.rough, roughStroke, 2, false);
-      drawStrokeLayer(pageData.pen,   "#111827",   3, true);
-
-      ctx.save();
-      for (const [panelIndex, balloons] of Object.entries(pageData.text)) {
-        const rect = pageData.frames[panelIndex];
-        balloons.forEach(b => {
-          if (rect) {
-            ctx.save();
-            ctx.beginPath();
-            ctx.rect(rect.x, rect.y, rect.w, rect.h);
-            ctx.clip();
-          }
-          ctx.beginPath();
-          ctx.ellipse(b.x, b.y, BALLOON_RX, BALLOON_RY, 0, 0, Math.PI * 2);
-          ctx.fillStyle = "rgba(255,255,255,0.97)";
-          ctx.fill();
-          ctx.strokeStyle = "#111827";
-          ctx.lineWidth = 2;
-          ctx.stroke();
-
-          const fontSize = 19;
-          ctx.font = `${fontSize}px "Yu Mincho", "Hiragino Mincho ProN", serif`;
-          ctx.fillStyle = "#111827";
-          ctx.textAlign = "center";
-          ctx.textBaseline = "top";
-
-          const lines = String(b.text).split(/[\/|｜]/);
-          const columnGap = 4;
-          const totalWidth = (lines.length - 1) * (fontSize + columnGap);
-          const firstX = b.x - totalWidth / 2;
-
-          lines.forEach((line, lineIndex) => {
-            const chars = [...line];
-            const columnHeight = chars.length * fontSize;
-            let y = b.y - columnHeight / 2;
-
-            const x = firstX + lineIndex * (fontSize + columnGap);
-            for (const ch of chars) {
-              ctx.fillText(ch, x, y);
-              y += fontSize;
-            }
-          });
-
-          if (rect) ctx.restore();
-        });
-      }
-      ctx.restore();
-
-      const url = off.toDataURL("image/png");
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `manga_page${currentPage}.png`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-    }
-
-    /* ===== 起動 ===== */
-    window.addEventListener("DOMContentLoaded", () => {
-      renderAll();
-
-      document.getElementById("resetProgressBtn").addEventListener("click", () => {
-        if (!confirm("本当に全ページの進捗・連続日数・枠線や下描き・台詞・ペン入れをすべてリセットしますか？")) return;
-        resetAllPagesProgress();
-        resetStreakData();
-        resetAllDrawData();
-        renderAll();
-      });
-
-      document.getElementById("prevPageBtn").addEventListener("click", () => {
-        if (currentPage > 1) {
-          currentPage--;
-          renderAll();
-        }
-      });
-      document.getElementById("nextPageBtn").addEventListener("click", () => {
-        const data = loadAllProgress();
-        if (currentPage < data.maxPage) {
-          currentPage++;
-          renderAll();
-        }
-      });
-      document.getElementById("addPageBtn").addEventListener("click", () => {
-        const data = loadAllProgress();
-        const newPage = data.maxPage + 1;
-        data.maxPage = newPage;
-        data.pages[String(newPage)] = createInitialProgressMap();
-        saveAllProgress(data);
-        currentPage = newPage;
-        logMessage(`${newPage}ページ目を追加しました。`);
-        renderAll();
-      });
-
-      document.getElementById("resetPagesBtn").addEventListener("click", () => {
-        if (!confirm("全ページを削除して 1ページ目だけ残します。よろしいですか？")) return;
-        const data = loadAllProgress();
-        data.maxPage = 1;
-        data.pages = { "1": createInitialProgressMap() };
-        saveAllProgress(data);
-        currentPage = 1;
-        renderAll();
-        logMessage("ページ数をリセットしました。");
-      });
-
-      const closeBtn = document.getElementById("sidePanelClose");
-      const doneBtn  = document.getElementById("sidePanelDoneBtn");
-      const exportBtn = document.getElementById("sidePanelExportBtn");
-
-      if (closeBtn) {
-        closeBtn.addEventListener("click", () => {
-          pendingLessonId = null;
-          closeLessonPanel();
-        });
-      }
-      if (doneBtn) {
-        doneBtn.addEventListener("click", () => {
-          if (!pendingLessonId) {
-            closeLessonPanel();
-            return;
-          }
-          const id = pendingLessonId;
-          pendingLessonId = null;
-          closeLessonPanel();
-          advanceLesson(id);
-        });
-      }
-      if (exportBtn) {
-        exportBtn.addEventListener("click", () => {
-          exportCurrentPageImage();
-        });
-      }
-
-      window.addEventListener("resize", () => {
-        renderAll();
       });
     });
-  </script>
+
+    ctx.restore();
+  }
+
+  function redrawCanvas() {
+    if (!drawingCanvas || !drawingCtx) return;
+    const pageData = activeDrawPageData || getDrawPage(currentPage).pageData;
+    const ctx = drawingCtx;
+    ctx.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height);
+
+    drawPaperBase(ctx, drawingCanvas.width, drawingCanvas.height);
+
+    ctx.save();
+    ctx.strokeStyle = "#111827";
+    ctx.lineWidth = 3;
+    Object.values(pageData.frames).forEach(rect => {
+      ctx.strokeRect(rect.x, rect.y, rect.w, rect.h);
+    });
+    ctx.restore();
+
+    const roughColor = pageData.roughColor || "black";
+    let roughStroke = "#111827";
+    if (roughColor === "blue") roughStroke = "#60a5fa";
+    if (roughColor === "gray") roughStroke = "#9ca3af";
+
+    function drawStrokeLayer(layer, strokeStyle, defaultWidth, useVariableWidth) {
+      ctx.save();
+      ctx.lineJoin = "round";
+      ctx.lineCap = "round";
+      ctx.strokeStyle = strokeStyle;
+
+      for (const [panelIndex, paths] of Object.entries(layer)) {
+        const rect = pageData.frames[panelIndex];
+        if (rect) {
+          ctx.save();
+          ctx.beginPath();
+          ctx.rect(rect.x, rect.y, rect.w, rect.h);
+          ctx.clip();
+        }
+
+        paths.forEach(path => {
+          let pts = path.points;
+          if (!pts || pts.length < 2) return;
+
+          if (useVariableWidth) {
+            pts = smoothStrokePoints(pts);
+          }
+
+          const n = pts.length;
+
+          if (!useVariableWidth) {
+            ctx.lineWidth = defaultWidth;
+            ctx.beginPath();
+            ctx.moveTo(pts[0].x, pts[0].y);
+            for (let i = 1; i < n; i++) {
+              ctx.lineTo(pts[i].x, pts[i].y);
+            }
+            ctx.stroke();
+          } else {
+            for (let i = 0; i < n - 1; i++) {
+              const p0 = pts[i];
+              const p1 = pts[i + 1];
+              const baseW = p0.w != null ? p0.w : defaultWidth;
+              const w = Math.max(0.5, baseW * taperFactor(i, n));
+              ctx.lineWidth = w;
+              ctx.beginPath();
+              ctx.moveTo(p0.x, p0.y);
+              ctx.lineTo(p1.x, p1.y);
+              ctx.stroke();
+            }
+          }
+        });
+
+        if (rect) ctx.restore();
+      }
+
+      ctx.restore();
+    }
+
+    drawStrokeLayer(pageData.rough, roughStroke, 2, false);
+    drawStrokeLayer(pageData.pen,   "#111827",   3, true);
+
+    ctx.save();
+    for (const [panelIndex, balloons] of Object.entries(pageData.text)) {
+      const rect = pageData.frames[panelIndex];
+      balloons.forEach(b => {
+        if (rect) {
+          ctx.save();
+          ctx.beginPath();
+          ctx.rect(rect.x, rect.y, rect.w, rect.h);
+          ctx.clip();
+        }
+
+        ctx.beginPath();
+        ctx.ellipse(b.x, b.y, BALLOON_RX, BALLOON_RY, 0, 0, Math.PI * 2);
+        ctx.fillStyle = "rgba(255,255,255,0.97)";
+        ctx.fill();
+        ctx.strokeStyle = "#111827";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        drawVerticalBalloonText(ctx, b.text, b.x, b.y);
+
+        if (rect) ctx.restore();
+      });
+    }
+    ctx.restore();
+
+    const activeRect = currentPanelIndex && pageData.frames[currentPanelIndex];
+    if (activeRect) {
+      ctx.save();
+      ctx.fillStyle = "rgba(0,0,0,0.15)";
+      ctx.beginPath();
+      ctx.rect(0, 0, drawingCanvas.width, drawingCanvas.height);
+      ctx.rect(activeRect.x, activeRect.y, activeRect.w, activeRect.h);
+      ctx.fill("evenodd");
+      ctx.restore();
+
+      ctx.save();
+      ctx.strokeStyle = "#22c55e";
+      ctx.lineWidth = 3;
+      ctx.strokeRect(activeRect.x, activeRect.y, activeRect.w, activeRect.h);
+      ctx.restore();
+    }
+  }
+
+  /* ===== サイドパネル開閉 ===== */
+  function openLessonPanel(lessonId) {
+    const { progress } = loadPageProgress(currentPage);
+    const lesson = LESSONS.find(l => l.id === lessonId);
+    if (!lesson) return;
+
+    if (!isLessonUnlocked(lesson, progress)) {
+      logMessage(`「${lesson.title}」はまだ先のマスです。手前のマスから順番に進めてください。`);
+    } else if (isLessonCompleted(lesson, progress)) {
+      logMessage(`「${lesson.title}」は既にクリアしています。`);
+    } else {
+      const panel = document.getElementById("sidePanel");
+      const titleEl = document.getElementById("sidePanelTitle");
+      if (!panel || !titleEl) return;
+
+      titleEl.textContent = lesson.title;
+
+      pendingLessonId = lessonId;
+      setupCanvasForLesson(lesson);
+      panel.classList.add("open");
+    }
+  }
+
+  function closeLessonPanel() {
+    const panel = document.getElementById("sidePanel");
+    if (panel) panel.classList.remove("open");
+    pendingLessonId = null;
+    drawingCanvas = null;
+    drawingCtx = null;
+    draggingBalloon = null;
+    activeDrawPageData = null;
+  }
+
+  /* ===== マップ描画 ===== */
+  function renderMap(progress) {
+    const mapEl = document.getElementById("map");
+    mapEl.innerHTML = "";
+
+    const perRow = getPerRow();
+    const positions = computeGridPositions(LESSONS.length, perRow);
+
+    const nextLesson = getNextIncompleteLesson(progress);
+
+    LESSONS.forEach((lesson, index) => {
+      const unlocked  = isLessonUnlocked(lesson, progress);
+      const completed = isLessonCompleted(lesson, progress);
+      const pos = positions[index];
+
+      const node = document.createElement("div");
+      node.className = "node";
+      node.dataset.lessonId = lesson.id;
+      node.style.left = pos.x + "%";
+      node.style.top  = pos.y + "%";
+
+      if (!unlocked) node.classList.add("locked");
+      if (unlocked)  node.classList.add("unlocked");
+      if (completed) node.classList.add("completed");
+
+      if (nextLesson && lesson.id === nextLesson.id) {
+        node.classList.add("next-node");
+      }
+
+      const circle = document.createElement("div");
+      circle.className = "node-circle";
+      circle.textContent = index + 1;
+
+      const title = document.createElement("div");
+      title.className = "node-title";
+      title.textContent = lesson.title;
+
+      const progressText = document.createElement("div");
+      progressText.className = "node-progress";
+      if (completed) {
+        progressText.textContent = "クリア済み";
+      } else if (unlocked) {
+        progressText.textContent = "クリックして進む";
+      } else {
+        progressText.textContent = "ロック中";
+      }
+
+      node.appendChild(circle);
+      node.appendChild(title);
+      node.appendChild(progressText);
+
+      node.addEventListener("click", () => openLessonPanel(lesson.id));
+      mapEl.appendChild(node);
+    });
+
+    requestAnimationFrame(drawLinesFromDom);
+  }
+
+  function drawLinesFromDom() {
+    const mapEl = document.getElementById("map");
+    if (!mapEl) return;
+
+    const oldSvg = mapEl.querySelector(".map-lines");
+    if (oldSvg) oldSvg.remove();
+
+    const nodes = Array.from(mapEl.querySelectorAll(".node"));
+    if (nodes.length < 2) return;
+
+    const mapRect = mapEl.getBoundingClientRect();
+    const centers = nodes.map(node => {
+      const r = node.getBoundingClientRect();
+      const cx = (r.left + r.right) / 2 - mapRect.left;
+      const cy = (r.top + r.bottom) / 2 - mapRect.top;
+      return { x: cx, y: cy };
+    });
+
+    const svgNS = "http://www.w3.org/2000/svg";
+    const svg = document.createElementNS(svgNS, "svg");
+    svg.setAttribute("class", "map-lines");
+    svg.setAttribute("width", "100%");
+    svg.setAttribute("height", "100%");
+    svg.setAttribute("viewBox", `0 0 ${mapRect.width} ${mapRect.height}`);
+    svg.setAttribute("preserveAspectRatio", "none");
+
+    for (let i = 0; i < centers.length - 1; i++) {
+      const p1 = centers[i];
+      const p2 = centers[i + 1];
+      const path = document.createElementNS(svgNS, "path");
+      const d = `M ${p1.x} ${p1.y} L ${p2.x} ${p2.y}`;
+      path.setAttribute("d", d);
+      path.setAttribute("class", "map-line");
+      svg.appendChild(path);
+    }
+
+    mapEl.insertBefore(svg, mapEl.firstChild);
+  }
+
+  function renderAll() {
+    const { data, progress } = loadPageProgress(currentPage);
+    renderMap(progress);
+    updateStreakDisplay();
+    updatePageLabel(data);
+    updateNextTaskDisplay(progress);
+  }
+
+  /* ===== 書き出し ===== */
+  function exportCurrentPageImage() {
+    const off = document.createElement("canvas");
+    off.width = EXPORT_WIDTH;
+    off.height = EXPORT_HEIGHT;
+    const ctx = off.getContext("2d");
+
+    const { pageData } = getDrawPage(currentPage);
+
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, off.width, off.height);
+
+    const scale = Math.min(
+      off.width / EDIT_CANVAS_WIDTH,
+      off.height / EDIT_CANVAS_HEIGHT
+    );
+    const offsetX = (off.width  - EDIT_CANVAS_WIDTH  * scale) / 2;
+    const offsetY = (off.height - EDIT_CANVAS_HEIGHT * scale) / 2;
+
+    ctx.save();
+    ctx.translate(offsetX, offsetY);
+    ctx.scale(scale, scale);
+
+    drawPaperBase(ctx, EDIT_CANVAS_WIDTH, EDIT_CANVAS_HEIGHT);
+
+    ctx.save();
+    ctx.strokeStyle = "#111827";
+    ctx.lineWidth = 3;
+    Object.values(pageData.frames).forEach(rect => {
+      ctx.strokeRect(rect.x, rect.y, rect.w, rect.h);
+    });
+    ctx.restore();
+
+    const roughColor = pageData.roughColor || "black";
+    let roughStroke = "#111827";
+    if (roughColor === "blue") roughStroke = "#60a5fa";
+    if (roughColor === "gray") roughStroke = "#9ca3af";
+
+    function drawStrokeLayer(layer, strokeStyle, defaultWidth, useVariableWidth) {
+      ctx.save();
+      ctx.lineJoin = "round";
+      ctx.lineCap  = "round";
+      ctx.strokeStyle = strokeStyle;
+
+      for (const [panelIndex, paths] of Object.entries(layer)) {
+        const rect = pageData.frames[panelIndex];
+        if (rect) {
+          ctx.save();
+          ctx.beginPath();
+          ctx.rect(rect.x, rect.y, rect.w, rect.h);
+          ctx.clip();
+        }
+
+        paths.forEach(path => {
+          let pts = path.points;
+          if (!pts || pts.length < 2) return;
+
+          if (useVariableWidth) {
+            pts = smoothStrokePoints(pts);
+          }
+
+          const n = pts.length;
+
+          if (!useVariableWidth) {
+            ctx.lineWidth = defaultWidth;
+            ctx.beginPath();
+            ctx.moveTo(pts[0].x, pts[0].y);
+            for (let i = 1; i < n; i++) {
+              ctx.lineTo(pts[i].x, pts[i].y);
+            }
+            ctx.stroke();
+          } else {
+            for (let i = 0; i < n - 1; i++) {
+              const p0 = pts[i];
+              const p1 = pts[i + 1];
+              const baseW = p0.w != null ? p0.w : defaultWidth;
+              const w  = Math.max(0.5, baseW * taperFactor(i, n));
+              ctx.lineWidth = w;
+              ctx.beginPath();
+              ctx.moveTo(p0.x, p0.y);
+              ctx.lineTo(p1.x, p1.y);
+              ctx.stroke();
+            }
+          }
+        });
+
+        if (rect) ctx.restore();
+      }
+
+      ctx.restore();
+    }
+
+    drawStrokeLayer(pageData.rough, roughStroke, 2, false);
+    drawStrokeLayer(pageData.pen,   "#111827",   3, true);
+
+    ctx.save();
+    for (const [panelIndex, balloons] of Object.entries(pageData.text)) {
+      const rect = pageData.frames[panelIndex];
+      balloons.forEach(b => {
+        if (rect) {
+          ctx.save();
+          ctx.beginPath();
+          ctx.rect(rect.x, rect.y, rect.w, rect.h);
+          ctx.clip();
+        }
+        ctx.beginPath();
+        ctx.ellipse(b.x, b.y, BALLOON_RX, BALLOON_RY, 0, 0, Math.PI * 2);
+        ctx.fillStyle = "rgba(255,255,255,0.97)";
+        ctx.fill();
+        ctx.strokeStyle = "#111827";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        const fontSize = 19;
+        ctx.font = `${fontSize}px "Yu Mincho", "Hiragino Mincho ProN", serif`;
+        ctx.fillStyle = "#111827";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "top";
+
+        const lines = String(b.text).split(/[\/|｜]/);
+        const columnGap = 4;
+        const totalWidth = (lines.length - 1) * (fontSize + columnGap);
+        const firstX = b.x - totalWidth / 2;
+
+        lines.forEach((line, lineIndex) => {
+          const chars = [...line];
+          const columnHeight = chars.length * fontSize;
+          let y = b.y - columnHeight / 2;
+
+          const x = firstX + lineIndex * (fontSize + columnGap);
+          for (const ch of chars) {
+            ctx.fillText(ch, x, y);
+            y += fontSize;
+          }
+        });
+
+        if (rect) ctx.restore();
+      });
+    }
+    ctx.restore();
+
+    const url = off.toDataURL("image/png");
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `manga_page${currentPage}.png`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
+
+  /* ===== 起動 ===== */
+  window.addEventListener("DOMContentLoaded", () => {
+    renderAll();
+
+    document.getElementById("resetProgressBtn").addEventListener("click", () => {
+      if (!confirm("本当に全ページの進捗・連続日数・枠線や下描き・台詞・ペン入れをすべてリセットしますか？")) return;
+      resetAllPagesProgress();
+      resetStreakData();
+      resetAllDrawData();
+      renderAll();
+    });
+
+    document.getElementById("prevPageBtn").addEventListener("click", () => {
+      if (currentPage > 1) {
+        currentPage--;
+        renderAll();
+      }
+    });
+    document.getElementById("nextPageBtn").addEventListener("click", () => {
+      const data = loadAllProgress();
+      if (currentPage < data.maxPage) {
+        currentPage++;
+        renderAll();
+      }
+    });
+    document.getElementById("addPageBtn").addEventListener("click", () => {
+      const data = loadAllProgress();
+      const newPage = data.maxPage + 1;
+      data.maxPage = newPage;
+      data.pages[String(newPage)] = createInitialProgressMap();
+      saveAllProgress(data);
+      currentPage = newPage;
+      logMessage(`${newPage}ページ目を追加しました。`);
+      renderAll();
+    });
+    document.getElementById("resetPagesBtn").addEventListener("click", () => {
+      if (!confirm("全ページを削除して 1ページ目だけ残します。よろしいですか？")) return;
+      const data = loadAllProgress();
+      data.maxPage = 1;
+      data.pages = { "1": createInitialProgressMap() };
+      saveAllProgress(data);
+      currentPage = 1;
+      renderAll();
+      logMessage("ページ数をリセットしました。");
+    });
+
+    const closeBtn = document.getElementById("sidePanelClose");
+    const doneBtn  = document.getElementById("sidePanelDoneBtn");
+    const exportBtn = document.getElementById("sidePanelExportBtn");
+
+    if (closeBtn) {
+      closeBtn.addEventListener("click", () => {
+        pendingLessonId = null;
+        closeLessonPanel();
+      });
+    }
+    if (doneBtn) {
+      doneBtn.addEventListener("click", () => {
+        if (!pendingLessonId) {
+          closeLessonPanel();
+          return;
+        }
+        const id = pendingLessonId;
+        pendingLessonId = null;
+        closeLessonPanel();
+        advanceLesson(id);
+      });
+    }
+    if (exportBtn) {
+      exportBtn.addEventListener("click", () => {
+        exportCurrentPageImage();
+      });
+    }
+
+    window.addEventListener("resize", () => {
+      renderAll();
+    });
+  });
+</script>
+
 </body>
 </html>
