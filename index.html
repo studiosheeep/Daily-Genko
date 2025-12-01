@@ -927,13 +927,25 @@ h1 {
     if (nextBtn) nextBtn.disabled = currentPage >= data.maxPage;
   }
 
-  /* ===== 次のタスク表示 ===== */
+  // ===== 次のタスク表示 =====
   function getNextIncompleteLesson(progress) {
-    for (const lesson of LESSONS) {
+    // 1. まず「一番後ろまで進んでいるマス（インデックス）」を探す
+    let lastCompletedIndex = -1;
+    LESSONS.forEach((lesson, index) => {
+      if (isLessonCompleted(lesson, progress) && index > lastCompletedIndex) {
+        lastCompletedIndex = index;
+      }
+    });
+
+    // 2. その次のマスから後ろを見て、まだ終わっていない最初のマスを返す
+    for (let i = lastCompletedIndex + 1; i < LESSONS.length; i++) {
+      const lesson = LESSONS[i];
       if (!isLessonCompleted(lesson, progress)) {
         return lesson;
       }
     }
+
+    // 3. 全部終わっている場合は null（ページクリア）
     return null;
   }
 
