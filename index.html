@@ -1521,28 +1521,40 @@ chars.forEach((ch, i) => {
   }
 
 function drawBalloonTail(ctx, b, rx, ry) {
+  // tailSide が無い古いデータは左扱い
   const side = b.tailSide === "right" ? "right" : "left";
-  const dir  = side === "right" ? 1 : -1;
 
-  // 楕円の側面あたりを基点にする
-  const baseX = b.x + dir * rx * 0.75; // 左右
-  const baseY = b.y + ry * 0.10;       // ほんの少し下
+  // 楕円の「やや下寄りの側面」を基点にする
+  const baseY = b.y + ry * 0.35;             // 下側寄り
+  const baseX = (side === "right") ? (b.x + rx) : (b.x - rx);
 
-  // 楕円にくっつく側の上下 2 点
-  const baseTopY    = baseY - 7;
-  const baseBottomY = baseY + 7;
+  // 先端はそこから少し外＆下へ
+  const tipOffsetX = rx * 0.25;
+  const tipOffsetY = ry * 0.18;
+  const tipX = (side === "right")
+    ? baseX + tipOffsetX
+    : baseX - tipOffsetX;
+  const tipY = baseY + tipOffsetY;
 
-  // 外側に向かう先端（x も y も動かして斜め下へ）
-  const tipX = baseX + dir * rx * 0.45;
-  const tipY = baseY + ry * 0.55;
+  // 側面の上下 2 点（ここから V 字になる）
+  const baseTopY    = baseY - 8;
+  const baseBottomY = baseY + 6;
 
+  ctx.save();
+  ctx.lineWidth = 2.2;        // 少し太めに
   ctx.beginPath();
-  ctx.moveTo(baseX, baseTopY);   // 上側
-  ctx.lineTo(tipX, tipY);        // 先端（斜め下）
-  ctx.lineTo(baseX, baseBottomY);// 下側
-  ctx.closePath();
-  ctx.fill();
+
+  // 上辺 → 先端
+  ctx.moveTo(baseX, baseTopY);
+  ctx.lineTo(tipX, tipY);
+
+  // 下辺 → 先端
+  ctx.moveTo(baseX, baseBottomY);
+  ctx.lineTo(tipX, tipY);
+
+  // ★ closePath も fill もしないので、ふきだし側が開いた形になる
   ctx.stroke();
+  ctx.restore();
 }
   
   function redrawCanvas() {
