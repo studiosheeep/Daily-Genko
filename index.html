@@ -1529,7 +1529,7 @@ function drawBalloonTail(ctx, b, rx, ry) {
 
   // 楕円の外側ぎりぎりから生やす（少しだけ外にずらす）
   const edgeX = (side === "right") ? (b.x + rx) : (b.x - rx);
-  const baseX = edgeX + (side === "right" ? 0.1 : -0.1);
+  const baseX = edgeX + (side === "right" ? -0.5 : +0.5);
 
   // 尾の角度をゆるめる（横長・縦短め）
   const tipOffsetX = rx * 0.40;   // 大きめ → 緩い角度
