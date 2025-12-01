@@ -975,40 +975,41 @@ h1 {
   let tonePatternData = null;
 
   // 60線相当（600dpi前提・45度・約20％）のトーンパターン
-  function createTonePatternData() {
-    // 600dpi / 60線 ≒ 10px間隔
-    // 20pxタイル中に対角線上に10px間隔で2つドットを置く
-    const size = 20;
-    const canvas = document.createElement("canvas");
-    canvas.width = size;
-    canvas.height = size;
-    const ctx = canvas.getContext("2d");
+function createTonePatternData() {
+  // 600dpi / 60線 = 約10px 間隔
+  const size = 10;
+  const canvas = document.createElement("canvas");
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext("2d");
 
-    // ベースは白
-    ctx.fillStyle = "#ffffff";
-    ctx.fillRect(0, 0, size, size);
+  // ベース
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(0, 0, size, size);
 
-    // ドット（網点）
-    ctx.fillStyle = "#000000";
-    const r = 3.6; // 2つ分でおおよそ20％弱の濃度
+  // ドット（20%濃度）
+  ctx.fillStyle = "#000000";
 
-    // 左上側の点
-    ctx.beginPath();
-    ctx.arc(5, 5, r, 0, Math.PI * 2);
-    ctx.fill();
+  // 直径 3.6px（半径1.8px）
+  const r = 1.8;
 
-    // 右下側の点（5+10=15で約10px間隔）
-    ctx.beginPath();
-    ctx.arc(15, 15, r, 0, Math.PI * 2);
-    ctx.fill();
+  // 左上ドット
+  ctx.beginPath();
+  ctx.arc(3, 3, r, 0, Math.PI * 2);
+  ctx.fill();
 
-    const img = ctx.getImageData(0, 0, size, size);
-    tonePatternData = {
-      width: size,
-      height: size,
-      data: img.data
-    };
-  }
+  // 右下ドット（10pxタイルなので + 10px - 4px で座標調整）
+  ctx.beginPath();
+  ctx.arc(7, 7, r, 0, Math.PI * 2);
+  ctx.fill();
+
+  const img = ctx.getImageData(0, 0, size, size);
+  tonePatternData = {
+    width: size,
+    height: size,
+    data: img.data
+  };
+}
 
   function createEmptyDrawPage() {
     return {
