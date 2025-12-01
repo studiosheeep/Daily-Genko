@@ -1521,22 +1521,22 @@ chars.forEach((ch, i) => {
   }
 
 function drawBalloonTail(ctx, b, rx, ry) {
-  // tailSide が無い古いデータは左扱い
   const side = b.tailSide === "right" ? "right" : "left";
 
-  const tailLength = ry * 0.6;     // テールの長さ
-  const baseOffsetX = rx * 0.4;    // 左右どのくらい寄せるか
-  const baseY = b.y + ry;          // 楕円の下端
+  const tailLength   = rx * 0.35;   // テールの長さ
+  const baseOffsetX  = rx * 0.4;    // 楕円の左右どこから出すか
+  const baseY        = b.y + ry * 0.15; // 下寄りに配置
+  const dir          = (side === "right") ? 1 : -1; // 右なら +1
 
-  let baseX = b.x - baseOffsetX;   // 左テール
-  if (side === "right") {
-    baseX = b.x + baseOffsetX;     // 右テール
-  }
+  // ★ ここだけで十分。左右の位置を決める
+  let baseX = (side === "right")
+    ? b.x + baseOffsetX
+    : b.x - baseOffsetX;
 
   ctx.beginPath();
-  ctx.moveTo(baseX - 6, baseY);
-  ctx.lineTo(baseX,     baseY + tailLength);
-  ctx.lineTo(baseX + 6, baseY);
+  ctx.moveTo(baseX, baseY - 6);                       // 上
+  ctx.lineTo(baseX + dir * tailLength, baseY);        // 先端
+  ctx.lineTo(baseX, baseY + 6);                       // 下
   ctx.closePath();
   ctx.fill();
   ctx.stroke();
