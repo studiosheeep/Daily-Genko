@@ -1421,6 +1421,31 @@ h1 {
     return -1;
   }
 
+  function measureBalloonSize(text, fontSize) {
+  // / と改行で列分割（あなたのコードと同じルール）
+  const lineTexts = String(text).split(/[\/\n]/);
+  const columns = lineTexts.map(line => Array.from(line));
+
+  // 最大行数
+  let maxLen = 0;
+  columns.forEach(chars => {
+    if (chars.length > maxLen) maxLen = chars.length;
+  });
+
+  // 1文字の縦幅と列の横幅
+  const lineHeight = fontSize * 1.1;
+  const colWidth   = fontSize + 4;
+
+  const textHeight = lineHeight * maxLen;
+  const textWidth  = colWidth * columns.length;
+
+  // 文字周囲に少し余白をつける
+  return {
+    rx: textWidth  * 0.6,  // 楕円横半径
+    ry: textHeight * 0.6   // 楕円縦半径
+  };
+}
+  
   // 句読点・三点リーダ専用の縦書き描画
   function drawVerticalBalloonText(ctx, text, centerX, centerY) {
     const fontSize = 18;
@@ -1453,27 +1478,44 @@ h1 {
     columns.forEach((chars, colIndex) => {
       const x = rightX - colGap * colIndex;
 
-      chars.forEach((ch, i) => {
-        const baseY = topY + lineHeight * i;
-        let drawX   = x;
-        let drawY   = baseY;
+chars.forEach((ch, i) => {
+  const baseY = topY + lineHeight * i;
+  let drawX   = x;
+  let drawY   = baseY;
 
-        if (ch === "、" || ch === "。") {
-          drawX = x - fontSize * 0.12;
-          drawY = baseY + fontSize * 0.15;
-          ctx.fillText(ch, drawX, drawY);
-        } else if (ch === "…") {
-          const dotGap = fontSize * 0.32;
-          const r      = fontSize * 0.07;
-          for (let k = -1; k <= 1; k++) {
-            ctx.beginPath();
-            ctx.arc(drawX, baseY + dotGap * k, r, 0, Math.PI * 2);
-            ctx.fill();
-          }
-        } else {
-          ctx.fillText(ch, drawX, baseY);
-        }
-      });
+  // 句読点
+  if (ch === "、" || ch === "。") {
+    drawX = x - fontSize * 0.12;
+    drawY = baseY + fontSize * 0.15;
+    ctx.fillText(ch, drawX, drawY);
+    return;
+  }
+
+  // 三点リーダー
+  if (ch === "…") {
+    const dotGap = fontSize * 0.32;
+    const r      = fontSize * 0.07;
+    for (let k = -1; k <= 1; k++) {
+      ctx.beginPath();
+      ctx.arc(drawX, baseY + dotGap * k, r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    return;
+  }
+
+  // ★伸ばし棒（縦書き対応）
+  if (ch === "ー" || ch === "〜" || ch === "～") {
+    ctx.save();
+    ctx.translate(drawX, drawY);
+    ctx.rotate(Math.PI / 2);
+    ctx.fillText(ch, 0, 0);
+    ctx.restore();
+    return;
+  }
+
+  // 通常文字
+  ctx.fillText(ch, drawX, baseY);
+});
     });
 
     ctx.restore();
@@ -1571,12 +1613,17 @@ h1 {
           ctx.clip();
         }
 
-        const scaleB = b.scale || 1;
-        const rx = BALLOON_RX * scaleB;
-        const ry = BALLOON_RY * scaleB;
+// 文字量から適切サイズを計算
+const fontSize = 18;
+const baseSize = measureBalloonSize(b.text, fontSize);
 
-        ctx.beginPath();
-        ctx.ellipse(b.x, b.y, rx, ry, 0, 0, Math.PI * 2);
+// ユーザー拡大縮小（スケール）を反映
+const scaleB = b.scale || 1;
+const rx = baseSize.rx * scaleB;
+const ry = baseSize.ry * scaleB;
+
+ctx.beginPath();
+ctx.ellipse(b.x, b.y, rx, ry);
         ctx.fillStyle = "rgba(255,255,255,0.97)";
         ctx.fill();
         ctx.strokeStyle = "#111827";
