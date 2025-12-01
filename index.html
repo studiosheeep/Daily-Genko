@@ -1596,18 +1596,22 @@ function floodFillBeta(ctx, startX, startY, rect) {
     return (y * w + x) * 4;
   }
 
-  const i0 = idx(sx, sy);
-  const targetBrightness =
-    (data[i0] + data[i0 + 1] + data[i0 + 2]) / 3;
+  // ★「この明るさ未満は線（境界）」として扱う
+  //   例: 0〜255 のうち 200 未満を境界にする
+  const DARK_BOUNDARY = 200;
 
-  // 「クリックした場所と明るさが近い色」を同じ領域とみなす
-  // → 原稿用紙の水色ラインも一緒に塗りつぶされる
-  const BRIGHTNESS_DELTA = 130; // 少し大きめにして紙の線も含める
+  function isFillable(i) {
+    // すでにベタで塗った真っ黒は無視
+    if (isBetaBlackPixel(data, i)) return false;
 
-  function isTargetColor(i) {
-    if (isBetaBlackPixel(data, i)) return false; // すでに塗った黒は除外
-    const b = (data[i] + data[i + 1] + data[i + 2]) / 3;
-    return Math.abs(b - targetBrightness) <= BRIGHTNESS_DELTA;
+    const r = data[i];
+    const g = data[i + 1];
+    const b = data[i + 2];
+    const brightness = (r + g + b) / 3;
+
+    // 暗い色（ペン線・影など）は境界
+    // 明るい色（紙・原稿用紙の水色線の明るい部分）は塗る対象
+    return brightness >= DARK_BOUNDARY;
   }
 
   const stack = [[sx, sy]];
@@ -1616,7 +1620,7 @@ function floodFillBeta(ctx, startX, startY, rect) {
     const [x, y] = stack.pop();
     if (x < rx || x >= rx + rw || y < ry || y >= ry + rh) continue;
     const i = idx(x, y);
-    if (!isTargetColor(i)) continue;
+    if (!isFillable(i)) continue;
 
     // この画素を黒で塗る
     data[i]     = 0;
@@ -1632,8 +1636,7 @@ function floodFillBeta(ctx, startX, startY, rect) {
 
   ctx.putImageData(img, 0, 0);
 
-  // ★ 塗り終わったあとで境界を 1 ピクセルだけ広げて、
-  // 線のフチにできた小さな白残りを消す
+  // フチの1ピクセル塗り残しを消す
   expandBetaRegion(ctx, rect, 1);
 }
 
