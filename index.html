@@ -1844,48 +1844,57 @@ function expandBetaRegion(ctx, rect, iterations = 1) {
     ctx.restore();
   }
 
-  function drawPageContent(ctx, pageData, options = {}) {
-    const w = ctx.canvas.width;
-    const h = ctx.canvas.height;
-    const activeIndex = options.activePanelIndex ?? null;
-    const selected = options.selectedBalloon ?? null;
+function drawPageContent(ctx, pageData, options = {}) {
+  const w = ctx.canvas.width;
+  const h = ctx.canvas.height;
+  const activeIndex = options.activePanelIndex ?? null;
+  const selected = options.selectedBalloon ?? null;
 
+  // ★ 追加：原稿用紙ベースを描かないオプション
+  const skipPaperBase = options.skipPaperBase === true;
+
+  // ★ ベタモードの編集時など、必要なとき以外は今まで通り原稿用紙を描く
+  if (!skipPaperBase) {
     drawPaperBase(ctx, w, h);
-
-    ctx.save();
-    ctx.strokeStyle = "#111827";
-    ctx.lineWidth = 3;
-    Object.values(pageData.frames).forEach(rect => {
-      ctx.strokeRect(rect.x, rect.y, rect.w, rect.h);
-    });
-    ctx.restore();
-
-    const roughColor = pageData.roughColor || "black";
-    let roughStroke = "#111827";
-    if (roughColor === "blue") roughStroke = "#60a5fa";
-    if (roughColor === "gray") roughStroke = "#9ca3af";
-
-    drawStrokeLayerOnCtx(ctx, pageData, "rough", roughStroke, 2, false);
-    drawStrokeLayerOnCtx(ctx, pageData, "pen",   "#111827",   3, true);
-
-    applyBetaFills(ctx, pageData);
-
-    drawBalloonsOnCtx(ctx, pageData, selected);
-
-    if (activeIndex) {
-      drawActivePanelOverlay(ctx, pageData, activeIndex);
-    }
   }
+
+  // ここから下は元の処理のまま
+  ctx.save();
+  ctx.strokeStyle = "#111827";
+  ctx.lineWidth = 3;
+  Object.values(pageData.frames).forEach(rect => {
+    ctx.strokeRect(rect.x, rect.y, rect.w, rect.h);
+  });
+  ctx.restore();
+
+  const roughColor = pageData.roughColor || "black";
+  let roughStroke = "#111827";
+  if (roughColor === "blue") roughStroke = "#60a5fa";
+  if (roughColor === "gray") roughStroke = "#9ca3af";
+
+  drawStrokeLayerOnCtx(ctx, pageData, "rough", roughStroke, 2, false);
+  drawStrokeLayerOnCtx(ctx, pageData, "pen",   "#111827",   3, true);
+
+  applyBetaFills(ctx, pageData);
+
+  drawBalloonsOnCtx(ctx, pageData, selected);
+
+  if (activeIndex) {
+    drawActivePanelOverlay(ctx, pageData, activeIndex);
+  }
+}
 
   function redrawCanvas() {
     if (!drawingCanvas || !drawingCtx) return;
     const pageData = activeDrawPageData || getDrawPage(currentPage).pageData;
     const ctx = drawingCtx;
     ctx.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height);
-    drawPageContent(ctx, pageData, {
-      activePanelIndex: currentPanelIndex,
-      selectedBalloon: selectedBalloon
-    });
+drawPageContent(ctx, pageData, {
+  activePanelIndex: currentPanelIndex,
+  selectedBalloon: selectedBalloon,
+  // ★ ベタ編集中だけ原稿用紙ベースを描かない
+  skipPaperBase: currentPanelMode === "beta"
+});
   }
 
   // ===== ズーム（ホイール + ピンチ） =====
