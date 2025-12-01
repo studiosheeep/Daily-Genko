@@ -2026,8 +2026,9 @@ function drawPageContent(ctx, pageData, options = {}) {
   if (roughColor === "blue") roughStroke = "#60a5fa";
   if (roughColor === "gray") roughStroke = "#9ca3af";
 
-  drawStrokeLayerOnCtx(ctx, pageData, "rough", roughStroke, 2, false);
-  drawStrokeLayerOnCtx(ctx, pageData, "pen",   "#111827",   3, true);
+drawStrokeLayerOnCtx(ctx, pageData, "rough", roughStroke, 2, false);
+// ペン入れ：入り抜きなし・一定幅
+drawStrokeLayerOnCtx(ctx, pageData, "pen",   "#111827",   3, false);
 
   applyBetaFills(ctx, pageData);
   applyToneFills(ctx, pageData);
