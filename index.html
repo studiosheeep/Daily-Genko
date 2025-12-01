@@ -1266,6 +1266,7 @@ h1 {
   let isDrawing = false;
   let lastX = 0, lastY = 0;
   let draggingBalloon = null;
+  let selectedBalloon = null; // { panelIndex: number, balloonIndex: number } or null
 
   /* ★ ズーム用グローバル ★ */
   let currentZoom = 1;
@@ -1519,6 +1520,28 @@ chars.forEach((ch, i) => {
     ctx.restore();
   }
 
+function drawBalloonTail(ctx, b, rx, ry) {
+  // tailSide が無い古いデータは左扱い
+  const side = b.tailSide === "right" ? "right" : "left";
+
+  const tailLength = ry * 0.6;     // テールの長さ
+  const baseOffsetX = rx * 0.4;    // 左右どのくらい寄せるか
+  const baseY = b.y + ry;          // 楕円の下端
+
+  let baseX = b.x - baseOffsetX;   // 左テール
+  if (side === "right") {
+    baseX = b.x + baseOffsetX;     // 右テール
+  }
+
+  ctx.beginPath();
+  ctx.moveTo(baseX - 6, baseY);
+  ctx.lineTo(baseX,     baseY + tailLength);
+  ctx.lineTo(baseX + 6, baseY);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+}
+  
   function redrawCanvas() {
     if (!drawingCanvas || !drawingCtx) return;
     const pageData = activeDrawPageData || getDrawPage(currentPage).pageData;
@@ -1600,43 +1623,54 @@ chars.forEach((ch, i) => {
     drawStrokeLayer(pageData.pen,   "#111827",   3, true);
 
     // 吹き出し＋台詞
-    ctx.save();
-    for (const [panelIndex, balloons] of Object.entries(pageData.text)) {
-      const rect = pageData.frames[panelIndex];
-      balloons.forEach(b => {
-        if (rect) {
-          ctx.save();
-          ctx.beginPath();
-          ctx.rect(rect.x, rect.y, rect.w, rect.h);
-          ctx.clip();
-        }
-
-// 文字量から適切サイズを計算
-const fontSize = 18;
-const baseSize = measureBalloonSize(b.text, fontSize);
-const scaleB   = b.scale || 1;
-const rx = baseSize.rx * scaleB;
-const ry = baseSize.ry * scaleB;
-
-ctx.beginPath();
-ctx.ellipse(b.x, b.y, rx, ry, 0, 0, Math.PI * 2);
-ctx.fillStyle = "rgba(255,255,255,0.97)";
-ctx.fill();
-ctx.strokeStyle = "#111827";
-ctx.lineWidth = 2;
-ctx.stroke();
-
-        ctx.save();
-        ctx.translate(b.x, b.y);
-        ctx.scale(scaleB, scaleB);
-        drawVerticalBalloonText(ctx, b.text, 0, 0);
-        ctx.restore();
-
-        if (rect) ctx.restore();
-      });
+ctx.save();
+for (const [panelIndex, balloons] of Object.entries(pageData.text)) {
+  const rect = pageData.frames[panelIndex];
+  balloons.forEach((b, idx) => {
+    if (rect) {
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(rect.x, rect.y, rect.w, rect.h);
+      ctx.clip();
     }
+
+    const fontSize = 18;
+    const baseSize = measureBalloonSize(b.text, fontSize);
+    const scaleB   = b.scale || 1;
+    const rx = baseSize.rx * scaleB;
+    const ry = baseSize.ry * scaleB;
+
+    const isSelected =
+      selectedBalloon &&
+      selectedBalloon.panelIndex === Number(panelIndex) &&
+      selectedBalloon.balloonIndex === idx;
+
+    // 塗りと枠（選択中は少し黄色っぽく）
+    ctx.beginPath();
+    ctx.ellipse(b.x, b.y, rx, ry, 0, 0, Math.PI * 2);
+    ctx.fillStyle = isSelected
+      ? "rgba(254,249,195,0.98)"   // 薄い黄色
+      : "rgba(255,255,255,0.97)";
+    ctx.fill();
+    ctx.strokeStyle = "#111827";
+    ctx.lineWidth = isSelected ? 2.5 : 2;
+    ctx.stroke();
+
+    // テール（塗り／線はそのまま使う）
+    drawBalloonTail(ctx, b, rx, ry);
+
+    // 台詞本体
+    ctx.save();
+    ctx.translate(b.x, b.y);
+    ctx.scale(scaleB, scaleB);
+    drawVerticalBalloonText(ctx, b.text, 0, 0);
     ctx.restore();
 
+    if (rect) ctx.restore();
+  });
+}
+ctx.restore();
+    
     // アクティブコマ強調
     const activeRect = currentPanelIndex && pageData.frames[currentPanelIndex];
     if (activeRect) {
@@ -1776,6 +1810,7 @@ ctx.stroke();
 
   /* ===== レッスンごとのキャンバスセットアップ ===== */
   function setupCanvasForLesson(lesson) {
+    selectedBalloon = null;
     const panelBody = document.getElementById("sidePanelBody");
     const exportBtn = document.getElementById("sidePanelExportBtn");
     const [group] = lesson.id.split("_");
@@ -1820,12 +1855,14 @@ ctx.stroke();
         <div class="canvas-toolbar">
           <span>コマ内にラフを描いてください。</span>
         </div>`;
-    } else if (currentPanelMode === "text") {
-      infoText = `右クリック位置に吹き出しと縦書き台詞を追加します。左ドラッグで吹き出しを移動できます。`;
-      toolbarHtml = `
-        <div class="canvas-toolbar">
-          <span>このコマ内だけ編集されます。（/ や ｜ を入れると簡易改行）</span>
-        </div>`;
+} else if (currentPanelMode === "text") {
+  infoText = `右クリック位置に吹き出しと縦書き台詞を追加します。左ドラッグで吹き出しを移動できます。`;
+  toolbarHtml = `
+    <div class="canvas-toolbar">
+      <span>このコマ内だけ編集されます。（/ や ｜ を入れると簡易改行）</span>
+      <button id="tailToggleBtn">尾を反転する</button>
+      <button id="editBalloonTextBtn">台詞修正</button>
+    </div>`;
     } else if (currentPanelMode === "pen") {
       infoText = `下描きを元にペン入れします。ラフ色を変更したり、不要になったら削除できます。`;
       toolbarHtml = `
@@ -1874,6 +1911,40 @@ ctx.stroke();
       if (grayBtn) grayBtn.onclick = () => { pageData.roughColor = "gray"; saveDrawPage(pageData); redrawCanvas(); };
       if (delBtn)  delBtn.onclick  = () => { pageData.rough = {};       saveDrawPage(pageData); redrawCanvas(); };
     }
+        } else if (currentPanelMode === "text") {
+      const tailBtn = document.getElementById("tailToggleBtn");
+      const editBtn = document.getElementById("editBalloonTextBtn");
+
+      if (tailBtn) {
+        tailBtn.onclick = () => {
+          if (!selectedBalloon || selectedBalloon.panelIndex !== currentPanelIndex) return;
+          const arr = pageData.text[currentPanelIndex] || [];
+          const b = arr[selectedBalloon.balloonIndex];
+          if (!b) return;
+          b.tailSide = (b.tailSide === "right") ? "left" : "right";
+          saveDrawPage(pageData);
+          selectedBalloon = null;
+          redrawCanvas();
+        };
+      }
+
+      if (editBtn) {
+        editBtn.onclick = () => {
+          if (!selectedBalloon || selectedBalloon.panelIndex !== currentPanelIndex) return;
+          const arr = pageData.text[currentPanelIndex] || [];
+          const b = arr[selectedBalloon.balloonIndex];
+          if (!b) return;
+          const newText = window.prompt(
+            "台詞を修正してください（/ や ｜ で簡易改行）",
+            b.text || ""
+          );
+          if (newText == null) return;
+          b.text = newText;
+          saveDrawPage(pageData);
+          selectedBalloon = null;
+          redrawCanvas();
+        };
+      }
 
     let frameStart = null;
 
@@ -1975,18 +2046,35 @@ ctx.stroke();
 
       if (isTouch) {
         if (evt.touches && evt.touches.length > 1) {
-          return;
+          return; // ピンチなどは別処理
         }
         if (idx !== -1) {
-          draggingBalloon = { index: idx };
+          // タップ開始（あとでドラッグかクリックかを判定）
+          draggingBalloon = {
+            index: idx,
+            startX: x,
+            startY: y,
+            hasMoved: false
+          };
         } else {
-          textContextMenu(evt);
+          selectedBalloon = null;
+          redrawCanvas();
+          textContextMenu(evt); // 新規フキダシ
         }
         return;
       }
 
+      // マウス
       if (idx !== -1) {
-        draggingBalloon = { index: idx };
+        draggingBalloon = {
+          index: idx,
+          startX: x,
+          startY: y,
+          hasMoved: false
+        };
+      } else {
+        selectedBalloon = null;
+        redrawCanvas();
       }
     }
 
@@ -1994,13 +2082,23 @@ ctx.stroke();
       if (!draggingBalloon) return;
       evt.preventDefault();
       const { x, y } = getCanvasPos(evt);
+
+      const dx = x - draggingBalloon.startX;
+      const dy = y - draggingBalloon.startY;
+      const dist2 = dx * dx + dy * dy;
+
+      if (dist2 > 9) { // 3px 以上動いたらドラッグ扱い
+        draggingBalloon.hasMoved = true;
+      } else if (!draggingBalloon.hasMoved) {
+        return; // ほとんど動いていない
+      }
+
       const arr = pageData.text[currentPanelIndex] || [];
       const b = arr[draggingBalloon.index];
       if (!b) return;
       const rect = pageData.frames[currentPanelIndex];
-      if (rect && !pointInRect(x, y, rect)) {
-        return;
-      }
+      if (rect && !pointInRect(x, y, rect)) return;
+
       b.x = x;
       b.y = y;
       saveDrawPage(pageData);
@@ -2008,9 +2106,18 @@ ctx.stroke();
     }
 
     function textMouseUp(evt) {
-      if (draggingBalloon) {
-        draggingBalloon = null;
+      if (!draggingBalloon) return;
+
+      // 動いていなければ「選択」とみなす
+      if (!draggingBalloon.hasMoved) {
+        selectedBalloon = {
+          panelIndex: currentPanelIndex,
+          balloonIndex: draggingBalloon.index
+        };
+        redrawCanvas();
       }
+
+      draggingBalloon = null;
     }
 
     function textContextMenu(evt) {
@@ -2021,7 +2128,14 @@ ctx.stroke();
       const text = window.prompt("台詞（縦書き）を入力してください\n（/ や ｜ で簡易改行）", "");
       if (!text) return;
       if (!pageData.text[currentPanelIndex]) pageData.text[currentPanelIndex] = [];
-      pageData.text[currentPanelIndex].push({ x, y, text, scale: 1 });
+pageData.text[currentPanelIndex].push({
+  x,
+  y,
+  text,
+  scale: 1,
+  tailSide: "left" // デフォルトは左下方向のテール
+});
+selectedBalloon = null;
       saveDrawPage(pageData);
       redrawCanvas();
     }
