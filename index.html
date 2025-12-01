@@ -962,11 +962,13 @@ h1 {
   }
 
   /* ===== 原稿用紙描画データ ===== */
-  const EDIT_CANVAS_WIDTH  = 1000;
-  const EDIT_CANVAS_HEIGHT = Math.round(EDIT_CANVAS_WIDTH * 6213 / 4441);
-  const EXPORT_WIDTH  = 4961;
-  const EXPORT_HEIGHT = 7016;
-  const DRAW_STORAGE_KEY = "mangaBoardDraw_v1";
+const EDIT_CANVAS_WIDTH  = 1000;
+// A4 600dpi (4961×7016) と同じ縦横比にする
+const EDIT_CANVAS_HEIGHT = Math.round(EDIT_CANVAS_WIDTH * 7016 / 4961);
+
+const EXPORT_WIDTH  = 4961;
+const EXPORT_HEIGHT = 7016;
+const DRAW_STORAGE_KEY = "mangaBoardDraw_v1";
 
   const BALLOON_RX = 60;
   const BALLOON_RY = 80;
@@ -1186,78 +1188,91 @@ function createTonePatternData() {
   }
 
   /* ===== 原稿用紙ベース ===== */
-  function drawPaperBase(ctx, w, h) {
-    ctx.save();
-    ctx.fillStyle = "#ffffff";
-    ctx.fillRect(0, 0, w, h);
+function drawPaperBase(ctx, w, h) {
+  ctx.save();
 
-    ctx.strokeStyle = "#3b82f6";
-    ctx.lineWidth = 1;
+  // 用紙の地
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(0, 0, w, h);
 
-    const outerMargin = Math.min(w, h) * 0.04;
-    const basicMargin = Math.min(w, h) * 0.12;
-    const innerMargin = Math.min(w, h) * 0.18;
+  ctx.strokeStyle = "#3b82f6";
+  ctx.lineWidth = 1;
 
-    ctx.strokeRect(
-      outerMargin,
-      outerMargin,
-      w - outerMargin * 2,
-      h - outerMargin * 2
-    );
+  // ここでは「w×h を A4 サイズ」とみなして比率で計算する
+  // A4: 210×297mm / B5 仕上がり: 182×257mm をざっくり再現
 
-    ctx.strokeRect(
-      basicMargin,
-      basicMargin,
-      w - basicMargin * 2,
-      h - basicMargin * 2
-    );
+  const minSide = Math.min(w, h);
 
-    ctx.strokeRect(
-      innerMargin,
-      innerMargin,
-      w - innerMargin * 2,
-      h - innerMargin * 2
-    );
+  // 断ち切り（仕上がり外側・外枠）: A4外周から少し内側
+  // だいたい 3mm 程度を想定
+  const bleedMargin = minSide * 0.012; // ≒ 3mm
+  const outerX = bleedMargin;
+  const outerY = bleedMargin;
+  const outerW = w - bleedMargin * 2;
+  const outerH = h - bleedMargin * 2;
+  ctx.strokeRect(outerX, outerY, outerW, outerH);
 
-    const markLen = Math.min(w, h) * 0.03;
-    const cornerLen = Math.min(w, h) * 0.025;
+  // B5 仕上がり枠
+  // A4 と B5 の差分をもとに左右14mm・上下20mmくらい内側に入る
+  const b5MarginX = w * (14 / 210); // ≒ 0.0667
+  const b5MarginY = h * (20 / 297); // ≒ 0.0673
+  const b5X = b5MarginX;
+  const b5Y = b5MarginY;
+  const b5W = w - b5MarginX * 2;
+  const b5H = h - b5MarginY * 2;
+  ctx.strokeRect(b5X, b5Y, b5W, b5H);
 
-    const cx = w / 2;
-    const cy = h / 2;
+  // 内枠（本文安全エリア）
+  // B5 仕上がりからさらに 8〜10mm ほど内側
+  const safeMarginX = w * (8 / 210);   // ざっくり 8mm 相当
+  const safeMarginY = h * (10 / 297);  // ざっくり 10mm 相当
+  const safeX = b5X + safeMarginX;
+  const safeY = b5Y + safeMarginY;
+  const safeW = b5W - safeMarginX * 2;
+  const safeH = b5H - safeMarginY * 2;
+  ctx.strokeRect(safeX, safeY, safeW, safeH);
 
-    ctx.beginPath();
+  // 中心十字とコーナーマーク（outer 枠基準）
+  const cx = w / 2;
+  const cy = h / 2;
 
-    ctx.moveTo(cx, outerMargin - markLen);
-    ctx.lineTo(cx, outerMargin);
+  const markLen   = minSide * 0.03;
+  const cornerLen = minSide * 0.025;
 
-    ctx.moveTo(cx, h - outerMargin);
-    ctx.lineTo(cx, h - outerMargin + markLen);
+  ctx.beginPath();
 
-    ctx.moveTo(outerMargin - markLen, cy);
-    ctx.lineTo(outerMargin, cy);
+  // 上下中央
+  ctx.moveTo(cx, outerY - markLen);
+  ctx.lineTo(cx, outerY);
+  ctx.moveTo(cx, outerY + outerH);
+  ctx.lineTo(cx, outerY + outerH + markLen);
 
-    ctx.moveTo(w - outerMargin, cy);
-    ctx.lineTo(w - outerMargin + markLen, cy);
+  // 左右中央
+  ctx.moveTo(outerX - markLen, cy);
+  ctx.lineTo(outerX, cy);
+  ctx.moveTo(outerX + outerW, cy);
+  ctx.lineTo(outerX + outerW + markLen, cy);
 
-    ctx.moveTo(outerMargin, outerMargin - cornerLen);
-    ctx.lineTo(outerMargin, outerMargin);
-    ctx.lineTo(outerMargin - cornerLen, outerMargin);
+  // 四隅コーナー
+  ctx.moveTo(outerX, outerY - cornerLen);
+  ctx.lineTo(outerX, outerY);
+  ctx.lineTo(outerX - cornerLen, outerY);
 
-    ctx.moveTo(w - outerMargin, outerMargin - cornerLen);
-    ctx.lineTo(w - outerMargin, outerMargin);
-    ctx.lineTo(w - outerMargin + cornerLen, outerMargin);
+  ctx.moveTo(outerX + outerW, outerY - cornerLen);
+  ctx.lineTo(outerX + outerW, outerY);
+  ctx.lineTo(outerX + outerW + cornerLen, outerY);
 
-    ctx.moveTo(outerMargin, h - outerMargin + cornerLen);
-    ctx.lineTo(outerMargin, h - outerMargin);
-    ctx.lineTo(outerMargin - cornerLen, h - outerMargin);
+  ctx.moveTo(outerX, outerY + outerH + cornerLen);
+  ctx.lineTo(outerX, outerY + outerH);
+  ctx.lineTo(outerX - cornerLen, outerY + outerH);
 
-    ctx.moveTo(w - outerMargin, h - outerMargin + cornerLen);
-    ctx.lineTo(w - outerMargin, h - outerMargin);
-    ctx.lineTo(w - outerMargin + cornerLen, h - outerMargin);
+  ctx.moveTo(outerX + outerW, outerY + outerH + cornerLen);
+  ctx.lineTo(outerX + outerW, outerY + outerH);
+  ctx.lineTo(outerX + outerW + cornerLen, outerY + outerH);
 
-    ctx.stroke();
-    ctx.restore();
-  }
+  ctx.stroke();
+  ctx.restore();
+}
 
   /* ===== 「進めた」処理 ===== */
   function advanceLesson(lessonId) {
@@ -2814,50 +2829,106 @@ function taperFactor(i, n) {
     updateNextTaskDisplay(progress);
   }
 
-  /* ===== 書き出し ===== */
-  function exportCurrentPageImage() {
-    const { pageData } = getDrawPage(currentPage);
+  // 書き出し用に座標だけ倍率をかけたページデータを作る
+function createScaledPageData(pageData, factor) {
+  const scaled = JSON.parse(JSON.stringify(pageData));
 
-    const work = document.createElement("canvas");
-    work.width = EDIT_CANVAS_WIDTH;
-    work.height = EDIT_CANVAS_HEIGHT;
-    const wctx = work.getContext("2d");
-
-    drawPageContent(wctx, pageData, {
-      activePanelIndex: null,
-      selectedBalloon: null
-    });
-
-    const off = document.createElement("canvas");
-    off.width = EXPORT_WIDTH;
-    off.height = EXPORT_HEIGHT;
-    const ctx = off.getContext("2d");
-
-    ctx.fillStyle = "#ffffff";
-    ctx.fillRect(0, 0, off.width, off.height);
-
-    const scale = Math.min(
-      off.width / work.width,
-      off.height / work.height
-    );
-    const drawW = work.width * scale;
-    const drawH = work.height * scale;
-    const offsetX = (off.width - drawW) / 2;
-    const offsetY = (off.height - drawH) / 2;
-
-    ctx.imageSmoothingEnabled = true;
-    ctx.imageSmoothingQuality = "high";
-    ctx.drawImage(work, offsetX, offsetY, drawW, drawH);
-
-    const url = off.toDataURL("image/png");
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `manga_page${currentPage}.png`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+  // コマ枠
+  for (const rect of Object.values(scaled.frames)) {
+    rect.x *= factor;
+    rect.y *= factor;
+    rect.w *= factor;
+    rect.h *= factor;
   }
 
+  // ラフ線・ペン線
+  ["rough", "pen"].forEach(layerName => {
+    const layer = scaled[layerName] || {};
+    for (const paths of Object.values(layer)) {
+      paths.forEach(path => {
+        path.points.forEach(p => {
+          p.x *= factor;
+          p.y *= factor;
+          if (p.w != null) p.w *= factor; // 線幅も比例
+        });
+      });
+    }
+  });
+
+  // 吹き出し（位置だけ拡大。scale はそのまま）
+  const textLayer = scaled.text || {};
+  for (const balloons of Object.values(textLayer)) {
+    balloons.forEach(b => {
+      b.x *= factor;
+      b.y *= factor;
+    });
+  }
+
+  // ベタ／トーンのクリック位置
+  ["beta", "tone"].forEach(key => {
+    const layer = scaled[key] || {};
+    for (const fills of Object.values(layer)) {
+      fills.forEach(f => {
+        f.x *= factor;
+        f.y *= factor;
+      });
+    }
+  });
+
+  return scaled;
+}
+  
+/* ===== 書き出し（内部2倍解像度で再レンダリング） ===== */
+function exportCurrentPageImage() {
+  const { pageData } = getDrawPage(currentPage);
+
+  // 編集キャンバスの 2倍解像度で一度ラスタライズする
+  const WORK_SCALE = 2;
+  const WORK_WIDTH  = EDIT_CANVAS_WIDTH  * WORK_SCALE;
+  const WORK_HEIGHT = EDIT_CANVAS_HEIGHT * WORK_SCALE;
+
+  const work = document.createElement("canvas");
+  work.width  = WORK_WIDTH;
+  work.height = WORK_HEIGHT;
+  const wctx = work.getContext("2d");
+
+  // ベクターデータを 2倍スケールしたコピーで描画
+  const scaledData = createScaledPageData(pageData, WORK_SCALE);
+  drawPageContent(wctx, scaledData, {
+    activePanelIndex: null,
+    selectedBalloon: null
+  });
+
+  // ここから 600dpi(A4) サイズへ高品質リサイズ
+  const off = document.createElement("canvas");
+  off.width  = EXPORT_WIDTH;
+  off.height = EXPORT_HEIGHT;
+  const ctx = off.getContext("2d");
+
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(0, 0, off.width, off.height);
+
+  const scale = Math.min(
+    off.width  / work.width,
+    off.height / work.height
+  );
+  const drawW = work.width  * scale;
+  const drawH = work.height * scale;
+  const offsetX = (off.width  - drawW) / 2;
+  const offsetY = (off.height - drawH) / 2;
+
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = "high";
+  ctx.drawImage(work, offsetX, offsetY, drawW, drawH);
+
+  const url = off.toDataURL("image/png");
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `manga_page${currentPage}.png`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
   /* ===== 起動 ===== */
   window.addEventListener("DOMContentLoaded", () => {
     createTonePatternData();
