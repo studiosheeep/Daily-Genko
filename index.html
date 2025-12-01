@@ -929,7 +929,6 @@ h1 {
 
   // ===== 次のタスク表示 =====
   function getNextIncompleteLesson(progress) {
-    // 1. まず「一番後ろまで進んでいるマス（インデックス）」を探す
     let lastCompletedIndex = -1;
     LESSONS.forEach((lesson, index) => {
       if (isLessonCompleted(lesson, progress) && index > lastCompletedIndex) {
@@ -937,15 +936,12 @@ h1 {
       }
     });
 
-    // 2. その次のマスから後ろを見て、まだ終わっていない最初のマスを返す
     for (let i = lastCompletedIndex + 1; i < LESSONS.length; i++) {
       const lesson = LESSONS[i];
       if (!isLessonCompleted(lesson, progress)) {
         return lesson;
       }
     }
-
-    // 3. 全部終わっている場合は null（ページクリア）
     return null;
   }
 
@@ -981,6 +977,7 @@ h1 {
       rough: {},
       pen: {},
       text: {},
+      beta: {},       // ★ ベタ塗り用
       roughColor: "black"
     };
   }
@@ -1005,8 +1002,16 @@ h1 {
     const key = String(page);
     if (!all[key]) {
       all[key] = createEmptyDrawPage();
-      saveDrawAll(all);
+    } else {
+      const p = all[key];
+      if (!p.frames) p.frames = {};
+      if (!p.rough) p.rough = {};
+      if (!p.pen)   p.pen   = {};
+      if (!p.text)  p.text  = {};
+      if (!p.beta)  p.beta  = {};
+      if (!p.roughColor) p.roughColor = "black";
     }
+    saveDrawAll(all);
     return { all, pageData: all[key] };
   }
 
@@ -1126,8 +1131,6 @@ h1 {
   }
 
   function isLessonUnlocked(lesson, progress) {
-    // どのマスでも、いつでも開けるようにする
-    // （前のマスのクリア状況は見ない）
     return true;
   }
 
@@ -1221,16 +1224,13 @@ h1 {
 
     const lesson = LESSONS[lessonIndex];
 
-    // すでにクリア済みなら何もしない
     if (progress[lesson.id] >= lesson.maxProgress) {
       logMessage(`「${lesson.title}」は既にクリアしています。`);
       return;
     }
 
-    // 1. 今押したマスをクリア
     progress[lesson.id] = lesson.maxProgress;
 
-    // 2. そのマスより前のすべてのマスを自動クリア
     for (let i = 0; i < lessonIndex; i++) {
       const prevLesson = LESSONS[i];
       if (progress[prevLesson.id] < prevLesson.maxProgress) {
@@ -1302,7 +1302,7 @@ h1 {
       zoomMin = 0.5;
       zoomMax = 3;
       currentZoom = 1;
-    } else if (currentPanelMode === "rough" || currentPanelMode === "pen") {
+    } else if (currentPanelMode === "rough" || currentPanelMode === "pen" || currentPanelMode === "beta") {
       zoomMin = 1;
       zoomMax = 3;
       currentZoom = 1;
@@ -1404,7 +1404,7 @@ h1 {
     return 1;
   }
 
-  // 吹き出しヒットテスト（ズーム処理からも使う）
+  // 吹き出しヒットテスト
   function findBalloonAt(x, y) {
     const pageData = activeDrawPageData;
     if (!pageData || !pageData.text) return -1;
@@ -1422,29 +1422,29 @@ h1 {
     return -1;
   }
 
-function measureBalloonSize(text, fontSize) {
-  const lineTexts = String(text).split(/[\/\n]/);
-  const columns = lineTexts.map(line => Array.from(line));
+  function measureBalloonSize(text, fontSize) {
+    const lineTexts = String(text).split(/[\/\n]/);
+    const columns = lineTexts.map(line => Array.from(line));
 
-  let maxLen = 0;
-  columns.forEach(chars => {
-    if (chars.length > maxLen) maxLen = chars.length;
-  });
+    let maxLen = 0;
+    columns.forEach(chars => {
+      if (chars.length > maxLen) maxLen = chars.length;
+    });
 
-  const lineHeight = fontSize * 1.1;
-  const colWidth   = fontSize + 4;
+    const lineHeight = fontSize * 1.1;
+    const colWidth   = fontSize + 4;
 
-  const textHeight = lineHeight * maxLen;
-  const textWidth  = colWidth * columns.length;
+    const textHeight = lineHeight * maxLen;
+    const textWidth  = colWidth * columns.length;
 
-  // ★ 内側に padding を追加（px ベース）
-  const padding = fontSize * 1.2; // ← ここが余白。増やすと広くなる
+    const padding = fontSize * 1.2;
 
-  return {
-    rx: textWidth  / 2 + padding,
-    ry: textHeight / 2 + padding
-  };
-}
+    return {
+      rx: textWidth  / 2 + padding,
+      ry: textHeight / 2 + padding
+    };
+  }
+
   // 句読点・三点リーダ専用の縦書き描画
   function drawVerticalBalloonText(ctx, text, centerX, centerY) {
     const fontSize = 18;
@@ -1477,115 +1477,327 @@ function measureBalloonSize(text, fontSize) {
     columns.forEach((chars, colIndex) => {
       const x = rightX - colGap * colIndex;
 
-chars.forEach((ch, i) => {
-  const baseY = topY + lineHeight * i;
-  let drawX   = x;
-  let drawY   = baseY;
+      chars.forEach((ch, i) => {
+        const baseY = topY + lineHeight * i;
+        let drawX   = x;
+        let drawY   = baseY;
 
-  // 句読点
-  if (ch === "、" || ch === "。") {
-    drawX = x - fontSize * 0.12;
-    drawY = baseY + fontSize * 0.15;
-    ctx.fillText(ch, drawX, drawY);
-    return;
-  }
+        if (ch === "、" || ch === "。") {
+          drawX = x - fontSize * 0.12;
+          drawY = baseY + fontSize * 0.15;
+          ctx.fillText(ch, drawX, drawY);
+          return;
+        }
 
-  // 三点リーダー
-  if (ch === "…") {
-    const dotGap = fontSize * 0.32;
-    const r      = fontSize * 0.07;
-    for (let k = -1; k <= 1; k++) {
-      ctx.beginPath();
-      ctx.arc(drawX, baseY + dotGap * k, r, 0, Math.PI * 2);
-      ctx.fill();
-    }
-    return;
-  }
+        if (ch === "…") {
+          const dotGap = fontSize * 0.32;
+          const r      = fontSize * 0.07;
+          for (let k = -1; k <= 1; k++) {
+            ctx.beginPath();
+            ctx.arc(drawX, baseY + dotGap * k, r, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          return;
+        }
 
-  // ★伸ばし棒（縦書き対応）
-  if (ch === "ー" || ch === "〜" || ch === "～") {
-    ctx.save();
-    ctx.translate(drawX, drawY);
-    ctx.rotate(Math.PI / 2);
-    ctx.fillText(ch, 0, 0);
-    ctx.restore();
-    return;
-  }
+        if (ch === "ー" || ch === "〜" || ch === "～") {
+          ctx.save();
+          ctx.translate(drawX, drawY);
+          ctx.rotate(Math.PI / 2);
+          ctx.fillText(ch, 0, 0);
+          ctx.restore();
+          return;
+        }
 
-  // 通常文字
-  ctx.fillText(ch, drawX, baseY);
-});
+        ctx.fillText(ch, drawX, baseY);
+      });
     });
 
     ctx.restore();
   }
 
-function drawBalloonTail(ctx, b, rx, ry) {
-  const side = b.tailSide === "right" ? "right" : "left";
-  const dir  = side === "right" ? 1 : -1; // 右: +1 / 左: -1
+  function drawBalloonTail(ctx, b, rx, ry) {
+    const side = b.tailSide === "right" ? "right" : "left";
+    const dir  = side === "right" ? 1 : -1;
 
-  // 楕円の側面で、少し下側（t）にテールを付ける
-  const tCenter = 0.42;  // 0.35→0.42 くらいにして少し下に
-  const tSpread = 0.07;  // 付け根の上下の開き
+    const tCenter = 0.42;
+    const tSpread = 0.07;
 
-  // 楕円の方程式から「側面上の点」を計算する関数
-  function ellipseSidePoint(tOffset) {
-    const y = b.y + ry * (tCenter + tOffset);
-    const ny = (y - b.y) / ry;
-    const dx = rx * Math.sqrt(1 - ny * ny);
-    const x  = b.x + dir * dx;
-    return { x, y };
+    function ellipseSidePoint(tOffset) {
+      const y = b.y + ry * (tCenter + tOffset);
+      const ny = (y - b.y) / ry;
+      const dx = rx * Math.sqrt(1 - ny * ny);
+      const x  = b.x + dir * dx;
+      return { x, y };
+    }
+
+    const p1 = ellipseSidePoint(-tSpread);
+    const p2 = ellipseSidePoint(+tSpread);
+
+    const tipX = b.x + dir * (rx + 18);
+    const tipY = b.y + ry * 0.50;
+
+    ctx.save();
+
+    ctx.beginPath();
+    ctx.moveTo(p1.x, p1.y);
+    ctx.lineTo(tipX, tipY);
+    ctx.lineTo(p2.x, p2.y);
+    ctx.closePath();
+    ctx.fillStyle = "#ffffff";
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.moveTo(p1.x, p1.y);
+    ctx.lineTo(p2.x, p2.y);
+    ctx.strokeStyle = "#ffffff";
+    ctx.lineWidth = 4;
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(p1.x, p1.y);
+    ctx.lineTo(tipX, tipY);
+    ctx.lineTo(p2.x, p2.y);
+    ctx.strokeStyle = "#111827";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    ctx.restore();
   }
 
-  // 楕円上の 2 点（テールの付け根の上下）
-  const p1 = ellipseSidePoint(-tSpread);
-  const p2 = ellipseSidePoint(+tSpread);;
+  /* ===== ベタ用塗りつぶし ===== */
+  function floodFillBeta(ctx, startX, startY, rect) {
+    const w = ctx.canvas.width;
+    const h = ctx.canvas.height;
 
-  // テールの先端
-  const tipX = b.x + dir * (rx + 18);
-  const tipY = b.y + ry * 0.50;
+    const sx = Math.floor(startX);
+    const sy = Math.floor(startY);
 
-  ctx.save();
+    if (
+      sx < 0 || sx >= w || sy < 0 || sy >= h ||
+      !rect
+    ) return;
 
-  // 1) 三角を白で塗る（吹き出し内と同じ色）
-  ctx.beginPath();
-  ctx.moveTo(p1.x, p1.y);
-  ctx.lineTo(tipX, tipY);
-  ctx.lineTo(p2.x, p2.y);
-  ctx.closePath();
-  ctx.fillStyle = "#ffffff";
-  ctx.fill();
+    const rx = Math.max(0, Math.floor(rect.x));
+    const ry = Math.max(0, Math.floor(rect.y));
+    const rw = Math.floor(rect.w);
+    const rh = Math.floor(rect.h);
+    if (sx < rx || sx >= rx + rw || sy < ry || sy >= ry + rh) return;
 
-  // 2) 楕円の線を消すため、付け根部分を白でなぞる
-  //    吹き出しの lineWidth(=2) より太めに
-  ctx.beginPath();
-  ctx.moveTo(p1.x, p1.y);
-  ctx.lineTo(p2.x, p2.y);
-  ctx.strokeStyle = "#ffffff";
-  ctx.lineWidth = 4;
-  ctx.stroke();
+    const img = ctx.getImageData(0, 0, w, h);
+    const data = img.data;
 
-  // 3) 尾の 2 辺だけ黒で描く（楕円とつながったように見える）
-  ctx.beginPath();
-  ctx.moveTo(p1.x, p1.y);
-  ctx.lineTo(tipX, tipY);
-  ctx.lineTo(p2.x, p2.y);
-  ctx.strokeStyle = "#111827";
-  ctx.lineWidth = 2;
-  ctx.stroke();
+    function idx(x, y) {
+      return (y * w + x) * 4;
+    }
 
-  ctx.restore();
-}
-  
-  function redrawCanvas() {
-    if (!drawingCanvas || !drawingCtx) return;
-    const pageData = activeDrawPageData || getDrawPage(currentPage).pageData;
-    const ctx = drawingCtx;
-    ctx.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height);
+    const i0 = idx(sx, sy);
+    const target = {
+      r: data[i0],
+      g: data[i0 + 1],
+      b: data[i0 + 2],
+      a: data[i0 + 3]
+    };
 
-    drawPaperBase(ctx, drawingCanvas.width, drawingCanvas.height);
+    const fill = { r: 0, g: 0, b: 0, a: 255 };
 
-    // 枠線
+    if (
+      target.r === fill.r &&
+      target.g === fill.g &&
+      target.b === fill.b &&
+      target.a === fill.a
+    ) {
+      return;
+    }
+
+    function isTargetColor(i) {
+      const dr = data[i]     - target.r;
+      const dg = data[i + 1] - target.g;
+      const db = data[i + 2] - target.b;
+      const da = data[i + 3] - target.a;
+      const dist = Math.abs(dr) + Math.abs(dg) + Math.abs(db) + Math.abs(da);
+      return dist <= 40;
+    }
+
+    function isFilled(i) {
+      return (
+        data[i]     === fill.r &&
+        data[i + 1] === fill.g &&
+        data[i + 2] === fill.b &&
+        data[i + 3] === fill.a
+      );
+    }
+
+    const stack = [[sx, sy]];
+
+    while (stack.length) {
+      const [x, y] = stack.pop();
+      if (x < rx || x >= rx + rw || y < ry || y >= ry + rh) continue;
+      if (x < 0 || x >= w || y < 0 || y >= h) continue;
+      const i = idx(x, y);
+      if (!isTargetColor(i) || isFilled(i)) continue;
+
+      data[i]     = fill.r;
+      data[i + 1] = fill.g;
+      data[i + 2] = fill.b;
+      data[i + 3] = fill.a;
+
+      stack.push([x + 1, y]);
+      stack.push([x - 1, y]);
+      stack.push([x, y + 1]);
+      stack.push([x, y - 1]);
+    }
+
+    ctx.putImageData(img, 0, 0);
+  }
+
+  function applyBetaFills(ctx, pageData) {
+    if (!pageData || !pageData.beta) return;
+    for (const [panelIndex, fills] of Object.entries(pageData.beta)) {
+      const rect = pageData.frames[panelIndex];
+      if (!rect) continue;
+      const r = {
+        x: rect.x,
+        y: rect.y,
+        w: rect.w,
+        h: rect.h
+      };
+      fills.forEach(f => {
+        floodFillBeta(ctx, f.x, f.y, r);
+      });
+    }
+  }
+
+  /* ===== ストローク描画共通 ===== */
+  function drawStrokeLayerOnCtx(ctx, pageData, layerName, strokeStyle, defaultWidth, useVariableWidth) {
+    const layer = pageData[layerName] || {};
+    ctx.save();
+    ctx.lineJoin = "round";
+    ctx.lineCap = "round";
+    ctx.strokeStyle = strokeStyle;
+
+    for (const [panelIndex, paths] of Object.entries(layer)) {
+      const rect = pageData.frames[panelIndex];
+      if (rect) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(rect.x, rect.y, rect.w, rect.h);
+        ctx.clip();
+      }
+
+      paths.forEach(path => {
+        let pts = path.points;
+        if (!pts || pts.length < 2) return;
+
+        if (useVariableWidth) {
+          pts = smoothStrokePoints(pts);
+        }
+
+        const n = pts.length;
+
+        if (!useVariableWidth) {
+          ctx.lineWidth = defaultWidth;
+          ctx.beginPath();
+          ctx.moveTo(pts[0].x, pts[0].y);
+          for (let i = 1; i < n; i++) {
+            ctx.lineTo(pts[i].x, pts[i].y);
+          }
+          ctx.stroke();
+        } else {
+          for (let i = 0; i < n - 1; i++) {
+            const p0 = pts[i];
+            const p1 = pts[i + 1];
+            const baseW = p0.w != null ? p0.w : defaultWidth;
+            const w = Math.max(0.5, baseW * taperFactor(i, n));
+            ctx.lineWidth = w;
+            ctx.beginPath();
+            ctx.moveTo(p0.x, p0.y);
+            ctx.lineTo(p1.x, p1.y);
+            ctx.stroke();
+          }
+        }
+      });
+
+      if (rect) ctx.restore();
+    }
+
+    ctx.restore();
+  }
+
+  function drawBalloonsOnCtx(ctx, pageData, selected) {
+    ctx.save();
+    for (const [panelIndex, balloons] of Object.entries(pageData.text)) {
+      const rect = pageData.frames[panelIndex];
+      balloons.forEach((b, idx) => {
+        if (rect) {
+          ctx.save();
+          ctx.beginPath();
+          ctx.rect(rect.x, rect.y, rect.w, rect.h);
+          ctx.clip();
+        }
+
+        const fontSize = 18;
+        const baseSize = measureBalloonSize(b.text, fontSize);
+        const scaleB   = b.scale || 1;
+        const rx = baseSize.rx * scaleB;
+        const ry = baseSize.ry * scaleB;
+
+        const isSelected =
+          selected &&
+          selected.panelIndex === Number(panelIndex) &&
+          selected.balloonIndex === idx;
+
+        ctx.beginPath();
+        ctx.ellipse(b.x, b.y, rx, ry, 0, 0, Math.PI * 2);
+        ctx.fillStyle = isSelected
+          ? "rgba(254,249,195,0.98)"
+          : "rgba(255,255,255,0.97)";
+        ctx.fill();
+        ctx.strokeStyle = "#111827";
+        ctx.lineWidth = isSelected ? 2.5 : 2;
+        ctx.stroke();
+
+        drawBalloonTail(ctx, b, rx, ry);
+
+        ctx.save();
+        ctx.translate(b.x, b.y);
+        ctx.scale(scaleB, scaleB);
+        drawVerticalBalloonText(ctx, b.text, 0, 0);
+        ctx.restore();
+
+        if (rect) ctx.restore();
+      });
+    }
+    ctx.restore();
+  }
+
+  function drawActivePanelOverlay(ctx, pageData, panelIndex) {
+    const rect = panelIndex && pageData.frames[panelIndex];
+    if (!rect) return;
+
+    ctx.save();
+    ctx.fillStyle = "rgba(0,0,0,0.15)";
+    ctx.beginPath();
+    ctx.rect(0, 0, ctx.canvas.width, ctx.canvas.height);
+    ctx.rect(rect.x, rect.y, rect.w, rect.h);
+    ctx.fill("evenodd");
+    ctx.restore();
+
+    ctx.save();
+    ctx.strokeStyle = "#22c55e";
+    ctx.lineWidth = 3;
+    ctx.strokeRect(rect.x, rect.y, rect.w, rect.h);
+    ctx.restore();
+  }
+
+  function drawPageContent(ctx, pageData, options = {}) {
+    const w = ctx.canvas.width;
+    const h = ctx.canvas.height;
+    const activeIndex = options.activePanelIndex ?? null;
+    const selected = options.selectedBalloon ?? null;
+
+    drawPaperBase(ctx, w, h);
+
     ctx.save();
     ctx.strokeStyle = "#111827";
     ctx.lineWidth = 3;
@@ -1599,130 +1811,27 @@ function drawBalloonTail(ctx, b, rx, ry) {
     if (roughColor === "blue") roughStroke = "#60a5fa";
     if (roughColor === "gray") roughStroke = "#9ca3af";
 
-    function drawStrokeLayer(layer, strokeStyle, defaultWidth, useVariableWidth) {
-      ctx.save();
-      ctx.lineJoin = "round";
-      ctx.lineCap = "round";
-      ctx.strokeStyle = strokeStyle;
+    drawStrokeLayerOnCtx(ctx, pageData, "rough", roughStroke, 2, false);
+    drawStrokeLayerOnCtx(ctx, pageData, "pen",   "#111827",   3, true);
 
-      for (const [panelIndex, paths] of Object.entries(layer)) {
-        const rect = pageData.frames[panelIndex];
-        if (rect) {
-          ctx.save();
-          ctx.beginPath();
-          ctx.rect(rect.x, rect.y, rect.w, rect.h);
-          ctx.clip();
-        }
+    applyBetaFills(ctx, pageData);
 
-        paths.forEach(path => {
-          let pts = path.points;
-          if (!pts || pts.length < 2) return;
+    drawBalloonsOnCtx(ctx, pageData, selected);
 
-          if (useVariableWidth) {
-            pts = smoothStrokePoints(pts);
-          }
-
-          const n = pts.length;
-
-          if (!useVariableWidth) {
-            ctx.lineWidth = defaultWidth;
-            ctx.beginPath();
-            ctx.moveTo(pts[0].x, pts[0].y);
-            for (let i = 1; i < n; i++) {
-              ctx.lineTo(pts[i].x, pts[i].y);
-            }
-            ctx.stroke();
-          } else {
-            for (let i = 0; i < n - 1; i++) {
-              const p0 = pts[i];
-              const p1 = pts[i + 1];
-              const baseW = p0.w != null ? p0.w : defaultWidth;
-              const w = Math.max(0.5, baseW * taperFactor(i, n));
-              ctx.lineWidth = w;
-              ctx.beginPath();
-              ctx.moveTo(p0.x, p0.y);
-              ctx.lineTo(p1.x, p1.y);
-              ctx.stroke();
-            }
-          }
-        });
-
-        if (rect) ctx.restore();
-      }
-
-      ctx.restore();
+    if (activeIndex) {
+      drawActivePanelOverlay(ctx, pageData, activeIndex);
     }
+  }
 
-    // ラフ・ペン
-    drawStrokeLayer(pageData.rough, roughStroke, 2, false);
-    drawStrokeLayer(pageData.pen,   "#111827",   3, true);
-
-    // 吹き出し＋台詞
-ctx.save();
-for (const [panelIndex, balloons] of Object.entries(pageData.text)) {
-  const rect = pageData.frames[panelIndex];
-  balloons.forEach((b, idx) => {
-    if (rect) {
-      ctx.save();
-      ctx.beginPath();
-      ctx.rect(rect.x, rect.y, rect.w, rect.h);
-      ctx.clip();
-    }
-
-    const fontSize = 18;
-    const baseSize = measureBalloonSize(b.text, fontSize);
-    const scaleB   = b.scale || 1;
-    const rx = baseSize.rx * scaleB;
-    const ry = baseSize.ry * scaleB;
-
-    const isSelected =
-      selectedBalloon &&
-      selectedBalloon.panelIndex === Number(panelIndex) &&
-      selectedBalloon.balloonIndex === idx;
-
-    // 塗りと枠（選択中は少し黄色っぽく）
-    ctx.beginPath();
-    ctx.ellipse(b.x, b.y, rx, ry, 0, 0, Math.PI * 2);
-    ctx.fillStyle = isSelected
-      ? "rgba(254,249,195,0.98)"   // 薄い黄色
-      : "rgba(255,255,255,0.97)";
-    ctx.fill();
-    ctx.strokeStyle = "#111827";
-    ctx.lineWidth = isSelected ? 2.5 : 2;
-    ctx.stroke();
-
-    // テール（塗り／線はそのまま使う）
-    drawBalloonTail(ctx, b, rx, ry);
-
-    // 台詞本体
-    ctx.save();
-    ctx.translate(b.x, b.y);
-    ctx.scale(scaleB, scaleB);
-    drawVerticalBalloonText(ctx, b.text, 0, 0);
-    ctx.restore();
-
-    if (rect) ctx.restore();
-  });
-}
-ctx.restore();
-    
-    // アクティブコマ強調
-    const activeRect = currentPanelIndex && pageData.frames[currentPanelIndex];
-    if (activeRect) {
-      ctx.save();
-      ctx.fillStyle = "rgba(0,0,0,0.15)";
-      ctx.beginPath();
-      ctx.rect(0, 0, drawingCanvas.width, drawingCanvas.height);
-      ctx.rect(activeRect.x, activeRect.y, activeRect.w, activeRect.h);
-      ctx.fill("evenodd");
-      ctx.restore();
-
-      ctx.save();
-      ctx.strokeStyle = "#22c55e";
-      ctx.lineWidth = 3;
-      ctx.strokeRect(activeRect.x, activeRect.y, activeRect.w, activeRect.h);
-      ctx.restore();
-    }
+  function redrawCanvas() {
+    if (!drawingCanvas || !drawingCtx) return;
+    const pageData = activeDrawPageData || getDrawPage(currentPage).pageData;
+    const ctx = drawingCtx;
+    ctx.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height);
+    drawPageContent(ctx, pageData, {
+      activePanelIndex: currentPanelIndex,
+      selectedBalloon: selectedBalloon
+    });
   }
 
   // ===== ズーム（ホイール + ピンチ） =====
@@ -1740,7 +1849,6 @@ ctx.restore();
 
     const pageData = activeDrawPageData;
 
-    // 台詞モード → 吹き出し拡大縮小
     if (currentPanelMode === "text") {
       const idx = findBalloonAt(x, y);
       if (idx === -1 || !pageData) return;
@@ -1753,7 +1861,6 @@ ctx.restore();
       return;
     }
 
-    // それ以外 → キャンバス拡大縮小
     currentZoom *= factor;
     if (currentZoom < zoomMin) currentZoom = zoomMin;
     if (currentZoom > zoomMax) currentZoom = zoomMax;
@@ -1856,6 +1963,7 @@ ctx.restore();
     else if (group === "rough") currentPanelMode = "rough";
     else if (group === "text")  currentPanelMode = "text";
     else if (group === "pen")   currentPanelMode = "pen";
+    else if (group === "beta")  currentPanelMode = "beta";
     else                        currentPanelMode = "info";
 
     if (["beta", "tone", "finish"].includes(group)) {
@@ -1890,14 +1998,14 @@ ctx.restore();
         <div class="canvas-toolbar">
           <span>コマ内にラフを描いてください。</span>
         </div>`;
-} else if (currentPanelMode === "text") {
-  infoText = `右クリックで吹き出しと台詞を追加します。左ドラッグで吹き出しを移動、スクロールで拡大縮小。`;
-  toolbarHtml = `
-    <div class="canvas-toolbar">
-      <span>このコマ内だけ編集されます。（/ や ｜ を入れると簡易改行）</span>
-      <button id="tailToggleBtn">尾を反転する</button>
-      <button id="editBalloonTextBtn">台詞修正</button>
-    </div>`;
+    } else if (currentPanelMode === "text") {
+      infoText = `右クリックで吹き出しと台詞を追加します。左ドラッグで吹き出しを移動、スクロールで拡大縮小。`;
+      toolbarHtml = `
+        <div class="canvas-toolbar">
+          <span>このコマ内だけ編集されます。（/ や ｜ を入れると簡易改行）</span>
+          <button id="tailToggleBtn">尾を反転する</button>
+          <button id="editBalloonTextBtn">台詞修正</button>
+        </div>`;
     } else if (currentPanelMode === "pen") {
       infoText = `下描きを元にペン入れします。ラフ色を変更したり、不要になったら削除できます。`;
       toolbarHtml = `
@@ -1905,6 +2013,13 @@ ctx.restore();
           <button id="draftBlueBtn">下描きを水色にする</button>
           <button id="draftGrayBtn">下描きをグレーにする</button>
           <button id="draftDeleteBtn">下描きを削除する</button>
+        </div>`;
+    } else if (currentPanelMode === "beta") {
+      infoText = `ペン入れ済みの線で囲った部分をクリックしてベタ塗りを行います。`;
+      toolbarHtml = `
+        <div class="canvas-toolbar">
+          <span>コマ内をクリックすると黒で塗りつぶします。</span>
+          <button id="betaUndoBtn">取り消し</button>
         </div>`;
     }
 
@@ -1921,12 +2036,12 @@ ctx.restore();
     clearCanvasListeners(drawingCanvas);
 
     const { pageData } = getDrawPage(currentPage);
+    if (!pageData.beta) pageData.beta = {};
     activeDrawPageData = pageData;
 
     resetZoomForMode();
     redrawCanvas();
 
-    // ==== ボタン系 ====
     if (currentPanelMode === "frame") {
       const clearBtn = document.getElementById("clearFrameBtn");
       if (clearBtn) {
@@ -2000,12 +2115,25 @@ ctx.restore();
           redrawCanvas();
         };
       }
+    } else if (currentPanelMode === "beta") {
+      const undoBtn = document.getElementById("betaUndoBtn");
+      if (undoBtn) {
+        undoBtn.onclick = () => {
+          const list = pageData.beta[currentPanelIndex] || [];
+          if (list.length > 0) {
+            list.pop();
+            pageData.beta[currentPanelIndex] = list;
+            saveDrawPage(pageData);
+            redrawCanvas();
+          }
+        };
+      }
     }
 
     let frameStart = null;
 
     function handleDown(evt) {
-      if (evt.touches && evt.touches.length > 1) return; // ピンチ中は描かない
+      if (evt.touches && evt.touches.length > 1) return;
       evt.preventDefault();
       const { x, y } = getCanvasPos(evt);
 
@@ -2091,8 +2219,22 @@ ctx.restore();
       }
     }
 
+    function betaClick(evt) {
+      evt.preventDefault();
+      const { x, y } = getCanvasPos(evt);
+      const rect = pageData.frames[currentPanelIndex];
+      if (!rect || !pointInRect(x, y, rect)) return;
+
+      if (!pageData.beta[currentPanelIndex]) pageData.beta[currentPanelIndex] = [];
+      pageData.beta[currentPanelIndex].push({ x, y });
+      saveDrawPage(pageData);
+      redrawCanvas();
+    }
+
     function textMouseDown(evt) {
       evt.preventDefault();
+      if (evt.touches && evt.touches.length > 1) return;
+
       const { x, y } = getCanvasPos(evt);
       const idx = findBalloonAt(x, y);
 
@@ -2102,10 +2244,9 @@ ctx.restore();
 
       if (isTouch) {
         if (evt.touches && evt.touches.length > 1) {
-          return; // ピンチなどは別処理
+          return;
         }
         if (idx !== -1) {
-          // タップ開始（あとでドラッグかクリックかを判定）
           draggingBalloon = {
             index: idx,
             startX: x,
@@ -2115,12 +2256,11 @@ ctx.restore();
         } else {
           selectedBalloon = null;
           redrawCanvas();
-          textContextMenu(evt); // 新規フキダシ
+          textContextMenu(evt);
         }
         return;
       }
 
-      // マウス
       if (idx !== -1) {
         draggingBalloon = {
           index: idx,
@@ -2143,10 +2283,10 @@ ctx.restore();
       const dy = y - draggingBalloon.startY;
       const dist2 = dx * dx + dy * dy;
 
-      if (dist2 > 9) { // 3px 以上動いたらドラッグ扱い
+      if (dist2 > 9) {
         draggingBalloon.hasMoved = true;
       } else if (!draggingBalloon.hasMoved) {
-        return; // ほとんど動いていない
+        return;
       }
 
       const arr = pageData.text[currentPanelIndex] || [];
@@ -2164,7 +2304,6 @@ ctx.restore();
     function textMouseUp(evt) {
       if (!draggingBalloon) return;
 
-      // 動いていなければ「選択」とみなす
       if (!draggingBalloon.hasMoved) {
         selectedBalloon = {
           panelIndex: currentPanelIndex,
@@ -2184,19 +2323,18 @@ ctx.restore();
       const text = window.prompt("台詞（縦書き）を入力してください\n（/ や ｜ で簡易改行）", "");
       if (!text) return;
       if (!pageData.text[currentPanelIndex]) pageData.text[currentPanelIndex] = [];
-pageData.text[currentPanelIndex].push({
-  x,
-  y,
-  text,
-  scale: 1,
-  tailSide: "left" // デフォルトは左下方向のテール
-});
-selectedBalloon = null;
+      pageData.text[currentPanelIndex].push({
+        x,
+        y,
+        text,
+        scale: 1,
+        tailSide: "left"
+      });
+      selectedBalloon = null;
       saveDrawPage(pageData);
       redrawCanvas();
     }
 
-    // ==== イベント割り当て ====
     if (currentPanelMode === "text") {
       drawingCanvas.onmousedown   = textMouseDown;
       drawingCanvas.onmousemove   = textMouseMove;
@@ -2207,6 +2345,13 @@ selectedBalloon = null;
       drawingCanvas.ontouchstart  = textMouseDown;
       drawingCanvas.ontouchmove   = textMouseMove;
       drawingCanvas.ontouchend    = textMouseUp;
+    } else if (currentPanelMode === "beta") {
+      drawingCanvas.onmousedown   = betaClick;
+      drawingCanvas.ontouchstart  = betaClick;
+      drawingCanvas.onmousemove   = null;
+      drawingCanvas.onmouseup     = null;
+      drawingCanvas.onmouseleave  = null;
+      drawingCanvas.oncontextmenu = evt => evt.preventDefault();
     } else {
       drawingCanvas.onmousedown   = handleDown;
       drawingCanvas.onmousemove   = handleMove;
@@ -2218,13 +2363,11 @@ selectedBalloon = null;
       drawingCanvas.ontouchend    = handleUp;
     }
 
-    // ズーム（ホイール／ピンチ）
     drawingCanvas.addEventListener("wheel", onWheelZoom, { passive: false });
     drawingCanvas.addEventListener("touchstart", onTouchStartZoom, { passive: false });
     drawingCanvas.addEventListener("touchmove",  onTouchMoveZoom,  { passive: false });
     drawingCanvas.addEventListener("touchend",   onTouchEndZoom,   { passive: false });
 
-    // ペン入れモードのパン（ホイール押し）
     drawingCanvas.onpointerdown = evt => {
       if (currentPanelMode !== "pen") return;
       if (evt.button === 1) {
@@ -2261,17 +2404,6 @@ selectedBalloon = null;
     const lesson = LESSONS.find(l => l.id === lessonId);
     if (!lesson) return;
 
-    const unlocked  = isLessonUnlocked(lesson, progress);
-    const completed = isLessonCompleted(lesson, progress);
-
-    // 以前はロック中・クリア済みだとここで return していたが、
-    // どのマスでもパネルを開けるようにする。
-    if (!unlocked) {
-      logMessage(`「${lesson.title}」は本来はロック中ですが、編集のために開きます。`);
-    } else if (completed) {
-      logMessage(`「${lesson.title}」は既にクリアしていますが、内容は編集できます。`);
-    }
-
     const panel   = document.getElementById("sidePanel");
     const titleEl = document.getElementById("sidePanelTitle");
     if (!panel || !titleEl) return;
@@ -2282,7 +2414,7 @@ selectedBalloon = null;
     setupCanvasForLesson(lesson);
     panel.classList.add("open");
   }
-  
+
   function closeLessonPanel() {
     const panel = document.getElementById("sidePanel");
     if (panel) panel.classList.remove("open");
@@ -2301,14 +2433,13 @@ selectedBalloon = null;
     const perRow = getPerRow();
     const positions = computeGridPositions(LESSONS.length, perRow);
 
-    // ★ どのマスが「次のマス」かを取得
     const nextLesson = getNextIncompleteLesson(progress);
     const nextId = nextLesson ? nextLesson.id : null;
 
     LESSONS.forEach((lesson, index) => {
       const completed = isLessonCompleted(lesson, progress);
       const isNext    = nextId && lesson.id === nextId;
-      const isFuture  = !completed && !isNext; // まだ押していない「先のマス」
+      const isFuture  = !completed && !isNext;
 
       const pos = positions[index];
 
@@ -2318,16 +2449,14 @@ selectedBalloon = null;
       node.style.left = pos.x + "%";
       node.style.top  = pos.y + "%";
 
-      // 見た目用クラスの振り分け
       if (completed) {
-        node.classList.add("completed"); // 濃い緑
+        node.classList.add("completed");
       } else if (isNext) {
-        node.classList.add("unlocked");  // 次のマス（明るい緑）
+        node.classList.add("unlocked");
       } else if (isFuture) {
-        node.classList.add("locked");    // まだ押してない先のマス（グレー）
+        node.classList.add("locked");
       }
 
-      // 「次のマス」用のリングアニメーション
       if (isNext) {
         node.classList.add("next-node");
       }
@@ -2354,7 +2483,6 @@ selectedBalloon = null;
       node.appendChild(title);
       node.appendChild(progressText);
 
-      // 見た目はロック中でも、クリックすればどのマスでも飛べる仕様のまま
       node.addEventListener("click", () => openLessonPanel(lesson.id));
 
       mapEl.appendChild(node);
@@ -2412,134 +2540,38 @@ selectedBalloon = null;
 
   /* ===== 書き出し ===== */
   function exportCurrentPageImage() {
+    const { pageData } = getDrawPage(currentPage);
+
+    const work = document.createElement("canvas");
+    work.width = EDIT_CANVAS_WIDTH;
+    work.height = EDIT_CANVAS_HEIGHT;
+    const wctx = work.getContext("2d");
+
+    drawPageContent(wctx, pageData, {
+      activePanelIndex: null,
+      selectedBalloon: null
+    });
+
     const off = document.createElement("canvas");
     off.width = EXPORT_WIDTH;
     off.height = EXPORT_HEIGHT;
     const ctx = off.getContext("2d");
 
-    const { pageData } = getDrawPage(currentPage);
-
     ctx.fillStyle = "#ffffff";
     ctx.fillRect(0, 0, off.width, off.height);
 
     const scale = Math.min(
-      off.width / EDIT_CANVAS_WIDTH,
-      off.height / EDIT_CANVAS_HEIGHT
+      off.width / work.width,
+      off.height / work.height
     );
-    const offsetX = (off.width  - EDIT_CANVAS_WIDTH  * scale) / 2;
-    const offsetY = (off.height - EDIT_CANVAS_HEIGHT * scale) / 2;
+    const drawW = work.width * scale;
+    const drawH = work.height * scale;
+    const offsetX = (off.width - drawW) / 2;
+    const offsetY = (off.height - drawH) / 2;
 
-    ctx.save();
-    ctx.translate(offsetX, offsetY);
-    ctx.scale(scale, scale);
-
-    drawPaperBase(ctx, EDIT_CANVAS_WIDTH, EDIT_CANVAS_HEIGHT);
-
-    ctx.save();
-    ctx.strokeStyle = "#111827";
-    ctx.lineWidth = 3;
-    Object.values(pageData.frames).forEach(rect => {
-      ctx.strokeRect(rect.x, rect.y, rect.w, rect.h);
-    });
-    ctx.restore();
-
-    const roughColor = pageData.roughColor || "black";
-    let roughStroke = "#111827";
-    if (roughColor === "blue") roughStroke = "#60a5fa";
-    if (roughColor === "gray") roughStroke = "#9ca3af";
-
-    function drawStrokeLayer(layer, strokeStyle, defaultWidth, useVariableWidth) {
-      ctx.save();
-      ctx.lineJoin = "round";
-      ctx.lineCap  = "round";
-      ctx.strokeStyle = strokeStyle;
-
-      for (const [panelIndex, paths] of Object.entries(layer)) {
-        const rect = pageData.frames[panelIndex];
-        if (rect) {
-          ctx.save();
-          ctx.beginPath();
-          ctx.rect(rect.x, rect.y, rect.w, rect.h);
-          ctx.clip();
-        }
-
-        paths.forEach(path => {
-          let pts = path.points;
-          if (!pts || pts.length < 2) return;
-
-          if (useVariableWidth) {
-            pts = smoothStrokePoints(pts);
-          }
-
-          const n = pts.length;
-
-          if (!useVariableWidth) {
-            ctx.lineWidth = defaultWidth;
-            ctx.beginPath();
-            ctx.moveTo(pts[0].x, pts[0].y);
-            for (let i = 1; i < n; i++) {
-              ctx.lineTo(pts[i].x, pts[i].y);
-            }
-            ctx.stroke();
-          } else {
-            for (let i = 0; i < n - 1; i++) {
-              const p0 = pts[i];
-              const p1 = pts[i + 1];
-              const baseW = p0.w != null ? p0.w : defaultWidth;
-              const w  = Math.max(0.5, baseW * taperFactor(i, n));
-              ctx.lineWidth = w;
-              ctx.beginPath();
-              ctx.moveTo(p0.x, p0.y);
-              ctx.lineTo(p1.x, p1.y);
-              ctx.stroke();
-            }
-          }
-        });
-
-        if (rect) ctx.restore();
-      }
-
-      ctx.restore();
-    }
-
-    drawStrokeLayer(pageData.rough, roughStroke, 2, false);
-    drawStrokeLayer(pageData.pen,   "#111827",   3, true);
-
-    ctx.save();
-    for (const [panelIndex, balloons] of Object.entries(pageData.text)) {
-      const rect = pageData.frames[panelIndex];
-      balloons.forEach(b => {
-        if (rect) {
-          ctx.save();
-          ctx.beginPath();
-          ctx.rect(rect.x, rect.y, rect.w, rect.h);
-          ctx.clip();
-        }
-
-        const scaleB = b.scale || 1;
-        const rx = BALLOON_RX * scaleB;
-        const ry = BALLOON_RY * scaleB;
-
-        ctx.beginPath();
-        ctx.ellipse(b.x, b.y, rx, ry, 0, 0, Math.PI * 2);
-        ctx.fillStyle = "rgba(255,255,255,0.97)";
-        ctx.fill();
-        ctx.strokeStyle = "#111827";
-        ctx.lineWidth = 2;
-        ctx.stroke();
-
-        ctx.save();
-        ctx.translate(b.x, b.y);
-        ctx.scale(scaleB, scaleB);
-        drawVerticalBalloonText(ctx, b.text, 0, 0);
-        ctx.restore();
-
-        if (rect) ctx.restore();
-      });
-    }
-    ctx.restore();
-
-    ctx.restore();
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = "high";
+    ctx.drawImage(work, offsetX, offsetY, drawW, drawH);
 
     const url = off.toDataURL("image/png");
     const a = document.createElement("a");
