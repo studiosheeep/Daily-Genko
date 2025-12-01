@@ -1525,29 +1525,29 @@ function drawBalloonTail(ctx, b, rx, ry) {
   const dir  = side === "right" ? 1 : -1; // 右: +1 / 左: -1
 
   // 楕円の側面で、少し下側（t）にテールを付ける
-  const tCenter = 0.35;   // 下に行くほど大きくなる（0〜1くらいで調整）
-  const tSpread = 0.06;   // テール付け根の上下の開き
+  const tCenter = 0.42;  // 0.35→0.42 くらいにして少し下に
+  const tSpread = 0.07;  // 付け根の上下の開き
 
   // 楕円の方程式から「側面上の点」を計算する関数
   function ellipseSidePoint(tOffset) {
-    const y = b.y + ry * (tCenter + tOffset);   // 縦方向
-    const ny = (y - b.y) / ry;                  // 正規化した y
-    const dx = rx * Math.sqrt(1 - ny * ny);     // 楕円の式から x 距離
-    const x  = b.x + dir * dx;                  // 左右どちら側か
+    const y = b.y + ry * (tCenter + tOffset);
+    const ny = (y - b.y) / ry;
+    const dx = rx * Math.sqrt(1 - ny * ny);
+    const x  = b.x + dir * dx;
     return { x, y };
   }
 
   // 楕円上の 2 点（テールの付け根の上下）
   const p1 = ellipseSidePoint(-tSpread);
-  const p2 = ellipseSidePoint(+tSpread);
+  const p2 = ellipseSidePoint(+tSpread);;
 
   // テールの先端
-  const tipX = b.x + dir * (rx + 18);  // 長さ・角度はここで調整
-  const tipY = b.y + ry * 0.45;
+  const tipX = b.x + dir * (rx + 18);
+  const tipY = b.y + ry * 0.50;
 
   ctx.save();
 
-  // まず白で塗って楕円の線をくり抜く
+  // 1) 三角を白で塗る（吹き出し内と同じ色）
   ctx.beginPath();
   ctx.moveTo(p1.x, p1.y);
   ctx.lineTo(tipX, tipY);
@@ -1556,7 +1556,16 @@ function drawBalloonTail(ctx, b, rx, ry) {
   ctx.fillStyle = "#ffffff";
   ctx.fill();
 
-  // 三角の2辺だけを描く（楕円とは別線）
+  // 2) 楕円の線を消すため、付け根部分を白でなぞる
+  //    吹き出しの lineWidth(=2) より太めに
+  ctx.beginPath();
+  ctx.moveTo(p1.x, p1.y);
+  ctx.lineTo(p2.x, p2.y);
+  ctx.strokeStyle = "#ffffff";
+  ctx.lineWidth = 4;
+  ctx.stroke();
+
+  // 3) 尾の 2 辺だけ黒で描く（楕円とつながったように見える）
   ctx.beginPath();
   ctx.moveTo(p1.x, p1.y);
   ctx.lineTo(tipX, tipY);
