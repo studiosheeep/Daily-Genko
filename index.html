@@ -1187,88 +1187,97 @@ function createTonePatternData() {
     console.log(text);
   }
 
-  /* ===== 原稿用紙ベース ===== */
+/* ===== 原稿用紙ベース（ClipStudio B5 ピクセル準拠） ===== */
 function drawPaperBase(ctx, w, h) {
   ctx.save();
 
-  // 用紙の地
+  // 用紙地
   ctx.fillStyle = "#ffffff";
   ctx.fillRect(0, 0, w, h);
 
   ctx.strokeStyle = "#3b82f6";
   ctx.lineWidth = 1;
 
-  // ここでは「w×h を A4 サイズ」とみなして比率で計算する
-  // A4: 210×297mm / B5 仕上がり: 182×257mm をざっくり再現
+  // ClipStudio B5 の基準ピクセル
+  const CS_CANVAS_W = 4961;
+  const CS_CANVAS_H = 7016;
 
-  const minSide = Math.min(w, h);
+  // ヘルパー：クリスタ上の px を編集キャンバス上の座標に変換
+  const sx = px => (px / CS_CANVAS_W) * w;
+  const sy = px => (px / CS_CANVAS_H) * h;
 
-  // 断ち切り（仕上がり外側・外枠）: A4外周から少し内側
-  // だいたい 3mm 程度を想定
-  const bleedMargin = minSide * 0.012; // ≒ 3mm
-  const outerX = bleedMargin;
-  const outerY = bleedMargin;
-  const outerW = w - bleedMargin * 2;
-  const outerH = h - bleedMargin * 2;
-  ctx.strokeRect(outerX, outerY, outerW, outerH);
+  // 1) キャンバス外枠（用紙全体）
+  //    4961×7016 をそのまま w×h に対応させる
+  const canvasX = 0;
+  const canvasY = 0;
+  const canvasW = w;
+  const canvasH = h;
+  ctx.strokeRect(canvasX + 0.5, canvasY + 0.5, canvasW - 1, canvasH - 1);
 
-  // B5 仕上がり枠
-  // A4 と B5 の差分をもとに左右14mm・上下20mmくらい内側に入る
-  const b5MarginX = w * (14 / 210); // ≒ 0.0667
-  const b5MarginY = h * (20 / 297); // ≒ 0.0673
-  const b5X = b5MarginX;
-  const b5Y = b5MarginY;
-  const b5W = w - b5MarginX * 2;
-  const b5H = h - b5MarginY * 2;
-  ctx.strokeRect(b5X, b5Y, b5W, b5H);
+  // 2) 仕上がり枠 4299×6071（中央）
+  const FIN_W = 4299;
+  const FIN_H = 6071;
+  const finW = sx(FIN_W);
+  const finH = sy(FIN_H);
+  const finX = (w - finW) / 2;
+  const finY = (h - finH) / 2;
+  ctx.strokeRect(finX, finY, finW, finH);
 
-  // 内枠（本文安全エリア）
-  // B5 仕上がりからさらに 8〜10mm ほど内側
-  const safeMarginX = w * (8 / 210);   // ざっくり 8mm 相当
-  const safeMarginY = h * (10 / 297);  // ざっくり 10mm 相当
-  const safeX = b5X + safeMarginX;
-  const safeY = b5Y + safeMarginY;
-  const safeW = b5W - safeMarginX * 2;
-  const safeH = b5H - safeMarginY * 2;
-  ctx.strokeRect(safeX, safeY, safeW, safeH);
+  // 3) 断ち落とし枠（仕上がり + 118px ×2）
+  const BLEED_W = FIN_W + 118 * 2;
+  const BLEED_H = FIN_H + 118 * 2;
+  const bleedW = sx(BLEED_W);
+  const bleedH = sy(BLEED_H);
+  const bleedX = (w - bleedW) / 2;
+  const bleedY = (h - bleedH) / 2;
+  ctx.strokeRect(bleedX, bleedY, bleedW, bleedH);
 
-  // 中心十字とコーナーマーク（outer 枠基準）
+  // 4) 内枠（本文安全枠）3520×5173
+  const INNER_W = 3520;
+  const INNER_H = 5173;
+  const innerW = sx(INNER_W);
+  const innerH = sy(INNER_H);
+  const innerX = (w - innerW) / 2;
+  const innerY = (h - innerH) / 2;
+  ctx.strokeRect(innerX, innerY, innerW, innerH);
+
+  // 5) 中心マーク・コーナーマーク（断ち落とし枠基準で描画）
   const cx = w / 2;
   const cy = h / 2;
-
+  const minSide = Math.min(w, h);
   const markLen   = minSide * 0.03;
   const cornerLen = minSide * 0.025;
 
   ctx.beginPath();
 
-  // 上下中央
-  ctx.moveTo(cx, outerY - markLen);
-  ctx.lineTo(cx, outerY);
-  ctx.moveTo(cx, outerY + outerH);
-  ctx.lineTo(cx, outerY + outerH + markLen);
+  // 上下中央（断ち落としの外側に）
+  ctx.moveTo(cx, bleedY - markLen);
+  ctx.lineTo(cx, bleedY);
+  ctx.moveTo(cx, bleedY + bleedH);
+  ctx.lineTo(cx, bleedY + bleedH + markLen);
 
   // 左右中央
-  ctx.moveTo(outerX - markLen, cy);
-  ctx.lineTo(outerX, cy);
-  ctx.moveTo(outerX + outerW, cy);
-  ctx.lineTo(outerX + outerW + markLen, cy);
+  ctx.moveTo(bleedX - markLen, cy);
+  ctx.lineTo(bleedX, cy);
+  ctx.moveTo(bleedX + bleedW, cy);
+  ctx.lineTo(bleedX + bleedW + markLen, cy);
 
-  // 四隅コーナー
-  ctx.moveTo(outerX, outerY - cornerLen);
-  ctx.lineTo(outerX, outerY);
-  ctx.lineTo(outerX - cornerLen, outerY);
+  // コーナー（断ち落とし四隅）
+  ctx.moveTo(bleedX, bleedY - cornerLen);
+  ctx.lineTo(bleedX, bleedY);
+  ctx.lineTo(bleedX - cornerLen, bleedY);
 
-  ctx.moveTo(outerX + outerW, outerY - cornerLen);
-  ctx.lineTo(outerX + outerW, outerY);
-  ctx.lineTo(outerX + outerW + cornerLen, outerY);
+  ctx.moveTo(bleedX + bleedW, bleedY - cornerLen);
+  ctx.lineTo(bleedX + bleedW, bleedY);
+  ctx.lineTo(bleedX + bleedW + cornerLen, bleedY);
 
-  ctx.moveTo(outerX, outerY + outerH + cornerLen);
-  ctx.lineTo(outerX, outerY + outerH);
-  ctx.lineTo(outerX - cornerLen, outerY + outerH);
+  ctx.moveTo(bleedX, bleedY + bleedH + cornerLen);
+  ctx.lineTo(bleedX, bleedY + bleedH);
+  ctx.lineTo(bleedX - cornerLen, bleedY + bleedH);
 
-  ctx.moveTo(outerX + outerW, outerY + outerH + cornerLen);
-  ctx.lineTo(outerX + outerW, outerY + outerH);
-  ctx.lineTo(outerX + outerW + cornerLen, outerY + outerH);
+  ctx.moveTo(bleedX + bleedW, bleedY + bleedH + cornerLen);
+  ctx.lineTo(bleedX + bleedW, bleedY + bleedH);
+  ctx.lineTo(bleedX + bleedW + cornerLen, bleedY + bleedH);
 
   ctx.stroke();
   ctx.restore();
