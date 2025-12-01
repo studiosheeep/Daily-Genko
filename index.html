@@ -1997,6 +1997,7 @@ function taperFactor(i, n) {
   }
 
   function drawPageContent(ctx, pageData, options = {}) {
+  const hidePaperBase = opts.hidePaperBase || false;
     const w = ctx.canvas.width;
     const h = ctx.canvas.height;
     const activeIndex = options.activePanelIndex ?? null;
@@ -2904,8 +2905,9 @@ function exportCurrentPageImage() {
   // ベクターデータを 2倍スケールしたコピーで描画
   const scaledData = createScaledPageData(pageData, WORK_SCALE);
   drawPageContent(wctx, scaledData, {
-    activePanelIndex: null,
-    selectedBalloon: null
+  activePanelIndex: null,
+  selectedBalloon: null,
+  hidePaperBase: true
   });
 
   // ここから 600dpi(A4) サイズへ高品質リサイズ
