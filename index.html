@@ -1421,31 +1421,29 @@ h1 {
     return -1;
   }
 
-  function measureBalloonSize(text, fontSize) {
-  // / と改行で列分割（あなたのコードと同じルール）
+function measureBalloonSize(text, fontSize) {
   const lineTexts = String(text).split(/[\/\n]/);
   const columns = lineTexts.map(line => Array.from(line));
 
-  // 最大行数
   let maxLen = 0;
   columns.forEach(chars => {
     if (chars.length > maxLen) maxLen = chars.length;
   });
 
-  // 1文字の縦幅と列の横幅
   const lineHeight = fontSize * 1.1;
   const colWidth   = fontSize + 4;
 
   const textHeight = lineHeight * maxLen;
   const textWidth  = colWidth * columns.length;
 
-  // 文字周囲に少し余白をつける
+  // ★ 内側に padding を追加（px ベース）
+  const padding = fontSize * 1.2; // ← ここが余白。増やすと広くなる
+
   return {
-    rx: textWidth  * 0.6,  // 楕円横半径
-    ry: textHeight * 0.6   // 楕円縦半径
+    rx: textWidth  / 2 + padding,
+    ry: textHeight / 2 + padding
   };
 }
-  
   // 句読点・三点リーダ専用の縦書き描画
   function drawVerticalBalloonText(ctx, text, centerX, centerY) {
     const fontSize = 18;
