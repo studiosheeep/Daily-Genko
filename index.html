@@ -974,23 +974,32 @@ h1 {
   /* ===== トーン用パターン(網点) ===== */
   let tonePatternData = null;
 
+  // 60線相当（600dpi前提・45度・約20％）のトーンパターン
   function createTonePatternData() {
-    const size = 16;
+    // 600dpi / 60線 ≒ 10px間隔
+    // 20pxタイル中に対角線上に10px間隔で2つドットを置く
+    const size = 20;
     const canvas = document.createElement("canvas");
     canvas.width = size;
     canvas.height = size;
     const ctx = canvas.getContext("2d");
 
+    // ベースは白
     ctx.fillStyle = "#ffffff";
     ctx.fillRect(0, 0, size, size);
 
+    // ドット（網点）
     ctx.fillStyle = "#000000";
-    const r = 2.5;
+    const r = 3.6; // 2つ分でおおよそ20％弱の濃度
+
+    // 左上側の点
     ctx.beginPath();
-    ctx.arc(size * 0.25, size * 0.25, r, 0, Math.PI * 2);
+    ctx.arc(5, 5, r, 0, Math.PI * 2);
     ctx.fill();
+
+    // 右下側の点（5+10=15で約10px間隔）
     ctx.beginPath();
-    ctx.arc(size * 0.75, size * 0.75, r, 0, Math.PI * 2);
+    ctx.arc(15, 15, r, 0, Math.PI * 2);
     ctx.fill();
 
     const img = ctx.getImageData(0, 0, size, size);
