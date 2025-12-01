@@ -1910,7 +1910,7 @@ ctx.restore();
       if (blueBtn) blueBtn.onclick = () => { pageData.roughColor = "blue"; saveDrawPage(pageData); redrawCanvas(); };
       if (grayBtn) grayBtn.onclick = () => { pageData.roughColor = "gray"; saveDrawPage(pageData); redrawCanvas(); };
       if (delBtn)  delBtn.onclick  = () => { pageData.rough = {};       saveDrawPage(pageData); redrawCanvas(); };
-    }
+      
         } else if (currentPanelMode === "text") {
       const tailBtn = document.getElementById("tailToggleBtn");
       const editBtn = document.getElementById("editBalloonTextBtn");
