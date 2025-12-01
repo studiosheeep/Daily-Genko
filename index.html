@@ -1339,26 +1339,45 @@ h1 {
     return base * (0.3 + p * 0.7);
   }
 
-  function getCanvasPos(evt) {
-    if (!drawingCanvas) return { x: 0, y: 0 };
-    const rect = drawingCanvas.getBoundingClientRect();
-    let clientX, clientY;
+function getCanvasPos(evt) {
+  if (!drawingCanvas) return { x: 0, y: 0 };
+  const canvas = drawingCanvas;
 
-    if (evt.touches && evt.touches.length > 0) {
-      clientX = evt.touches[0].clientX;
-      clientY = evt.touches[0].clientY;
-    } else if (evt.changedTouches && evt.changedTouches.length > 0) {
-      clientX = evt.changedTouches[0].clientX;
-      clientY = evt.changedTouches[0].clientY;
-    } else {
-      clientX = evt.clientX;
-      clientY = evt.clientY;
-    }
+  // 1) マウス・ペンなど（touch ではない）なら offsetX/Y を優先
+  //    → 親要素のレイアウト変化やスクロールの影響を受けにくくなります
+  const isPointerLike =
+    !evt.touches && !evt.changedTouches &&
+    typeof evt.offsetX === "number" &&
+    typeof evt.offsetY === "number";
 
-    const x = (clientX - rect.left) * (drawingCanvas.width / rect.width);
-    const y = (clientY - rect.top) * (drawingCanvas.height / rect.height);
-    return { x, y };
+  if (isPointerLike) {
+    const scaleX = canvas.width  / canvas.clientWidth;
+    const scaleY = canvas.height / canvas.clientHeight;
+    return {
+      x: evt.offsetX * scaleX,
+      y: evt.offsetY * scaleY
+    };
   }
+
+  // 2) タッチ操作など offsetX/Y が使えない場合は従来通り rect から計算
+  const rect = canvas.getBoundingClientRect();
+  let clientX, clientY;
+
+  if (evt.touches && evt.touches.length > 0) {
+    clientX = evt.touches[0].clientX;
+    clientY = evt.touches[0].clientY;
+  } else if (evt.changedTouches && evt.changedTouches.length > 0) {
+    clientX = evt.changedTouches[0].clientX;
+    clientY = evt.changedTouches[0].clientY;
+  } else {
+    clientX = evt.clientX;
+    clientY = evt.clientY;
+  }
+
+  const x = (clientX - rect.left) * (canvas.width / rect.width);
+  const y = (clientY - rect.top)  * (canvas.height / rect.height);
+  return { x, y };
+}
 
   function normalizeRect(x1, y1, x2, y2) {
     const x = Math.min(x1, x2);
