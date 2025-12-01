@@ -1524,36 +1524,48 @@ function drawBalloonTail(ctx, b, rx, ry) {
   // tailSide が無い古いデータは左扱い
   const side = b.tailSide === "right" ? "right" : "left";
 
-  // 楕円の「やや下寄りの側面」を基点にする
-  const baseY = b.y + ry * 0.35;             // 下側寄り
-  const baseX = (side === "right") ? (b.x + rx) : (b.x - rx);
+  // もう少し下側から出す
+  const baseY = b.y + ry * 0.45;
 
-  // 先端はそこから少し外＆下へ
-  const tipOffsetX = rx * 0.25;
-  const tipOffsetY = ry * 0.18;
+  // 楕円の外側ぎりぎりから生やす（少しだけ外にずらす）
+  const edgeX = (side === "right") ? (b.x + rx) : (b.x - rx);
+  const baseX = edgeX + (side === "right" ? 2 : -2);
+
+  // 尾の角度をゆるめる（横長・縦短め）
+  const tipOffsetX = rx * 0.40;   // 大きめ → 緩い角度
+  const tipOffsetY = ry * 0.12;   // 小さめ → あまり下に行き過ぎない
   const tipX = (side === "right")
     ? baseX + tipOffsetX
     : baseX - tipOffsetX;
   const tipY = baseY + tipOffsetY;
 
-  // 側面の上下 2 点（ここから V 字になる）
-  const baseTopY    = baseY - 8;
+  const baseTopY    = baseY - 10;
   const baseBottomY = baseY + 6;
 
   ctx.save();
-  ctx.lineWidth = 2.2;        // 少し太めに
-  ctx.beginPath();
+  ctx.lineCap  = "round";
+  ctx.lineJoin = "round";
 
-  // 上辺 → 先端
+  // 1. 楕円の線と重なっている部分を白で「抜く」
+  ctx.beginPath();
   ctx.moveTo(baseX, baseTopY);
   ctx.lineTo(tipX, tipY);
-
-  // 下辺 → 先端
   ctx.moveTo(baseX, baseBottomY);
   ctx.lineTo(tipX, tipY);
-
-  // ★ closePath も fill もしないので、ふきだし側が開いた形になる
+  ctx.strokeStyle = "#ffffff";
+  ctx.lineWidth   = 4;   // 楕円の線より太めに
   ctx.stroke();
+
+  // 2. その上から実際のテール線を描く（片辺は閉じない）
+  ctx.beginPath();
+  ctx.moveTo(baseX, baseTopY);
+  ctx.lineTo(tipX, tipY);
+  ctx.moveTo(baseX, baseBottomY);
+  ctx.lineTo(tipX, tipY);
+  ctx.strokeStyle = "#111827";
+  ctx.lineWidth   = 2.3;
+  ctx.stroke();
+
   ctx.restore();
 }
   
