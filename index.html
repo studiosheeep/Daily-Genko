@@ -971,13 +971,44 @@ h1 {
   const BALLOON_RX = 60;
   const BALLOON_RY = 80;
 
+  /* ===== トーン用パターン(網点) ===== */
+  let tonePatternData = null;
+
+  function createTonePatternData() {
+    const size = 16;
+    const canvas = document.createElement("canvas");
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext("2d");
+
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, size, size);
+
+    ctx.fillStyle = "#000000";
+    const r = 2.5;
+    ctx.beginPath();
+    ctx.arc(size * 0.25, size * 0.25, r, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(size * 0.75, size * 0.75, r, 0, Math.PI * 2);
+    ctx.fill();
+
+    const img = ctx.getImageData(0, 0, size, size);
+    tonePatternData = {
+      width: size,
+      height: size,
+      data: img.data
+    };
+  }
+
   function createEmptyDrawPage() {
     return {
       frames: {},
       rough: {},
       pen: {},
       text: {},
-      beta: {},       // ★ ベタ塗り用
+      beta: {},       // ベタ塗り用
+      tone: {},       // トーン塗り用
       roughColor: "black"
     };
   }
@@ -1009,6 +1040,7 @@ h1 {
       if (!p.pen)   p.pen   = {};
       if (!p.text)  p.text  = {};
       if (!p.beta)  p.beta  = {};
+      if (!p.tone)  p.tone  = {};
       if (!p.roughColor) p.roughColor = "black";
     }
     saveDrawAll(all);
@@ -1302,7 +1334,12 @@ h1 {
       zoomMin = 0.5;
       zoomMax = 3;
       currentZoom = 1;
-    } else if (currentPanelMode === "rough" || currentPanelMode === "pen" || currentPanelMode === "beta") {
+    } else if (
+      currentPanelMode === "rough" ||
+      currentPanelMode === "pen"   ||
+      currentPanelMode === "beta"  ||
+      currentPanelMode === "tone"
+    ) {
       zoomMin = 1;
       zoomMax = 3;
       currentZoom = 1;
@@ -1339,45 +1376,42 @@ h1 {
     return base * (0.3 + p * 0.7);
   }
 
-function getCanvasPos(evt) {
-  if (!drawingCanvas) return { x: 0, y: 0 };
-  const canvas = drawingCanvas;
+  function getCanvasPos(evt) {
+    if (!drawingCanvas) return { x: 0, y: 0 };
+    const canvas = drawingCanvas;
 
-  // 1) マウス・ペンなど（touch ではない）なら offsetX/Y を優先
-  //    → 親要素のレイアウト変化やスクロールの影響を受けにくくなります
-  const isPointerLike =
-    !evt.touches && !evt.changedTouches &&
-    typeof evt.offsetX === "number" &&
-    typeof evt.offsetY === "number";
+    const isPointerLike =
+      !evt.touches && !evt.changedTouches &&
+      typeof evt.offsetX === "number" &&
+      typeof evt.offsetY === "number";
 
-  if (isPointerLike) {
-    const scaleX = canvas.width  / canvas.clientWidth;
-    const scaleY = canvas.height / canvas.clientHeight;
-    return {
-      x: evt.offsetX * scaleX,
-      y: evt.offsetY * scaleY
-    };
+    if (isPointerLike) {
+      const scaleX = canvas.width  / canvas.clientWidth;
+      const scaleY = canvas.height / canvas.clientHeight;
+      return {
+        x: evt.offsetX * scaleX,
+        y: evt.offsetY * scaleY
+      };
+    }
+
+    const rect = canvas.getBoundingClientRect();
+    let clientX, clientY;
+
+    if (evt.touches && evt.touches.length > 0) {
+      clientX = evt.touches[0].clientX;
+      clientY = evt.touches[0].clientY;
+    } else if (evt.changedTouches && evt.changedTouches.length > 0) {
+      clientX = evt.changedTouches[0].clientX;
+      clientY = evt.changedTouches[0].clientY;
+    } else {
+      clientX = evt.clientX;
+      clientY = evt.clientY;
+    }
+
+    const x = (clientX - rect.left) * (canvas.width / rect.width);
+    const y = (clientY - rect.top)  * (canvas.height / rect.height);
+    return { x, y };
   }
-
-  // 2) タッチ操作など offsetX/Y が使えない場合は従来通り rect から計算
-  const rect = canvas.getBoundingClientRect();
-  let clientX, clientY;
-
-  if (evt.touches && evt.touches.length > 0) {
-    clientX = evt.touches[0].clientX;
-    clientY = evt.touches[0].clientY;
-  } else if (evt.changedTouches && evt.changedTouches.length > 0) {
-    clientX = evt.changedTouches[0].clientX;
-    clientY = evt.changedTouches[0].clientY;
-  } else {
-    clientX = evt.clientX;
-    clientY = evt.clientY;
-  }
-
-  const x = (clientX - rect.left) * (canvas.width / rect.width);
-  const y = (clientY - rect.top)  * (canvas.height / rect.height);
-  return { x, y };
-}
 
   function normalizeRect(x1, y1, x2, y2) {
     const x = Math.min(x1, x2);
@@ -1585,145 +1619,131 @@ function getCanvasPos(evt) {
   }
 
   /* ===== ベタ用塗りつぶし ===== */
-// ★ 明るさベースで同じ領域を判定し、
-// 原稿用紙の線（薄い水色）もまとめて塗りつぶす flood fill
-function floodFillBeta(ctx, startX, startY, rect) {
-  const w = ctx.canvas.width;
-  const h = ctx.canvas.height;
+  function floodFillBeta(ctx, startX, startY, rect) {
+    const w = ctx.canvas.width;
+    const h = ctx.canvas.height;
 
-  const sx = Math.floor(startX);
-  const sy = Math.floor(startY);
+    const sx = Math.floor(startX);
+    const sy = Math.floor(startY);
 
-  if (!rect) return;
+    if (!rect) return;
 
-  const rx = Math.max(0, Math.floor(rect.x));
-  const ry = Math.max(0, Math.floor(rect.y));
-  const rw = Math.min(w - rx, Math.floor(rect.w));
-  const rh = Math.min(h - ry, Math.floor(rect.h));
+    const rx = Math.max(0, Math.floor(rect.x));
+    const ry = Math.max(0, Math.floor(rect.y));
+    const rw = Math.min(w - rx, Math.floor(rect.w));
+    const rh = Math.min(h - ry, Math.floor(rect.h));
 
-  if (
-    sx < rx || sx >= rx + rw ||
-    sy < ry || sy >= ry + rh
-  ) {
-    return;
+    if (
+      sx < rx || sx >= rx + rw ||
+      sy < ry || sy >= ry + rh
+    ) {
+      return;
+    }
+
+    const img = ctx.getImageData(0, 0, w, h);
+    const data = img.data;
+
+    function idx(x, y) {
+      return (y * w + x) * 4;
+    }
+
+    const DARK_BOUNDARY = 200;
+
+    function isFillable(i) {
+      if (isBetaBlackPixel(data, i)) return false;
+
+      const r = data[i];
+      const g = data[i + 1];
+      const b = data[i + 2];
+      const brightness = (r + g + b) / 3;
+
+      return brightness >= DARK_BOUNDARY;
+    }
+
+    const stack = [[sx, sy]];
+
+    while (stack.length) {
+      const [x, y] = stack.pop();
+      if (x < rx || x >= rx + rw || y < ry || y >= ry + rh) continue;
+      const i = idx(x, y);
+      if (!isFillable(i)) continue;
+
+      data[i]     = 0;
+      data[i + 1] = 0;
+      data[i + 2] = 0;
+      data[i + 3] = 255;
+
+      stack.push([x + 1, y]);
+      stack.push([x - 1, y]);
+      stack.push([x, y + 1]);
+      stack.push([x, y - 1]);
+    }
+
+    ctx.putImageData(img, 0, 0);
+
+    expandBetaRegion(ctx, rect, 1);
   }
 
-  const img = ctx.getImageData(0, 0, w, h);
-  const data = img.data;
-
-  function idx(x, y) {
-    return (y * w + x) * 4;
+  function isBetaBlackPixel(data, index) {
+    return (
+      data[index]     === 0 &&
+      data[index + 1] === 0 &&
+      data[index + 2] === 0 &&
+      data[index + 3] === 255
+    );
   }
 
-  // ★「この明るさ未満は線（境界）」として扱う
-  //   例: 0〜255 のうち 200 未満を境界にする
-  const DARK_BOUNDARY = 200;
+  function expandBetaRegion(ctx, rect, iterations = 1) {
+    const w = ctx.canvas.width;
+    const h = ctx.canvas.height;
 
-  function isFillable(i) {
-    // すでにベタで塗った真っ黒は無視
-    if (isBetaBlackPixel(data, i)) return false;
+    const rx = Math.max(0, Math.floor(rect.x));
+    const ry = Math.max(0, Math.floor(rect.y));
+    const rw = Math.min(w - rx, Math.floor(rect.w));
+    const rh = Math.min(h - ry, Math.floor(rect.h));
 
-    const r = data[i];
-    const g = data[i + 1];
-    const b = data[i + 2];
-    const brightness = (r + g + b) / 3;
+    function idx(x, y) {
+      return (y * w + x) * 4;
+    }
 
-    // 暗い色（ペン線・影など）は境界
-    // 明るい色（紙・原稿用紙の水色線の明るい部分）は塗る対象
-    return brightness >= DARK_BOUNDARY;
-  }
+    const img = ctx.getImageData(0, 0, w, h);
+    const data = img.data;
 
-  const stack = [[sx, sy]];
+    for (let it = 0; it < iterations; it++) {
+      const prev = new Uint8ClampedArray(data);
 
-  while (stack.length) {
-    const [x, y] = stack.pop();
-    if (x < rx || x >= rx + rw || y < ry || y >= ry + rh) continue;
-    const i = idx(x, y);
-    if (!isFillable(i)) continue;
+      for (let y = ry; y < ry + rh; y++) {
+        for (let x = rx; x < rx + rw; x++) {
+          const i = idx(x, y);
+          if (isBetaBlackPixel(prev, i)) continue;
 
-    // この画素を黒で塗る
-    data[i]     = 0;
-    data[i + 1] = 0;
-    data[i + 2] = 0;
-    data[i + 3] = 255;
-
-    stack.push([x + 1, y]);
-    stack.push([x - 1, y]);
-    stack.push([x, y + 1]);
-    stack.push([x, y - 1]);
-  }
-
-  ctx.putImageData(img, 0, 0);
-
-  // フチの1ピクセル塗り残しを消す
-  expandBetaRegion(ctx, rect, 1);
-}
-
-// ★ ベタ塗り用: 「すでに塗った黒」かどうか判定
-function isBetaBlackPixel(data, index) {
-  return (
-    data[index]     === 0 &&
-    data[index + 1] === 0 &&
-    data[index + 2] === 0 &&
-    data[index + 3] === 255
-  );
-}
-
-// ★ ベタ塗りの境界を 1 ピクセル分ふくらませて
-// フチの塗り残しを消す（枠線の中だけ処理）
-function expandBetaRegion(ctx, rect, iterations = 1) {
-  const w = ctx.canvas.width;
-  const h = ctx.canvas.height;
-
-  const rx = Math.max(0, Math.floor(rect.x));
-  const ry = Math.max(0, Math.floor(rect.y));
-  const rw = Math.min(w - rx, Math.floor(rect.w));
-  const rh = Math.min(h - ry, Math.floor(rect.h));
-
-  function idx(x, y) {
-    return (y * w + x) * 4;
-  }
-
-  const img = ctx.getImageData(0, 0, w, h);
-  const data = img.data;
-
-  for (let it = 0; it < iterations; it++) {
-    const prev = new Uint8ClampedArray(data); // 1ステップ前の状態をコピー
-
-    for (let y = ry; y < ry + rh; y++) {
-      for (let x = rx; x < rx + rw; x++) {
-        const i = idx(x, y);
-        // すでに黒ならそのまま
-        if (isBetaBlackPixel(prev, i)) continue;
-
-        // 8近傍のどこかに黒があればこのピクセルも黒にする
-        let hasBlackNeighbor = false;
-        for (let dy = -1; dy <= 1 && !hasBlackNeighbor; dy++) {
-          for (let dx = -1; dx <= 1 && !hasBlackNeighbor; dx++) {
-            if (dx === 0 && dy === 0) continue;
-            const nx = x + dx;
-            const ny = y + dy;
-            if (nx < rx || nx >= rx + rw || ny < ry || ny >= ry + rh) continue;
-            const ni = idx(nx, ny);
-            if (isBetaBlackPixel(prev, ni)) {
-              hasBlackNeighbor = true;
+          let hasBlackNeighbor = false;
+          for (let dy = -1; dy <= 1 && !hasBlackNeighbor; dy++) {
+            for (let dx = -1; dx <= 1 && !hasBlackNeighbor; dx++) {
+              if (dx === 0 && dy === 0) continue;
+              const nx = x + dx;
+              const ny = y + dy;
+              if (nx < rx || nx >= rx + rw || ny < ry || ny >= ry + rh) continue;
+              const ni = idx(nx, ny);
+              if (isBetaBlackPixel(prev, ni)) {
+                hasBlackNeighbor = true;
+              }
             }
           }
-        }
 
-        if (hasBlackNeighbor) {
-          data[i]     = 0;
-          data[i + 1] = 0;
-          data[i + 2] = 0;
-          data[i + 3] = 255;
+          if (hasBlackNeighbor) {
+            data[i]     = 0;
+            data[i + 1] = 0;
+            data[i + 2] = 0;
+            data[i + 3] = 255;
+          }
         }
       }
     }
+
+    ctx.putImageData(img, 0, 0);
   }
 
-  ctx.putImageData(img, 0, 0);
-}
-  
   function applyBetaFills(ctx, pageData) {
     if (!pageData || !pageData.beta) return;
     for (const [panelIndex, fills] of Object.entries(pageData.beta)) {
@@ -1739,6 +1759,83 @@ function expandBetaRegion(ctx, rect, iterations = 1) {
         floodFillBeta(ctx, f.x, f.y, r);
       });
     }
+  }
+
+  /* ===== トーン用塗りつぶし（網点パターン） ===== */
+  function applyToneFills(ctx, pageData) {
+    if (!pageData || !pageData.tone) return;
+    if (!tonePatternData) return;
+
+    const w = ctx.canvas.width;
+    const h = ctx.canvas.height;
+
+    const baseImg = ctx.getImageData(0, 0, w, h);
+    const baseData = baseImg.data;
+
+    const outImg = ctx.getImageData(0, 0, w, h);
+    const outData = outImg.data;
+
+    const visited = new Uint8Array(w * h);
+
+    const pW = tonePatternData.width;
+    const pH = tonePatternData.height;
+    const pData = tonePatternData.data;
+
+    const DARK_BOUNDARY = 200;
+
+    function floodPanel(panelIndex, seed) {
+      const rect = pageData.frames[panelIndex];
+      if (!rect) return;
+
+      const rx = Math.max(0, Math.floor(rect.x));
+      const ry = Math.max(0, Math.floor(rect.y));
+      const rw = Math.min(w - rx, Math.floor(rect.w));
+      const rh = Math.min(h - ry, Math.floor(rect.h));
+
+      const sx = Math.floor(seed.x);
+      const sy = Math.floor(seed.y);
+
+      if (sx < rx || sx >= rx + rw || sy < ry || sy >= ry + rh) return;
+
+      const stack = [[sx, sy]];
+
+      while (stack.length) {
+        const [x, y] = stack.pop();
+        if (x < rx || x >= rx + rw || y < ry || y >= ry + rh) continue;
+
+        const pos = y * w + x;
+        if (visited[pos]) continue;
+        visited[pos] = 1;
+
+        const i = pos * 4;
+        const r = baseData[i];
+        const g = baseData[i + 1];
+        const b = baseData[i + 2];
+        const brightness = (r + g + b) / 3;
+
+        if (brightness < DARK_BOUNDARY) continue;
+
+        const tx = ((x % pW) + pW) % pW;
+        const ty = ((y % pH) + pH) % pH;
+        const ti = (ty * pW + tx) * 4;
+
+        outData[i]     = pData[ti];
+        outData[i + 1] = pData[ti + 1];
+        outData[i + 2] = pData[ti + 2];
+        outData[i + 3] = pData[ti + 3];
+
+        stack.push([x + 1, y]);
+        stack.push([x - 1, y]);
+        stack.push([x, y + 1]);
+        stack.push([x, y - 1]);
+      }
+    }
+
+    for (const [panelIndex, fills] of Object.entries(pageData.tone)) {
+      fills.forEach(f => floodPanel(panelIndex, f));
+    }
+
+    ctx.putImageData(outImg, 0, 0);
   }
 
   /* ===== ストローク描画共通 ===== */
@@ -1863,62 +1960,59 @@ function expandBetaRegion(ctx, rect, iterations = 1) {
     ctx.restore();
   }
 
-function drawPageContent(ctx, pageData, options = {}) {
-  const w = ctx.canvas.width;
-  const h = ctx.canvas.height;
-  const activeIndex = options.activePanelIndex ?? null;
-  const selected = options.selectedBalloon ?? null;
+  function drawPageContent(ctx, pageData, options = {}) {
+    const w = ctx.canvas.width;
+    const h = ctx.canvas.height;
+    const activeIndex = options.activePanelIndex ?? null;
+    const selected = options.selectedBalloon ?? null;
 
-  const skipPaperBase = options.skipPaperBase === true;
+    const skipPaperBase = options.skipPaperBase === true;
 
-  if (skipPaperBase) {
-    // ★ 原稿用紙の青線は描かないが、背景だけは必ず白で塗る
+    if (skipPaperBase) {
+      ctx.save();
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, w, h);
+      ctx.restore();
+    } else {
+      drawPaperBase(ctx, w, h);
+    }
+
     ctx.save();
-    ctx.fillStyle = "#ffffff";
-    ctx.fillRect(0, 0, w, h);
+    ctx.strokeStyle = "#111827";
+    ctx.lineWidth = 3;
+    Object.values(pageData.frames).forEach(rect => {
+      ctx.strokeRect(rect.x, rect.y, rect.w, rect.h);
+    });
     ctx.restore();
-  } else {
-    // 通常時はこれまで通り原稿用紙を描画
-    drawPaperBase(ctx, w, h);
+
+    const roughColor = pageData.roughColor || "black";
+    let roughStroke = "#111827";
+    if (roughColor === "blue") roughStroke = "#60a5fa";
+    if (roughColor === "gray") roughStroke = "#9ca3af";
+
+    drawStrokeLayerOnCtx(ctx, pageData, "rough", roughStroke, 2, false);
+    drawStrokeLayerOnCtx(ctx, pageData, "pen",   "#111827",   3, true);
+
+    applyBetaFills(ctx, pageData);
+    applyToneFills(ctx, pageData);
+
+    drawBalloonsOnCtx(ctx, pageData, selected);
+
+    if (activeIndex) {
+      drawActivePanelOverlay(ctx, pageData, activeIndex);
+    }
   }
-
-  // ここから下は元の処理のまま
-  ctx.save();
-  ctx.strokeStyle = "#111827";
-  ctx.lineWidth = 3;
-  Object.values(pageData.frames).forEach(rect => {
-    ctx.strokeRect(rect.x, rect.y, rect.w, rect.h);
-  });
-  ctx.restore();
-
-  const roughColor = pageData.roughColor || "black";
-  let roughStroke = "#111827";
-  if (roughColor === "blue") roughStroke = "#60a5fa";
-  if (roughColor === "gray") roughStroke = "#9ca3af";
-
-  drawStrokeLayerOnCtx(ctx, pageData, "rough", roughStroke, 2, false);
-  drawStrokeLayerOnCtx(ctx, pageData, "pen",   "#111827",   3, true);
-
-  applyBetaFills(ctx, pageData);
-
-  drawBalloonsOnCtx(ctx, pageData, selected);
-
-  if (activeIndex) {
-    drawActivePanelOverlay(ctx, pageData, activeIndex);
-  }
-}
 
   function redrawCanvas() {
     if (!drawingCanvas || !drawingCtx) return;
     const pageData = activeDrawPageData || getDrawPage(currentPage).pageData;
     const ctx = drawingCtx;
     ctx.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height);
-drawPageContent(ctx, pageData, {
-  activePanelIndex: currentPanelIndex,
-  selectedBalloon: selectedBalloon,
-  // ★ ベタ編集中だけ原稿用紙ベースを描かない
-  skipPaperBase: currentPanelMode === "beta"
-});
+    drawPageContent(ctx, pageData, {
+      activePanelIndex: currentPanelIndex,
+      selectedBalloon: selectedBalloon,
+      skipPaperBase: currentPanelMode === "beta" || currentPanelMode === "tone"
+    });
   }
 
   // ===== ズーム（ホイール + ピンチ） =====
@@ -2051,6 +2145,7 @@ drawPageContent(ctx, pageData, {
     else if (group === "text")  currentPanelMode = "text";
     else if (group === "pen")   currentPanelMode = "pen";
     else if (group === "beta")  currentPanelMode = "beta";
+    else if (group === "tone")  currentPanelMode = "tone";
     else                        currentPanelMode = "info";
 
     if (["beta", "tone", "finish"].includes(group)) {
@@ -2108,6 +2203,13 @@ drawPageContent(ctx, pageData, {
           <span>コマ内をクリックすると黒で塗りつぶします。</span>
           <button id="betaUndoBtn">取り消し</button>
         </div>`;
+    } else if (currentPanelMode === "tone") {
+      infoText = `ペン入れ済みの線で囲った部分をクリックしてトーン（網点）を貼ります。`;
+      toolbarHtml = `
+        <div class="canvas-toolbar">
+          <span>コマ内をクリックすると網点（45°・20％程度）で塗りつぶします。</span>
+          <button id="toneUndoBtn">取り消し</button>
+        </div>`;
     }
 
     panelBody.innerHTML = `
@@ -2124,6 +2226,7 @@ drawPageContent(ctx, pageData, {
 
     const { pageData } = getDrawPage(currentPage);
     if (!pageData.beta) pageData.beta = {};
+    if (!pageData.tone) pageData.tone = {};
     activeDrawPageData = pageData;
 
     resetZoomForMode();
@@ -2210,6 +2313,19 @@ drawPageContent(ctx, pageData, {
           if (list.length > 0) {
             list.pop();
             pageData.beta[currentPanelIndex] = list;
+            saveDrawPage(pageData);
+            redrawCanvas();
+          }
+        };
+      }
+    } else if (currentPanelMode === "tone") {
+      const undoBtn = document.getElementById("toneUndoBtn");
+      if (undoBtn) {
+        undoBtn.onclick = () => {
+          const list = pageData.tone[currentPanelIndex] || [];
+          if (list.length > 0) {
+            list.pop();
+            pageData.tone[currentPanelIndex] = list;
             saveDrawPage(pageData);
             redrawCanvas();
           }
@@ -2314,6 +2430,18 @@ drawPageContent(ctx, pageData, {
 
       if (!pageData.beta[currentPanelIndex]) pageData.beta[currentPanelIndex] = [];
       pageData.beta[currentPanelIndex].push({ x, y });
+      saveDrawPage(pageData);
+      redrawCanvas();
+    }
+
+    function toneClick(evt) {
+      evt.preventDefault();
+      const { x, y } = getCanvasPos(evt);
+      const rect = pageData.frames[currentPanelIndex];
+      if (!rect || !pointInRect(x, y, rect)) return;
+
+      if (!pageData.tone[currentPanelIndex]) pageData.tone[currentPanelIndex] = [];
+      pageData.tone[currentPanelIndex].push({ x, y });
       saveDrawPage(pageData);
       redrawCanvas();
     }
@@ -2435,6 +2563,13 @@ drawPageContent(ctx, pageData, {
     } else if (currentPanelMode === "beta") {
       drawingCanvas.onmousedown   = betaClick;
       drawingCanvas.ontouchstart  = betaClick;
+      drawingCanvas.onmousemove   = null;
+      drawingCanvas.onmouseup     = null;
+      drawingCanvas.onmouseleave  = null;
+      drawingCanvas.oncontextmenu = evt => evt.preventDefault();
+    } else if (currentPanelMode === "tone") {
+      drawingCanvas.onmousedown   = toneClick;
+      drawingCanvas.ontouchstart  = toneClick;
       drawingCanvas.onmousemove   = null;
       drawingCanvas.onmouseup     = null;
       drawingCanvas.onmouseleave  = null;
@@ -2671,6 +2806,8 @@ drawPageContent(ctx, pageData, {
 
   /* ===== 起動 ===== */
   window.addEventListener("DOMContentLoaded", () => {
+    createTonePatternData();
+
     renderAll();
 
     document.getElementById("resetProgressBtn").addEventListener("click", () => {
