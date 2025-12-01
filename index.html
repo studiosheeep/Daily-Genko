@@ -1616,19 +1616,26 @@ chars.forEach((ch, i) => {
 // 文字量から適切サイズを計算
 const fontSize = 18;
 const baseSize = measureBalloonSize(b.text, fontSize);
-
-// ユーザー拡大縮小（スケール）を反映
-const scaleB = b.scale || 1;
+const scaleB   = b.scale || 1;
 const rx = baseSize.rx * scaleB;
 const ry = baseSize.ry * scaleB;
 
 ctx.beginPath();
-ctx.ellipse(b.x, b.y, rx, ry);
-        ctx.fillStyle = "rgba(255,255,255,0.97)";
-        ctx.fill();
-        ctx.strokeStyle = "#111827";
-        ctx.lineWidth = 2;
-        ctx.stroke();
+ctx.ellipse(b.x, b.y, rx, ry, 0, 0, Math.PI * 2);
+ctx.fillStyle = "rgba(255,255,255,0.97)";
+ctx.fill();
+ctx.strokeStyle = "#111827";
+ctx.lineWidth = 2;
+ctx.stroke();
+
+ctx.beginPath();
+// rotation=0, startAngle=0, endAngle=Math.PI*2 を追加
+ctx.ellipse(b.x, b.y, rx, ry, 0, 0, Math.PI * 2);
+ctx.fillStyle = "rgba(255,255,255,0.97)";
+ctx.fill();
+ctx.strokeStyle = "#111827";
+ctx.lineWidth = 2;
+ctx.stroke();
 
         ctx.save();
         ctx.translate(b.x, b.y);
