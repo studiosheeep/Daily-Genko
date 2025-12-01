@@ -976,31 +976,32 @@ h1 {
 
   // 60線相当（600dpi前提・45度・約20％）のトーンパターン
 function createTonePatternData() {
-  // 600dpi / 60線 = 約10px 間隔
-  const size = 10;
+  // 編集キャンバス上でかなり細かいトーンにする
+  // （タイル 4px、対角上に 2 ドット、濃度はだいたい 20〜25%）
+  const size = 4;  // ← ここを小さくするほど細かくなる
   const canvas = document.createElement("canvas");
   canvas.width = size;
   canvas.height = size;
   const ctx = canvas.getContext("2d");
 
-  // ベース
+  // ベースは白
   ctx.fillStyle = "#ffffff";
   ctx.fillRect(0, 0, size, size);
 
-  // ドット（20%濃度）
   ctx.fillStyle = "#000000";
 
-  // 直径 3.6px（半径1.8px）
-  const r = 1.8;
+  // 半径 0.8px（直径 1.6px）くらいの小さなドット
+  // 2つで約20〜25%くらいの濃度
+  const r = 0.8;
 
-  // 左上ドット
+  // 左上寄りの点
   ctx.beginPath();
-  ctx.arc(3, 3, r, 0, Math.PI * 2);
+  ctx.arc(1.2, 1.2, r, 0, Math.PI * 2);
   ctx.fill();
 
-  // 右下ドット（10pxタイルなので + 10px - 4px で座標調整）
+  // 右下寄りの点（対角方向）
   ctx.beginPath();
-  ctx.arc(7, 7, r, 0, Math.PI * 2);
+  ctx.arc(size - 1.2, size - 1.2, r, 0, Math.PI * 2);
   ctx.fill();
 
   const img = ctx.getImageData(0, 0, size, size);
