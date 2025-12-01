@@ -1379,48 +1379,52 @@ h1 {
     return isNaN(n) ? null : n;
   }
 
-  function getStrokeWidth(evt, mode) {
-    const base = mode === "pen" ? 3.2 : 2.2;
-    const p = evt.pressure && evt.pressure > 0 ? evt.pressure : 0.5;
-    return base * (0.3 + p * 0.7);
+function getStrokeWidth(evt, mode) {
+  // pressure を無視してほぼ一定の線幅にする
+  const base = mode === "pen" ? 3.0 : 2.0;
+  return base;
+}
+
+function getCanvasPos(evt) {
+  if (!drawingCanvas) return { x: 0, y: 0 };
+  const canvas = drawingCanvas;
+
+  // ★ ペンの場合は offsetX が正常ではない機種が多い
+  const isPen = evt.pointerType === "pen";
+
+  const canUseOffset =
+    !isPen && !evt.touches && !evt.changedTouches &&
+    typeof evt.offsetX === "number" &&
+    typeof evt.offsetY === "number";
+
+  if (canUseOffset) {
+    const scaleX = canvas.width  / canvas.clientWidth;
+    const scaleY = canvas.height / canvas.clientHeight;
+    return {
+      x: evt.offsetX * scaleX,
+      y: evt.offsetY * scaleY
+    };
   }
 
-  function getCanvasPos(evt) {
-    if (!drawingCanvas) return { x: 0, y: 0 };
-    const canvas = drawingCanvas;
+  // ★ ここから下は rect 基準
+  const rect = canvas.getBoundingClientRect();
+  let clientX, clientY;
 
-    const isPointerLike =
-      !evt.touches && !evt.changedTouches &&
-      typeof evt.offsetX === "number" &&
-      typeof evt.offsetY === "number";
-
-    if (isPointerLike) {
-      const scaleX = canvas.width  / canvas.clientWidth;
-      const scaleY = canvas.height / canvas.clientHeight;
-      return {
-        x: evt.offsetX * scaleX,
-        y: evt.offsetY * scaleY
-      };
-    }
-
-    const rect = canvas.getBoundingClientRect();
-    let clientX, clientY;
-
-    if (evt.touches && evt.touches.length > 0) {
-      clientX = evt.touches[0].clientX;
-      clientY = evt.touches[0].clientY;
-    } else if (evt.changedTouches && evt.changedTouches.length > 0) {
-      clientX = evt.changedTouches[0].clientX;
-      clientY = evt.changedTouches[0].clientY;
-    } else {
-      clientX = evt.clientX;
-      clientY = evt.clientY;
-    }
-
-    const x = (clientX - rect.left) * (canvas.width / rect.width);
-    const y = (clientY - rect.top)  * (canvas.height / rect.height);
-    return { x, y };
+  if (evt.touches && evt.touches.length > 0) {
+    clientX = evt.touches[0].clientX;
+    clientY = evt.touches[0].clientY;
+  } else if (evt.changedTouches && evt.changedTouches.length > 0) {
+    clientX = evt.changedTouches[0].clientX;
+    clientY = evt.changedTouches[0].clientY;
+  } else {
+    clientX = evt.clientX;
+    clientY = evt.clientY;
   }
+
+  const x = (clientX - rect.left) * (canvas.width / rect.width);
+  const y = (clientY - rect.top)  * (canvas.height / rect.height);
+  return { x, y };
+}
 
   function normalizeRect(x1, y1, x2, y2) {
     const x = Math.min(x1, x2);
