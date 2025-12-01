@@ -1996,49 +1996,48 @@ function taperFactor(i, n) {
     ctx.restore();
   }
 
-  function drawPageContent(ctx, pageData, options = {}) {
-  const hidePaperBase = opts.hidePaperBase || false;
-    const w = ctx.canvas.width;
-    const h = ctx.canvas.height;
-    const activeIndex = options.activePanelIndex ?? null;
-    const selected = options.selectedBalloon ?? null;
+function drawPageContent(ctx, pageData, options = {}) {
+  const w = ctx.canvas.width;
+  const h = ctx.canvas.height;
+  const activeIndex = options.activePanelIndex ?? null;
+  const selected = options.selectedBalloon ?? null;
 
-    const skipPaperBase = options.skipPaperBase === true;
+  const skipPaperBase = options.skipPaperBase === true;
 
-    if (skipPaperBase) {
-      ctx.save();
-      ctx.fillStyle = "#ffffff";
-      ctx.fillRect(0, 0, w, h);
-      ctx.restore();
-    } else {
-      drawPaperBase(ctx, w, h);
-    }
-
+  if (skipPaperBase) {
     ctx.save();
-    ctx.strokeStyle = "#111827";
-    ctx.lineWidth = 5;
-    Object.values(pageData.frames).forEach(rect => {
-      ctx.strokeRect(rect.x, rect.y, rect.w, rect.h);
-    });
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, w, h);
     ctx.restore();
-
-    const roughColor = pageData.roughColor || "black";
-    let roughStroke = "#111827";
-    if (roughColor === "blue") roughStroke = "#60a5fa";
-    if (roughColor === "gray") roughStroke = "#9ca3af";
-
-    drawStrokeLayerOnCtx(ctx, pageData, "rough", roughStroke, 2, false);
-    drawStrokeLayerOnCtx(ctx, pageData, "pen",   "#111827",   3, true);
-
-    applyBetaFills(ctx, pageData);
-    applyToneFills(ctx, pageData);
-
-    drawBalloonsOnCtx(ctx, pageData, selected);
-
-    if (activeIndex) {
-      drawActivePanelOverlay(ctx, pageData, activeIndex);
-    }
+  } else {
+    drawPaperBase(ctx, w, h);
   }
+
+  ctx.save();
+  ctx.strokeStyle = "#111827";
+  ctx.lineWidth = 5;
+  Object.values(pageData.frames).forEach(rect => {
+    ctx.strokeRect(rect.x, rect.y, rect.w, rect.h);
+  });
+  ctx.restore();
+
+  const roughColor = pageData.roughColor || "black";
+  let roughStroke = "#111827";
+  if (roughColor === "blue") roughStroke = "#60a5fa";
+  if (roughColor === "gray") roughStroke = "#9ca3af";
+
+  drawStrokeLayerOnCtx(ctx, pageData, "rough", roughStroke, 2, false);
+  drawStrokeLayerOnCtx(ctx, pageData, "pen",   "#111827",   3, true);
+
+  applyBetaFills(ctx, pageData);
+  applyToneFills(ctx, pageData);
+
+  drawBalloonsOnCtx(ctx, pageData, selected);
+
+  if (activeIndex) {
+    drawActivePanelOverlay(ctx, pageData, activeIndex);
+  }
+}
 
   function redrawCanvas() {
     if (!drawingCanvas || !drawingCtx) return;
@@ -2904,11 +2903,11 @@ function exportCurrentPageImage() {
 
   // ベクターデータを 2倍スケールしたコピーで描画
   const scaledData = createScaledPageData(pageData, WORK_SCALE);
-  drawPageContent(wctx, scaledData, {
+drawPageContent(wctx, scaledData, {
   activePanelIndex: null,
   selectedBalloon: null,
-  hidePaperBase: true
-  });
+  skipPaperBase: true   // 原稿用紙の枠線を描かない
+});
 
   // ここから 600dpi(A4) サイズへ高品質リサイズ
   const off = document.createElement("canvas");
