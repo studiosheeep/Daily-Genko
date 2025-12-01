@@ -1207,16 +1207,31 @@ h1 {
     const lesson = LESSONS.find(l => l.id === lessonId);
     if (!lesson) return;
 
-    if (!isLessonUnlocked(lesson, progress)) {
-      logMessage(`「${lesson.title}」はまだ先のマスです。手前のマスから順番に進めてください。`);
-      return;
-    }
+    // すでにクリア済みなら何もしない
     if (progress[lesson.id] >= lesson.maxProgress) {
       logMessage(`「${lesson.title}」は既にクリアしています。`);
       return;
     }
 
-    progress[lesson.id] += 1;
+    // このマスをクリア扱いにする
+    progress[lesson.id] = lesson.maxProgress;
+
+    // ★同じグループ（枠線 / 下書き / 台詞 など）の
+    //   「自分より前のコマ」を自動的にクリア扱いにする
+    const [prefix, indexStr] = lesson.id.split("_"); // 例: "frame_2" → ["frame", "2"]
+    const n = parseInt(indexStr, 10);
+    if (!isNaN(n)) {
+      for (const other of LESSONS) {
+        const [p2, idx2Str] = other.id.split("_");
+        if (p2 !== prefix) continue; // 別グループは対象外（枠線と下書きなどは別）
+        const m = parseInt(idx2Str, 10);
+        if (isNaN(m)) continue;
+        if (m < n && progress[other.id] < other.maxProgress) {
+          progress[other.id] = other.maxProgress;
+        }
+      }
+    }
+
     saveAllProgress(data);
 
     logMessage(`「${lesson.title}」をクリアしました。（${currentPage}ページ目）`);
