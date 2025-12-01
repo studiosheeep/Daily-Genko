@@ -1114,10 +1114,9 @@ h1 {
   }
 
   function isLessonUnlocked(lesson, progress) {
-    if (!lesson.prereqId) return true;
-    const prereq = LESSONS.find(l => l.id === lesson.prereqId);
-    if (!prereq) return true;
-    return progress[prereq.id] >= prereq.maxProgress;
+    // どのマスでも、いつでも開けるようにする
+    // （前のマスのクリア状況は見ない）
+    return true;
   }
 
   function isLessonCompleted(lesson, progress) {
@@ -2028,23 +2027,28 @@ h1 {
     const lesson = LESSONS.find(l => l.id === lessonId);
     if (!lesson) return;
 
-    if (!isLessonUnlocked(lesson, progress)) {
-      logMessage(`「${lesson.title}」はまだ先のマスです。手前のマスから順番に進めてください。`);
-    } else if (isLessonCompleted(lesson, progress)) {
-      logMessage(`「${lesson.title}」は既にクリアしています。`);
-    } else {
-      const panel = document.getElementById("sidePanel");
-      const titleEl = document.getElementById("sidePanelTitle");
-      if (!panel || !titleEl) return;
+    const unlocked  = isLessonUnlocked(lesson, progress);
+    const completed = isLessonCompleted(lesson, progress);
 
-      titleEl.textContent = lesson.title;
-
-      pendingLessonId = lessonId;
-      setupCanvasForLesson(lesson);
-      panel.classList.add("open");
+    // 以前はロック中・クリア済みだとここで return していたが、
+    // どのマスでもパネルを開けるようにする。
+    if (!unlocked) {
+      logMessage(`「${lesson.title}」は本来はロック中ですが、編集のために開きます。`);
+    } else if (completed) {
+      logMessage(`「${lesson.title}」は既にクリアしていますが、内容は編集できます。`);
     }
-  }
 
+    const panel   = document.getElementById("sidePanel");
+    const titleEl = document.getElementById("sidePanelTitle");
+    if (!panel || !titleEl) return;
+
+    titleEl.textContent = lesson.title;
+
+    pendingLessonId = lessonId;
+    setupCanvasForLesson(lesson);
+    panel.classList.add("open");
+  }
+  
   function closeLessonPanel() {
     const panel = document.getElementById("sidePanel");
     if (panel) panel.classList.remove("open");
@@ -2096,12 +2100,11 @@ h1 {
       progressText.className = "node-progress";
       if (completed) {
         progressText.textContent = "クリア済み";
-      } else if (unlocked) {
-        progressText.textContent = "クリックして進む";
       } else {
-        progressText.textContent = "ロック中";
+        // すべてのマスがいつでも触れる仕様なので、常にこの文言でOK
+        progressText.textContent = "クリックして進む";
       }
-
+      
       node.appendChild(circle);
       node.appendChild(title);
       node.appendChild(progressText);
