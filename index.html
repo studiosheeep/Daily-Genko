@@ -1850,11 +1850,16 @@ function drawPageContent(ctx, pageData, options = {}) {
   const activeIndex = options.activePanelIndex ?? null;
   const selected = options.selectedBalloon ?? null;
 
-  // ★ 追加：原稿用紙ベースを描かないオプション
   const skipPaperBase = options.skipPaperBase === true;
 
-  // ★ ベタモードの編集時など、必要なとき以外は今まで通り原稿用紙を描く
-  if (!skipPaperBase) {
+  if (skipPaperBase) {
+    // ★ 原稿用紙の青線は描かないが、背景だけは必ず白で塗る
+    ctx.save();
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, w, h);
+    ctx.restore();
+  } else {
+    // 通常時はこれまで通り原稿用紙を描画
     drawPaperBase(ctx, w, h);
   }
 
