@@ -1216,8 +1216,10 @@ h1 {
   /* ===== 「進めた」処理 ===== */
   function advanceLesson(lessonId) {
     const { data, progress } = loadPageProgress(currentPage);
-    const lesson = LESSONS.find(l => l.id === lessonId);
-    if (!lesson) return;
+    const lessonIndex = LESSONS.findIndex(l => l.id === lessonId);
+    if (lessonIndex === -1) return;
+
+    const lesson = LESSONS[lessonIndex];
 
     // すでにクリア済みなら何もしない
     if (progress[lesson.id] >= lesson.maxProgress) {
@@ -1225,22 +1227,14 @@ h1 {
       return;
     }
 
-    // このマスをクリア扱いにする
+    // 1. 今押したマスをクリア
     progress[lesson.id] = lesson.maxProgress;
 
-    // ★同じグループ（枠線 / 下書き / 台詞 など）の
-    //   「自分より前のコマ」を自動的にクリア扱いにする
-    const [prefix, indexStr] = lesson.id.split("_"); // 例: "frame_2" → ["frame", "2"]
-    const n = parseInt(indexStr, 10);
-    if (!isNaN(n)) {
-      for (const other of LESSONS) {
-        const [p2, idx2Str] = other.id.split("_");
-        if (p2 !== prefix) continue; // 別グループは対象外（枠線と下書きなどは別）
-        const m = parseInt(idx2Str, 10);
-        if (isNaN(m)) continue;
-        if (m < n && progress[other.id] < other.maxProgress) {
-          progress[other.id] = other.maxProgress;
-        }
+    // 2. そのマスより前のすべてのマスを自動クリア
+    for (let i = 0; i < lessonIndex; i++) {
+      const prevLesson = LESSONS[i];
+      if (progress[prevLesson.id] < prevLesson.maxProgress) {
+        progress[prevLesson.id] = prevLesson.maxProgress;
       }
     }
 
@@ -2094,11 +2088,15 @@ h1 {
     const perRow = getPerRow();
     const positions = computeGridPositions(LESSONS.length, perRow);
 
+    // ★ どのマスが「次のマス」かを取得
     const nextLesson = getNextIncompleteLesson(progress);
+    const nextId = nextLesson ? nextLesson.id : null;
 
     LESSONS.forEach((lesson, index) => {
-      const unlocked  = isLessonUnlocked(lesson, progress);
       const completed = isLessonCompleted(lesson, progress);
+      const isNext    = nextId && lesson.id === nextId;
+      const isFuture  = !completed && !isNext; // まだ押していない「先のマス」
+
       const pos = positions[index];
 
       const node = document.createElement("div");
@@ -2107,11 +2105,17 @@ h1 {
       node.style.left = pos.x + "%";
       node.style.top  = pos.y + "%";
 
-      if (!unlocked) node.classList.add("locked");
-      if (unlocked)  node.classList.add("unlocked");
-      if (completed) node.classList.add("completed");
+      // 見た目用クラスの振り分け
+      if (completed) {
+        node.classList.add("completed"); // 濃い緑
+      } else if (isNext) {
+        node.classList.add("unlocked");  // 次のマス（明るい緑）
+      } else if (isFuture) {
+        node.classList.add("locked");    // まだ押してない先のマス（グレー）
+      }
 
-      if (nextLesson && lesson.id === nextLesson.id) {
+      // 「次のマス」用のリングアニメーション
+      if (isNext) {
         node.classList.add("next-node");
       }
 
@@ -2127,16 +2131,19 @@ h1 {
       progressText.className = "node-progress";
       if (completed) {
         progressText.textContent = "クリア済み";
-      } else {
-        // すべてのマスがいつでも触れる仕様なので、常にこの文言でOK
+      } else if (isNext) {
         progressText.textContent = "クリックして進む";
+      } else {
+        progressText.textContent = "ロック中";
       }
-      
+
       node.appendChild(circle);
       node.appendChild(title);
       node.appendChild(progressText);
 
+      // 見た目はロック中でも、クリックすればどのマスでも飛べる仕様のまま
       node.addEventListener("click", () => openLessonPanel(lesson.id));
+
       mapEl.appendChild(node);
     });
 
