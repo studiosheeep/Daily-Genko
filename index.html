@@ -1628,15 +1628,6 @@ ctx.strokeStyle = "#111827";
 ctx.lineWidth = 2;
 ctx.stroke();
 
-ctx.beginPath();
-// rotation=0, startAngle=0, endAngle=Math.PI*2 を追加
-ctx.ellipse(b.x, b.y, rx, ry, 0, 0, Math.PI * 2);
-ctx.fillStyle = "rgba(255,255,255,0.97)";
-ctx.fill();
-ctx.strokeStyle = "#111827";
-ctx.lineWidth = 2;
-ctx.stroke();
-
         ctx.save();
         ctx.translate(b.x, b.y);
         ctx.scale(scaleB, scaleB);
