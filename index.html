@@ -1521,49 +1521,48 @@ chars.forEach((ch, i) => {
   }
 
 function drawBalloonTail(ctx, b, rx, ry) {
-  // tailSide が無い古いデータは左扱い
   const side = b.tailSide === "right" ? "right" : "left";
+  const dir  = side === "right" ? 1 : -1; // 右: +1 / 左: -1
 
-  // もう少し下側から出す
-  const baseY = b.y + ry * 0.45;
+  // 楕円の側面で、少し下側（t）にテールを付ける
+  const tCenter = 0.35;   // 下に行くほど大きくなる（0〜1くらいで調整）
+  const tSpread = 0.06;   // テール付け根の上下の開き
 
-  // 楕円の外側ぎりぎりから生やす（少しだけ外にずらす）
-  const edgeX = (side === "right") ? (b.x + rx) : (b.x - rx);
-  const baseX = edgeX + (side === "right" ? -2.0 : +2.0);
+  // 楕円の方程式から「側面上の点」を計算する関数
+  function ellipseSidePoint(tOffset) {
+    const y = b.y + ry * (tCenter + tOffset);   // 縦方向
+    const ny = (y - b.y) / ry;                  // 正規化した y
+    const dx = rx * Math.sqrt(1 - ny * ny);     // 楕円の式から x 距離
+    const x  = b.x + dir * dx;                  // 左右どちら側か
+    return { x, y };
+  }
 
-  // 尾の角度をゆるめる（横長・縦短め）
-  const tipOffsetX = rx * 0.40;   // 大きめ → 緩い角度
-  const tipOffsetY = ry * 0.12;   // 小さめ → あまり下に行き過ぎない
-  const tipX = (side === "right")
-    ? baseX + tipOffsetX
-    : baseX - tipOffsetX;
-  const tipY = baseY + tipOffsetY;
+  // 楕円上の 2 点（テールの付け根の上下）
+  const p1 = ellipseSidePoint(-tSpread);
+  const p2 = ellipseSidePoint(+tSpread);
 
-  const baseTopY    = baseY - 10;
-  const baseBottomY = baseY + 6;
+  // テールの先端
+  const tipX = b.x + dir * (rx + 18);  // 長さ・角度はここで調整
+  const tipY = b.y + ry * 0.45;
 
   ctx.save();
-  ctx.lineCap  = "round";
-  ctx.lineJoin = "round";
 
-  // 1. 楕円の線と重なっている部分を白で「抜く」
+  // まず白で塗って楕円の線をくり抜く
   ctx.beginPath();
-  ctx.moveTo(baseX, baseTopY);
+  ctx.moveTo(p1.x, p1.y);
   ctx.lineTo(tipX, tipY);
-  ctx.moveTo(baseX, baseBottomY);
-  ctx.lineTo(tipX, tipY);
-  ctx.strokeStyle = "#ffffff";
-  ctx.lineWidth   = 4;   // 楕円の線より太めに
-  ctx.stroke();
+  ctx.lineTo(p2.x, p2.y);
+  ctx.closePath();
+  ctx.fillStyle = "#ffffff";
+  ctx.fill();
 
-  // 2. その上から実際のテール線を描く（片辺は閉じない）
+  // 三角の2辺だけを描く（楕円とは別線）
   ctx.beginPath();
-  ctx.moveTo(baseX, baseTopY);
+  ctx.moveTo(p1.x, p1.y);
   ctx.lineTo(tipX, tipY);
-  ctx.moveTo(baseX, baseBottomY);
-  ctx.lineTo(tipX, tipY);
+  ctx.lineTo(p2.x, p2.y);
   ctx.strokeStyle = "#111827";
-  ctx.lineWidth   = 2.3;
+  ctx.lineWidth = 2;
   ctx.stroke();
 
   ctx.restore();
