@@ -2600,31 +2600,73 @@ function taperFactor(i, n) {
     drawingCanvas.addEventListener("touchmove",  onTouchMoveZoom,  { passive: false });
     drawingCanvas.addEventListener("touchend",   onTouchEndZoom,   { passive: false });
 
+    // ここから下の pointer 系ハンドラを差し替え
     drawingCanvas.onpointerdown = evt => {
-      if (currentPanelMode !== "pen") return;
-      if (evt.button === 1) {
-        isPanning = true;
-        panStartClientX = evt.clientX;
-        panStartClientY = evt.clientY;
-        panStartX = panX;
-        panStartY = panY;
+      // ペン入れ・ラフ：左ボタン or ペン先で描画開始、中ボタンでパン
+      if (currentPanelMode === "pen" || currentPanelMode === "rough") {
+        if (evt.button === 1) {
+          // 中ボタンでパン開始
+          isPanning = true;
+          panStartClientX = evt.clientX;
+          panStartClientY = evt.clientY;
+          panStartX = panX;
+          panStartY = panY;
+        } else if (evt.button === 0) {
+          // 左ボタン（マウス） / ペン先 で線を描く
+          handleDown(evt);
+        }
+        return;
+      }
+
+      // ベタ・トーン：ペン先でクリック扱い
+      if (currentPanelMode === "beta") {
+        if (evt.button === 0) betaClick(evt);
+        return;
+      }
+      if (currentPanelMode === "tone") {
+        if (evt.button === 0) toneClick(evt);
+        return;
+      }
+
+      // 台詞：ペン先でドラッグ開始
+      if (currentPanelMode === "text") {
+        if (evt.button === 0) textMouseDown(evt);
+        return;
       }
     };
 
     drawingCanvas.onpointermove = evt => {
-      if (currentPanelMode !== "pen") return;
-      if (isPanning) {
-        const dx = evt.clientX - panStartClientX;
-        const dy = evt.clientY - panStartClientY;
-        panX = panStartX + dx;
-        panY = panStartY + dy;
-        applyCanvasZoom();
+      // ペン入れ・ラフのときだけパン or 描画を更新
+      if (currentPanelMode === "pen" || currentPanelMode === "rough") {
+        if (isPanning) {
+          const dx = evt.clientX - panStartClientX;
+          const dy = evt.clientY - panStartClientY;
+          panX = panStartX + dx;
+          panY = panStartY + dy;
+          applyCanvasZoom();
+        } else if (isDrawing) {
+          handleMove(evt);
+        }
+      }
+
+      if (currentPanelMode === "text" && draggingBalloon) {
+        textMouseMove(evt);
       }
     };
 
     drawingCanvas.onpointerup = evt => {
-      if (currentPanelMode !== "pen") return;
-      isPanning = false;
+      if (currentPanelMode === "pen" || currentPanelMode === "rough") {
+        if (isPanning) {
+          isPanning = false;
+        }
+        if (isDrawing) {
+          handleUp(evt);
+        }
+      }
+
+      if (currentPanelMode === "text" && draggingBalloon) {
+        textMouseUp(evt);
+      }
     };
 
     drawingCanvas.onpointercancel = drawingCanvas.onpointerup;
