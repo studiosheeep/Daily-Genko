@@ -1341,6 +1341,8 @@ function drawPageContent(ctx, pageData, options = {}) {
   const balloonStrokeBase = options.balloonStrokeBase ?? 2;
 
   const skipPaperBase = options.skipPaperBase === true;
+  // ★ 追加：枠線の太さ（デフォルト 5）
+  const frameLineWidth = options.frameLineWidth ?? 5;
 
   if (skipPaperBase) {
     ctx.save();
@@ -1351,22 +1353,22 @@ function drawPageContent(ctx, pageData, options = {}) {
     drawPaperBase(ctx, w, h);
   }
 
+  // コマ枠
   ctx.save();
   ctx.strokeStyle = "#111827";
-  ctx.lineWidth = 5;
+  ctx.lineWidth = frameLineWidth;  // ★ ここをオプションで指定
   Object.values(pageData.frames).forEach(rect => {
     ctx.strokeRect(rect.x, rect.y, rect.w, rect.h);
   });
   ctx.restore();
 
+  // （以下ラフ・ペン・ベタ・トーン・吹き出し処理はそのまま）
   const roughColor = pageData.roughColor || "black";
   let roughStroke = "#111827";
   if (roughColor === "blue") roughStroke = "#60a5fa";
   if (roughColor === "gray") roughStroke = "#9ca3af";
 
-  // ラフ線：一定幅
   drawStrokeLayerOnCtx(ctx, pageData, "rough", roughStroke, 2, false);
-  // ペン入れ：入り抜きあり（可変幅）
   drawStrokeLayerOnCtx(ctx, pageData, "pen",   "#111827",   3, true);
 
   applyBetaFills(ctx, pageData);
@@ -1388,7 +1390,8 @@ function redrawCanvas() {
     activePanelIndex: currentPanelIndex,
     selectedBalloon: selectedBalloon,
     skipPaperBase: currentPanelMode === "beta" || currentPanelMode === "tone",
-    balloonStrokeBase: 1.0   // 画面だけ少し細め（好みに応じて調整）
+    balloonStrokeBase: 1.0,  // 画面用の吹き出し線
+    frameLineWidth: 5        // 画面プレビューの枠線の太さ（今まで通り）
   });
 }
 
@@ -2244,11 +2247,13 @@ function exportCurrentPageImage() {
   const wctx = work.getContext("2d");
 
   // ベクターデータを 2倍スケールしたコピーで描画
-  const scaledData = createScaledPageData(pageData, WORK_SCALE);
+const scaledData = createScaledPageData(pageData, WORK_SCALE);
 drawPageContent(wctx, scaledData, {
   activePanelIndex: null,
   selectedBalloon: null,
-  skipPaperBase: true   // 原稿用紙の枠線を描かない
+  skipPaperBase: true,   // 原稿用紙の枠線を描かない
+  frameLineWidth: 10,    // ★ 書き出し用に枠線を太くする（お好みで調整）
+  balloonStrokeBase: 2   // ★ 吹き出し線も少し太目にしたい場合は追加
 });
 
   // ここから 600dpi(A4) サイズへ高品質リサイズ
