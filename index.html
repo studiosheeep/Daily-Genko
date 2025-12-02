@@ -1652,7 +1652,7 @@ function taperFactor(i, n) {
     ctx.lineTo(tipX, tipY);
     ctx.lineTo(p2.x, p2.y);
     ctx.strokeStyle = "#111827";
-    ctx.lineWidth = 6;
+    ctx.lineWidth = 4.5;
     ctx.stroke();
 
     ctx.restore();
@@ -1965,7 +1965,7 @@ function drawStrokeLayerOnCtx(ctx, pageData, layerName, strokeStyle, defaultWidt
           : "rgba(255,255,255,0.97)";
         ctx.fill();
         ctx.strokeStyle = "#111827";
-        ctx.lineWidth = isSelected ? 6 : 6;
+        ctx.lineWidth = isSelected ? 4.5 : 4.5;
         ctx.stroke();
 
         drawBalloonTail(ctx, b, rx, ry);
