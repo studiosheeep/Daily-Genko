@@ -2292,12 +2292,13 @@ drawPageContent(wctx, scaledData, {
 
     renderAll();
 
-    document.getElementById("resetProgressBtn").addEventListener("click", () => {
-      if (!confirm("本当に全ページの進捗・連続日数・枠線や下描き・台詞・ペン入れをすべてリセットしますか？")) return;
-      resetAllPagesProgress();
-      resetAllDrawData();
-      renderAll();
-    });
+document.getElementById("resetProgressBtn").addEventListener("click", () => {
+  if (!confirm("本当に全ページの進捗・枠線や下描き・台詞・ペン入れをすべてリセットしますか？\n※連続日数はリセットされません。")) return;
+  resetAllPagesProgress();
+  // resetStreakData();  // ← もう使わないので削除
+  resetAllDrawData();
+  renderAll();
+});
 
     document.getElementById("prevPageBtn").addEventListener("click", () => {
       if (currentPage > 1) {
