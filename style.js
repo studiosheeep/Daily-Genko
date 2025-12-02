@@ -2438,7 +2438,10 @@ function setupMascot() {
       if (typeof dataUrl !== "string") return;
 
       // 表示を変更
-      img.src = dataUrl;
+img.style.backgroundImage = `url(${dataUrl})`;
+img.style.backgroundSize = "contain";
+img.style.backgroundRepeat = "no-repeat";
+img.style.backgroundPosition = "center";
 
       // localStorage に保存（再読み込みしても同じマスコットにする）
       try {
