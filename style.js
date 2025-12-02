@@ -930,7 +930,7 @@ function taperFactor(i, n) {
     ctx.restore();
   }
 
-function drawBalloonTail(ctx, b, rx, ry, scaleB) {
+function drawBalloonTail(ctx, b, rx, ry, scaleB, baseStroke) {
   const side = b.tailSide === "right" ? "right" : "left";
   const dir  = side === "right" ? 1 : -1;
 
@@ -951,7 +951,6 @@ function drawBalloonTail(ctx, b, rx, ry, scaleB) {
   const tipX = b.x + dir * (rx + 18);
   const tipY = b.y + ry * 0.50;
 
-  // スケールに合わせた線幅（2〜8px にクランプ）
   const base = baseStroke ?? 2;
   const strokeW = Math.min(8, Math.max(2, base * (scaleB || 1)));
 
