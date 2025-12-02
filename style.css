@@ -618,17 +618,17 @@ h1 {
 }
 
 /* ===== 右下の応援キャラクター ===== */
-
 .helper-character {
-  position: fixed;      /* ここが fixed になっていることを確認 */
+  position: fixed;
   right: 12px;
   bottom: 12px;
   display: flex;
-  align-items: center;   /* ← これを center に */
-  gap: 16px;
-  pointer-events: none;
+  align-items: center;
+  gap: 8px;
+  /* pointer-events: none;  ← これは削除 */
+  pointer-events: auto;      /* 全体をクリック可能にする */
   animation: helper-pop 0.6s ease-out 1;
-  z-index: 9999;        /* 画面の一番前に出す */
+  z-index: 9999;
 }
 
 /* 吹き出し部分 */
@@ -657,6 +657,30 @@ h1 {
   border-right: 1px solid #d1d5db;
   border-bottom: 1px solid #d1d5db;
   transform: rotate(-45deg);
+}
+
+/* 画像部分（マスコット） */
+.helper-image {
+  /* もし width / height を指定していたら削除してください。
+     アップロードした画像のサイズをそのまま使いたい場合は
+     何も指定しないのが一番素直です。 */
+  cursor: pointer;        /* マウスカーソルを「クリックできる」形に */
+}
+
+/* 吹き出しの「褒め台詞」を出したときの簡単アニメ */
+.helper-speech.pop {
+  animation: helperSpeechPop 0.4s ease-out;
+}
+
+@keyframes helperSpeechPop {
+  0% {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
 /* キャラクター本体（丸いキャラ） */
