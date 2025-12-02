@@ -1389,7 +1389,7 @@ function drawPageContent(ctx, pageData, options = {}) {
       activePanelIndex: currentPanelIndex,
       selectedBalloon: selectedBalloon,
       skipPaperBase: currentPanelMode === "beta" || currentPanelMode === "tone"
-      balloonStrokeBase: 2.0   // ← ここだけ少し細めに
+      balloonStrokeBase: 1.0   // ← ここだけ少し細めに
     });
   }
 
