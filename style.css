@@ -661,10 +661,12 @@ h1 {
 
 /* 画像部分（マスコット） */
 .helper-image {
-  /* もし width / height を指定していたら削除してください。
-     アップロードした画像のサイズをそのまま使いたい場合は
-     何も指定しないのが一番素直です。 */
-  cursor: pointer;        /* マウスカーソルを「クリックできる」形に */
+  cursor: pointer;
+  display: block;
+  max-width: none; /* 念のため */
+  max-height: none;
+  width: auto;     /* ← 元サイズのまま */
+  height: auto;    /* ← 元サイズのまま */
 }
 
 /* 吹き出しの「褒め台詞」を出したときの簡単アニメ */
