@@ -55,12 +55,25 @@
   </div>
 
   <!-- 画面右下に固定される応援キャラクター -->
-  <div class="helper-character">
-    <div class="helper-speech">
-      一つだけ進めてみよう！
-    </div>
-    <div class="helper-avatar"></div>
+<div class="helper-character">
+  <div class="helper-speech" id="helperSpeech">
+    一つだけ進めてみよう！
   </div>
+  <img
+    src="mascot-default.png"
+    alt="マスコット"
+    class="helper-image"
+    id="helperImage"
+  >
+</div>
+
+<!-- 画像選択用（表示しない） -->
+<input
+  type="file"
+  id="mascotFileInput"
+  accept="image/*"
+  style="display: none;"
+>
       
    <script src="style.js" defer></script>
   
