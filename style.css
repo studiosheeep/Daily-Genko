@@ -624,7 +624,7 @@ h1 {
   bottom: 12px;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 20px;
   /* pointer-events: none;  ← これは削除 */
   pointer-events: auto;      /* 全体をクリック可能にする */
   animation: helper-pop 0.6s ease-out 1;
