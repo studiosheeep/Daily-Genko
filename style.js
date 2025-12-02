@@ -952,7 +952,7 @@ function drawBalloonTail(ctx, b, rx, ry, scaleB) {
   const tipY = b.y + ry * 0.50;
 
   // スケールに合わせた線幅（2〜8px にクランプ）
-  const base = 3;
+  const base = baseStroke ?? 3;
   const strokeW = Math.min(8, Math.max(2, base * (scaleB || 1)));
 
   ctx.save();
@@ -1263,7 +1263,7 @@ function drawStrokeLayerOnCtx(ctx, pageData, layerName, strokeStyle, defaultWidt
   ctx.restore();
 }
 
-function drawBalloonsOnCtx(ctx, pageData, selected) {
+function drawBalloonsOnCtx(ctx, pageData, selected, balloonStrokeBase) {
   ctx.save();
   for (const [panelIndex, balloons] of Object.entries(pageData.text)) {
     const rect = pageData.frames[panelIndex];
@@ -1286,11 +1286,10 @@ function drawBalloonsOnCtx(ctx, pageData, selected) {
         selected.panelIndex === Number(panelIndex) &&
         selected.balloonIndex === idx;
 
-      // スケールに応じた線幅（2〜8px の範囲）
-      const baseStroke = 3;
+      // ← オプションから基準線幅を受け取る
+      const baseStroke = balloonStrokeBase ?? 3;
       const strokeW = Math.min(8, Math.max(2, baseStroke * scaleB));
 
-      // 吹き出し本体
       ctx.beginPath();
       ctx.ellipse(b.x, b.y, rx, ry, 0, 0, Math.PI * 2);
       ctx.fillStyle = isSelected
@@ -1301,10 +1300,9 @@ function drawBalloonsOnCtx(ctx, pageData, selected) {
       ctx.lineWidth = strokeW;
       ctx.stroke();
 
-      // 尾（同じ strokeW を使う）
-      drawBalloonTail(ctx, b, rx, ry, scaleB);
+      // 尾も同じ基準を使う
+      drawBalloonTail(ctx, b, rx, ry, scaleB, baseStroke);
 
-      // 文字
       ctx.save();
       ctx.translate(b.x, b.y);
       ctx.scale(scaleB, scaleB);
@@ -1341,6 +1339,7 @@ function drawPageContent(ctx, pageData, options = {}) {
   const h = ctx.canvas.height;
   const activeIndex = options.activePanelIndex ?? null;
   const selected = options.selectedBalloon ?? null;
+  const balloonStrokeBase = options.balloonStrokeBase ?? 3;
 
   const skipPaperBase = options.skipPaperBase === true;
 
@@ -1374,7 +1373,7 @@ function drawPageContent(ctx, pageData, options = {}) {
   applyBetaFills(ctx, pageData);
   applyToneFills(ctx, pageData);
 
-  drawBalloonsOnCtx(ctx, pageData, selected);
+  drawBalloonsOnCtx(ctx, pageData, selected, balloonStrokeBase);
 
   if (activeIndex) {
     drawActivePanelOverlay(ctx, pageData, activeIndex);
@@ -1390,6 +1389,7 @@ function drawPageContent(ctx, pageData, options = {}) {
       activePanelIndex: currentPanelIndex,
       selectedBalloon: selectedBalloon,
       skipPaperBase: currentPanelMode === "beta" || currentPanelMode === "tone"
+      balloonStrokeBase: 2.0   // ← ここだけ少し細めに
     });
   }
 
