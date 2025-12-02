@@ -952,7 +952,7 @@ function drawBalloonTail(ctx, b, rx, ry, scaleB) {
   const tipY = b.y + ry * 0.50;
 
   // スケールに合わせた線幅（2〜8px にクランプ）
-  const base = baseStroke ?? 3;
+  const base = baseStroke ?? 2;
   const strokeW = Math.min(8, Math.max(2, base * (scaleB || 1)));
 
   ctx.save();
@@ -1287,7 +1287,7 @@ function drawBalloonsOnCtx(ctx, pageData, selected, balloonStrokeBase) {
         selected.balloonIndex === idx;
 
       // ← オプションから基準線幅を受け取る
-      const baseStroke = balloonStrokeBase ?? 3;
+      const baseStroke = balloonStrokeBase ?? 2;
       const strokeW = Math.min(8, Math.max(2, baseStroke * scaleB));
 
       ctx.beginPath();
@@ -1339,7 +1339,7 @@ function drawPageContent(ctx, pageData, options = {}) {
   const h = ctx.canvas.height;
   const activeIndex = options.activePanelIndex ?? null;
   const selected = options.selectedBalloon ?? null;
-  const balloonStrokeBase = options.balloonStrokeBase ?? 3;
+  const balloonStrokeBase = options.balloonStrokeBase ?? 2;
 
   const skipPaperBase = options.skipPaperBase === true;
 
