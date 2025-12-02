@@ -951,6 +951,7 @@ function drawBalloonTail(ctx, b, rx, ry, scaleB, baseStroke) {
   const tipX = b.x + dir * (rx + 18);
   const tipY = b.y + ry * 0.50;
 
+  // スケールに合わせた線幅（2〜8px にクランプ）
   const base = baseStroke ?? 2;
   const strokeW = Math.min(8, Math.max(2, base * (scaleB || 1)));
 
@@ -965,7 +966,7 @@ function drawBalloonTail(ctx, b, rx, ry, scaleB, baseStroke) {
   ctx.fillStyle = "#ffffff";
   ctx.fill();
 
-  // 吹き出し本体との境目を消すための白線
+  // 吹き出し本体との境目を消す白線
   ctx.beginPath();
   ctx.moveTo(p1.x, p1.y);
   ctx.lineTo(p2.x, p2.y);
@@ -984,7 +985,6 @@ function drawBalloonTail(ctx, b, rx, ry, scaleB, baseStroke) {
 
   ctx.restore();
 }
-
   /* ===== ベタ用塗りつぶし ===== */
   function floodFillBeta(ctx, startX, startY, rect) {
     const w = ctx.canvas.width;
