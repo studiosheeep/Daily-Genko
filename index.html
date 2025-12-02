@@ -2031,23 +2031,10 @@ function drawPageContent(ctx, pageData, options = {}) {
   if (roughColor === "blue") roughStroke = "#60a5fa";
   if (roughColor === "gray") roughStroke = "#9ca3af";
 
-  if (useVariableWidth) {
-  // 点が少ない線は入り抜きなしで一定幅にする
-  if (pts.length < 4) {
-    ctx.lineWidth = defaultWidth;
-    ctx.beginPath();
-    ctx.moveTo(pts[0].x, pts[0].y);
-    for (let i = 1; i < pts.length; i++) {
-      ctx.lineTo(pts[i].x, pts[i].y);
-    }
-    ctx.stroke();
-    continue;
-  }
-}
-
-drawStrokeLayerOnCtx(ctx, pageData, "rough", roughStroke, 2, false);
-// ペン入れ：入り抜きあり（可変幅）
-drawStrokeLayerOnCtx(ctx, pageData, "pen",   "#111827",   3, true);
+  // ラフ線：一定幅
+  drawStrokeLayerOnCtx(ctx, pageData, "rough", roughStroke, 2, false);
+  // ペン入れ：入り抜きあり（可変幅）
+  drawStrokeLayerOnCtx(ctx, pageData, "pen",   "#111827",   3, true);
 
   applyBetaFills(ctx, pageData);
   applyToneFills(ctx, pageData);
