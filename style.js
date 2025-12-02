@@ -952,7 +952,7 @@ function drawBalloonTail(ctx, b, rx, ry, scaleB) {
   const tipY = b.y + ry * 0.50;
 
   // スケールに合わせた線幅（2〜8px にクランプ）
-  const base = 4.5;
+  const base = 3;
   const strokeW = Math.min(8, Math.max(2, base * (scaleB || 1)));
 
   ctx.save();
@@ -1287,7 +1287,7 @@ function drawBalloonsOnCtx(ctx, pageData, selected) {
         selected.balloonIndex === idx;
 
       // スケールに応じた線幅（2〜8px の範囲）
-      const baseStroke = 4.5;
+      const baseStroke = 3;
       const strokeW = Math.min(8, Math.max(2, baseStroke * scaleB));
 
       // 吹き出し本体
