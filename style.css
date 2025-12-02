@@ -620,7 +620,7 @@ h1 {
 /* ===== 右下の応援キャラクター ===== */
 
 .helper-character {
-  position: fixed;   /* ← absolute から fixed に変更 */
+  position: fixed;      /* ここが fixed になっていることを確認 */
   right: 12px;
   bottom: 12px;
   display: flex;
@@ -628,7 +628,7 @@ h1 {
   gap: 8px;
   pointer-events: none;
   animation: helper-pop 0.6s ease-out 1;
-  z-index: 9999;     /* 念のため前面に */
+  z-index: 9999;        /* 画面の一番前に出す */
 }
 
 /* 吹き出し部分 */
