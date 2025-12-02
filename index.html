@@ -1489,8 +1489,12 @@ function getCanvasPos(evt) {
 
 function taperFactor(i, n) {
   if (n <= 1) return 1;
-  const t = i / (n - 1);
-  return Math.sin(Math.PI * t);
+
+  const t = i / (n - 1);          // 0〜1
+  const s = Math.sin(Math.PI * t); // 0〜1（真ん中が1）
+
+  // 両端 0 → 0.4 に持ち上げる（0.4〜1.0 の範囲）
+  return 0.4 + 0.6 * s;
 }
 
   // 吹き出しヒットテスト
@@ -1914,7 +1918,7 @@ function taperFactor(i, n) {
             const p0 = pts[i];
             const p1 = pts[i + 1];
             const baseW = p0.w != null ? p0.w : defaultWidth;
-            const w = Math.max(0.5, baseW * taperFactor(i, n));
+            const w = Math.max(1.0, baseW * taperFactor(i, n));
             ctx.lineWidth = w;
             ctx.beginPath();
             ctx.moveTo(p0.x, p0.y);
@@ -2026,9 +2030,23 @@ function drawPageContent(ctx, pageData, options = {}) {
   if (roughColor === "blue") roughStroke = "#60a5fa";
   if (roughColor === "gray") roughStroke = "#9ca3af";
 
+  if (useVariableWidth) {
+  // 点が少ない線は入り抜きなしで一定幅にする
+  if (pts.length < 4) {
+    ctx.lineWidth = defaultWidth;
+    ctx.beginPath();
+    ctx.moveTo(pts[0].x, pts[0].y);
+    for (let i = 1; i < pts.length; i++) {
+      ctx.lineTo(pts[i].x, pts[i].y);
+    }
+    ctx.stroke();
+    continue;
+  }
+}
+
 drawStrokeLayerOnCtx(ctx, pageData, "rough", roughStroke, 2, false);
-// ペン入れ：入り抜きなし・一定幅
-drawStrokeLayerOnCtx(ctx, pageData, "pen",   "#111827",   3, false);
+// ペン入れ：入り抜きあり（可変幅）
+drawStrokeLayerOnCtx(ctx, pageData, "pen",   "#111827",   3, true);
 
   applyBetaFills(ctx, pageData);
   applyToneFills(ctx, pageData);
