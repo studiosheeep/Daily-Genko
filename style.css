@@ -661,8 +661,8 @@ h1 {
 
 /* キャラクター本体（丸いキャラ） */
 .helper-avatar {
-  width: 300px;
-  height: 300px;
+  width: 100px;
+  height: 100px;
   border-radius: 50%;
   background: radial-gradient(circle at 30% 25%, #fef9c3, #22c55e);
   box-shadow: 0 6px 14px rgba(16, 185, 129, 0.45);
