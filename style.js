@@ -2295,7 +2295,6 @@ drawPageContent(wctx, scaledData, {
     document.getElementById("resetProgressBtn").addEventListener("click", () => {
       if (!confirm("本当に全ページの進捗・連続日数・枠線や下描き・台詞・ペン入れをすべてリセットしますか？")) return;
       resetAllPagesProgress();
-      resetStreakData();
       resetAllDrawData();
       renderAll();
     });
