@@ -625,7 +625,7 @@ h1 {
   bottom: 12px;
   display: flex;
   align-items: center;   /* ← これを center に */
-  gap: 8px;
+  gap: 16px;
   pointer-events: none;
   animation: helper-pop 0.6s ease-out 1;
   z-index: 9999;        /* 画面の一番前に出す */
@@ -643,7 +643,6 @@ h1 {
   color: #111827;
   box-shadow: 0 4px 14px rgba(15, 23, 42, 0.2);
   position: relative;
-  margin-right: 10px;
 }
 
 /* 吹き出しのしっぽ */
