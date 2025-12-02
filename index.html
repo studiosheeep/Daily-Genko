@@ -2845,7 +2845,7 @@ function drawPageContent(ctx, pageData, options = {}) {
     updateNextTaskDisplay(progress);
   }
 
-  // 書き出し用に座標だけ倍率をかけたページデータを作る
+// 書き出し用に座標だけ倍率をかけたページデータを作る
 function createScaledPageData(pageData, factor) {
   const scaled = JSON.parse(JSON.stringify(pageData));
 
@@ -2865,18 +2865,19 @@ function createScaledPageData(pageData, factor) {
         path.points.forEach(p => {
           p.x *= factor;
           p.y *= factor;
-          if (p.w != null) p.w *= factor; // 線幅も比例
+          if (p.w != null) p.w *= factor; // 線幅も倍率をかける
         });
       });
     }
   });
 
-  // 吹き出し（位置だけ拡大。scale はそのまま）
+  // 吹き出し（位置と大きさを拡大）
   const textLayer = scaled.text || {};
   for (const balloons of Object.values(textLayer)) {
     balloons.forEach(b => {
       b.x *= factor;
       b.y *= factor;
+      b.scale = (b.scale || 1) * factor;  // ← これを追加
     });
   }
 
