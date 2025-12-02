@@ -620,14 +620,15 @@ h1 {
 /* ===== 右下の応援キャラクター ===== */
 
 .helper-character {
-  position: absolute;
+  position: fixed;   /* ← absolute から fixed に変更 */
   right: 12px;
   bottom: 12px;
   display: flex;
   align-items: flex-end;
   gap: 8px;
-  pointer-events: none; /* ボード操作の邪魔をしないように */
+  pointer-events: none;
   animation: helper-pop 0.6s ease-out 1;
+  z-index: 9999;     /* 念のため前面に */
 }
 
 /* 吹き出し部分 */
