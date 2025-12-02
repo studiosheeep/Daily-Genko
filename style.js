@@ -930,54 +930,61 @@ function taperFactor(i, n) {
     ctx.restore();
   }
 
-  function drawBalloonTail(ctx, b, rx, ry) {
-    const side = b.tailSide === "right" ? "right" : "left";
-    const dir  = side === "right" ? 1 : -1;
+function drawBalloonTail(ctx, b, rx, ry, scaleB) {
+  const side = b.tailSide === "right" ? "right" : "left";
+  const dir  = side === "right" ? 1 : -1;
 
-    const tCenter = 0.42;
-    const tSpread = 0.07;
+  const tCenter = 0.42;
+  const tSpread = 0.07;
 
-    function ellipseSidePoint(tOffset) {
-      const y = b.y + ry * (tCenter + tOffset);
-      const ny = (y - b.y) / ry;
-      const dx = rx * Math.sqrt(1 - ny * ny);
-      const x  = b.x + dir * dx;
-      return { x, y };
-    }
-
-    const p1 = ellipseSidePoint(-tSpread);
-    const p2 = ellipseSidePoint(+tSpread);
-
-    const tipX = b.x + dir * (rx + 18);
-    const tipY = b.y + ry * 0.50;
-
-    ctx.save();
-
-    ctx.beginPath();
-    ctx.moveTo(p1.x, p1.y);
-    ctx.lineTo(tipX, tipY);
-    ctx.lineTo(p2.x, p2.y);
-    ctx.closePath();
-    ctx.fillStyle = "#ffffff";
-    ctx.fill();
-
-    ctx.beginPath();
-    ctx.moveTo(p1.x, p1.y);
-    ctx.lineTo(p2.x, p2.y);
-    ctx.strokeStyle = "#ffffff";
-    ctx.lineWidth = 4;
-    ctx.stroke();
-
-    ctx.beginPath();
-    ctx.moveTo(p1.x, p1.y);
-    ctx.lineTo(tipX, tipY);
-    ctx.lineTo(p2.x, p2.y);
-    ctx.strokeStyle = "#111827";
-    ctx.lineWidth = 4.5;
-    ctx.stroke();
-
-    ctx.restore();
+  function ellipseSidePoint(tOffset) {
+    const y = b.y + ry * (tCenter + tOffset);
+    const ny = (y - b.y) / ry;
+    const dx = rx * Math.sqrt(1 - ny * ny);
+    const x  = b.x + dir * dx;
+    return { x, y };
   }
+
+  const p1 = ellipseSidePoint(-tSpread);
+  const p2 = ellipseSidePoint(+tSpread);
+
+  const tipX = b.x + dir * (rx + 18);
+  const tipY = b.y + ry * 0.50;
+
+  // スケールに合わせた線幅（2〜8px にクランプ）
+  const base = 4.5;
+  const strokeW = Math.min(8, Math.max(2, base * (scaleB || 1)));
+
+  ctx.save();
+
+  // 中身の白三角
+  ctx.beginPath();
+  ctx.moveTo(p1.x, p1.y);
+  ctx.lineTo(tipX, tipY);
+  ctx.lineTo(p2.x, p2.y);
+  ctx.closePath();
+  ctx.fillStyle = "#ffffff";
+  ctx.fill();
+
+  // 吹き出し本体との境目を消すための白線
+  ctx.beginPath();
+  ctx.moveTo(p1.x, p1.y);
+  ctx.lineTo(p2.x, p2.y);
+  ctx.strokeStyle = "#ffffff";
+  ctx.lineWidth = strokeW;
+  ctx.stroke();
+
+  // 黒いアウトライン
+  ctx.beginPath();
+  ctx.moveTo(p1.x, p1.y);
+  ctx.lineTo(tipX, tipY);
+  ctx.lineTo(p2.x, p2.y);
+  ctx.strokeStyle = "#111827";
+  ctx.lineWidth = strokeW;
+  ctx.stroke();
+
+  ctx.restore();
+}
 
   /* ===== ベタ用塗りつぶし ===== */
   function floodFillBeta(ctx, startX, startY, rect) {
@@ -1256,52 +1263,59 @@ function drawStrokeLayerOnCtx(ctx, pageData, layerName, strokeStyle, defaultWidt
   ctx.restore();
 }
 
-  function drawBalloonsOnCtx(ctx, pageData, selected) {
-    ctx.save();
-    for (const [panelIndex, balloons] of Object.entries(pageData.text)) {
-      const rect = pageData.frames[panelIndex];
-      balloons.forEach((b, idx) => {
-        if (rect) {
-          ctx.save();
-          ctx.beginPath();
-          ctx.rect(rect.x, rect.y, rect.w, rect.h);
-          ctx.clip();
-        }
-
-        const fontSize = 18;
-        const baseSize = measureBalloonSize(b.text, fontSize);
-        const scaleB   = b.scale || 1;
-        const rx = baseSize.rx * scaleB;
-        const ry = baseSize.ry * scaleB;
-
-        const isSelected =
-          selected &&
-          selected.panelIndex === Number(panelIndex) &&
-          selected.balloonIndex === idx;
-
-        ctx.beginPath();
-        ctx.ellipse(b.x, b.y, rx, ry, 0, 0, Math.PI * 2);
-        ctx.fillStyle = isSelected
-          ? "rgba(254,249,195,0.98)"
-          : "rgba(255,255,255,0.97)";
-        ctx.fill();
-        ctx.strokeStyle = "#111827";
-        ctx.lineWidth = isSelected ? 4.5 : 4.5;
-        ctx.stroke();
-
-        drawBalloonTail(ctx, b, rx, ry);
-
+function drawBalloonsOnCtx(ctx, pageData, selected) {
+  ctx.save();
+  for (const [panelIndex, balloons] of Object.entries(pageData.text)) {
+    const rect = pageData.frames[panelIndex];
+    balloons.forEach((b, idx) => {
+      if (rect) {
         ctx.save();
-        ctx.translate(b.x, b.y);
-        ctx.scale(scaleB, scaleB);
-        drawVerticalBalloonText(ctx, b.text, 0, 0);
-        ctx.restore();
+        ctx.beginPath();
+        ctx.rect(rect.x, rect.y, rect.w, rect.h);
+        ctx.clip();
+      }
 
-        if (rect) ctx.restore();
-      });
-    }
-    ctx.restore();
+      const fontSize = 18;
+      const baseSize = measureBalloonSize(b.text, fontSize);
+      const scaleB   = b.scale || 1;
+      const rx = baseSize.rx * scaleB;
+      const ry = baseSize.ry * scaleB;
+
+      const isSelected =
+        selected &&
+        selected.panelIndex === Number(panelIndex) &&
+        selected.balloonIndex === idx;
+
+      // スケールに応じた線幅（2〜8px の範囲）
+      const baseStroke = 4.5;
+      const strokeW = Math.min(8, Math.max(2, baseStroke * scaleB));
+
+      // 吹き出し本体
+      ctx.beginPath();
+      ctx.ellipse(b.x, b.y, rx, ry, 0, 0, Math.PI * 2);
+      ctx.fillStyle = isSelected
+        ? "rgba(254,249,195,0.98)"
+        : "rgba(255,255,255,0.97)";
+      ctx.fill();
+      ctx.strokeStyle = "#111827";
+      ctx.lineWidth = strokeW;
+      ctx.stroke();
+
+      // 尾（同じ strokeW を使う）
+      drawBalloonTail(ctx, b, rx, ry, scaleB);
+
+      // 文字
+      ctx.save();
+      ctx.translate(b.x, b.y);
+      ctx.scale(scaleB, scaleB);
+      drawVerticalBalloonText(ctx, b.text, 0, 0);
+      ctx.restore();
+
+      if (rect) ctx.restore();
+    });
   }
+  ctx.restore();
+}
 
   function drawActivePanelOverlay(ctx, pageData, panelIndex) {
     const rect = panelIndex && pageData.frames[panelIndex];
