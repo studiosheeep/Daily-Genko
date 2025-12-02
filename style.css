@@ -624,7 +624,7 @@ h1 {
   right: 12px;
   bottom: 12px;
   display: flex;
-  align-items: flex-end;
+  align-items: center;   /* ← これを center に */
   gap: 8px;
   pointer-events: none;
   animation: helper-pop 0.6s ease-out 1;
