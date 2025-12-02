@@ -629,6 +629,10 @@ function drawPaperBase(ctx, w, h) {
     saveAllProgress(data);
 
     logMessage(`「${lesson.title}」をクリアしました。（${currentPage}ページ目）`);
+
+    // ★ ここでマスコットに褒め台詞をしゃべらせる
+    mascotSayRandomPraise();
+    
     registerActivity();
     updateStreakDisplay();
 
@@ -2365,4 +2369,84 @@ document.getElementById("resetProgressBtn").addEventListener("click", () => {
     window.addEventListener("resize", () => {
       renderAll();
     });
+
+      setupMascot();  // マスコット機能の初期化を追加    
   });
+
+// ===== 右下マスコット関連 =====
+const PRAISE_MESSAGES = [
+  "やった！",
+  "えらい！",
+  "すごい！",
+  "今日も進んだね！",
+  "コツコツ続けてて偉い！",
+  "いいペースだよ！"
+];
+
+function mascotSayRandomPraise() {
+  const speechEl = document.getElementById("helperSpeech");
+  if (!speechEl) return;
+
+  const msg =
+    PRAISE_MESSAGES[Math.floor(Math.random() * PRAISE_MESSAGES.length)];
+
+  speechEl.textContent = msg;
+
+  // アニメーション用クラスをつけ直して「ポン」と出す
+  speechEl.classList.remove("pop");
+  // 強制再描画してからクラス付与（アニメをリセットするため）
+  // eslint-disable-next-line no-unused-expressions
+  speechEl.offsetWidth;
+  speechEl.classList.add("pop");
+}
+
+function setupMascot() {
+  const img = document.getElementById("helperImage");
+  const fileInput = document.getElementById("mascotFileInput");
+  if (!img || !fileInput) return;
+
+  // 保存済みマスコットがあれば読み込む
+  try {
+    const saved = localStorage.getItem("genko_mascot_image");
+    if (saved) {
+      img.src = saved;
+    }
+  } catch (e) {
+    console.warn("マスコット画像の読み込みに失敗しました", e);
+  }
+
+  // 画像クリックで変更確認 → ファイル選択
+  img.addEventListener("click", () => {
+    if (!confirm("マスコットを変更しますか？")) return;
+    fileInput.value = "";  // 同じファイル選択でも change が発火するように
+    fileInput.click();
+  });
+
+  // ファイル選択後の処理
+  fileInput.addEventListener("change", e => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      alert("画像ファイルを選択してください。");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = ev => {
+      const dataUrl = ev.target.result;
+      if (typeof dataUrl !== "string") return;
+
+      // 表示を変更
+      img.src = dataUrl;
+
+      // localStorage に保存（再読み込みしても同じマスコットにする）
+      try {
+        localStorage.setItem("genko_mascot_image", dataUrl);
+      } catch (err) {
+        console.warn("マスコット画像を保存できませんでした", err);
+      }
+    };
+    reader.readAsDataURL(file);
+  });
+}
