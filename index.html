@@ -1879,60 +1879,61 @@ function taperFactor(i, n) {
   }
 
   /* ===== ストローク描画共通 ===== */
-  function drawStrokeLayerOnCtx(ctx, pageData, layerName, strokeStyle, defaultWidth, useVariableWidth) {
-    const layer = pageData[layerName] || {};
-    ctx.save();
-    ctx.lineJoin = "round";
-    ctx.lineCap = "round";
-    ctx.strokeStyle = strokeStyle;
+function drawStrokeLayerOnCtx(ctx, pageData, layerName, strokeStyle, defaultWidth, useVariableWidth) {
+  const layer = pageData[layerName] || {};
+  ctx.save();
+  ctx.lineJoin = "round";
+  ctx.lineCap = "round";
+  ctx.strokeStyle = strokeStyle;
 
-    for (const [panelIndex, paths] of Object.entries(layer)) {
-      const rect = pageData.frames[panelIndex];
-      if (rect) {
-        ctx.save();
-        ctx.beginPath();
-        ctx.rect(rect.x, rect.y, rect.w, rect.h);
-        ctx.clip();
-      }
-
-      paths.forEach(path => {
-        let pts = path.points;
-        if (!pts || pts.length < 2) return;
-
-        if (useVariableWidth) {
-          pts = smoothStrokePoints(pts);
-        }
-
-        const n = pts.length;
-
-        if (!useVariableWidth) {
-          ctx.lineWidth = defaultWidth;
-          ctx.beginPath();
-          ctx.moveTo(pts[0].x, pts[0].y);
-          for (let i = 1; i < n; i++) {
-            ctx.lineTo(pts[i].x, pts[i].y);
-          }
-          ctx.stroke();
-        } else {
-          for (let i = 0; i < n - 1; i++) {
-            const p0 = pts[i];
-            const p1 = pts[i + 1];
-            const baseW = p0.w != null ? p0.w : defaultWidth;
-            const w = Math.max(1.0, baseW * taperFactor(i, n));
-            ctx.lineWidth = w;
-            ctx.beginPath();
-            ctx.moveTo(p0.x, p0.y);
-            ctx.lineTo(p1.x, p1.y);
-            ctx.stroke();
-          }
-        }
-      });
-
-      if (rect) ctx.restore();
+  for (const [panelIndex, paths] of Object.entries(layer)) {
+    const rect = pageData.frames[panelIndex];
+    if (rect) {
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(rect.x, rect.y, rect.w, rect.h);
+      ctx.clip();
     }
 
-    ctx.restore();
+    paths.forEach(path => {
+      let pts = path.points;
+      if (!pts || pts.length < 2) return;
+
+      if (useVariableWidth) {
+        pts = smoothStrokePoints(pts);
+      }
+      const n = pts.length;
+
+      // ① 可変幅オフ、または「ごく短い線」は一定幅で描画
+      if (!useVariableWidth || n < 4) {
+        ctx.lineWidth = defaultWidth;
+        ctx.beginPath();
+        ctx.moveTo(pts[0].x, pts[0].y);
+        for (let i = 1; i < n; i++) {
+          ctx.lineTo(pts[i].x, pts[i].y);
+        }
+        ctx.stroke();
+      } else {
+        // ② それ以外は入り抜きありで描画
+        for (let i = 0; i < n - 1; i++) {
+          const p0 = pts[i];
+          const p1 = pts[i + 1];
+          const baseW = p0.w != null ? p0.w : defaultWidth;
+          const w = Math.max(1.0, baseW * taperFactor(i, n)); // 両端細め・真ん中太め
+          ctx.lineWidth = w;
+          ctx.beginPath();
+          ctx.moveTo(p0.x, p0.y);
+          ctx.lineTo(p1.x, p1.y);
+          ctx.stroke();
+        }
+      }
+    });
+
+    if (rect) ctx.restore();
   }
+
+  ctx.restore();
+}
 
   function drawBalloonsOnCtx(ctx, pageData, selected) {
     ctx.save();
