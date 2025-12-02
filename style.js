@@ -1380,18 +1380,18 @@ function drawPageContent(ctx, pageData, options = {}) {
   }
 }
 
-  function redrawCanvas() {
-    if (!drawingCanvas || !drawingCtx) return;
-    const pageData = activeDrawPageData || getDrawPage(currentPage).pageData;
-    const ctx = drawingCtx;
-    ctx.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height);
-    drawPageContent(ctx, pageData, {
-      activePanelIndex: currentPanelIndex,
-      selectedBalloon: selectedBalloon,
-      skipPaperBase: currentPanelMode === "beta" || currentPanelMode === "tone"
-      balloonStrokeBase: 1.0   // ← ここだけ少し細めに
-    });
-  }
+function redrawCanvas() {
+  if (!drawingCanvas || !drawingCtx) return;
+  const pageData = activeDrawPageData || getDrawPage(currentPage).pageData;
+  const ctx = drawingCtx;
+  ctx.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height);
+  drawPageContent(ctx, pageData, {
+    activePanelIndex: currentPanelIndex,
+    selectedBalloon: selectedBalloon,
+    skipPaperBase: currentPanelMode === "beta" || currentPanelMode === "tone",
+    balloonStrokeBase: 1.0   // 画面だけ少し細め（好みに応じて調整）
+  });
+}
 
   // ===== ズーム（ホイール + ピンチ） =====
   function onWheelZoom(evt) {
