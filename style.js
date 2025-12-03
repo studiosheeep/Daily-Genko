@@ -2178,13 +2178,24 @@ function redrawCanvas() {
     mapEl.insertBefore(svg, mapEl.firstChild);
   }
 
-  function renderAll() {
-    const { data, progress } = loadPageProgress(currentPage);
-    renderMap(progress);
-    updateStreakDisplay();
-    updatePageLabel(data);
-    updateNextTaskDisplay(progress);
+function renderAll() {
+  const { data, progress } = loadPageProgress(currentPage);
+
+  // ★ 継続パネル用：「次にやること」を共有する
+  const next = getNextIncompleteLesson(progress);
+  if (next) {
+    // 例: "枠線1コマ目を進めてみましょう"
+    window.dailyNextTaskText = `${next.title}を進めてみましょう`;
+  } else {
+    // 全マス終わっている場合
+    window.dailyNextTaskText = "このページは全部クリアしました";
   }
+
+  renderMap(progress);
+  updateStreakDisplay();
+  updatePageLabel(data);
+  updateNextTaskDisplay(progress);
+}
 
 // 書き出し用に座標だけ倍率をかけたページデータを作る
 function createScaledPageData(pageData, factor) {
