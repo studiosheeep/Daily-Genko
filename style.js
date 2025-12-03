@@ -266,21 +266,29 @@
     return null;
   }
 
-  function updateNextTaskDisplay(progress) {
-    const titleEl = document.getElementById("nextTaskTitle");
-    const infoEl  = document.getElementById("nextTaskInfo");
-    if (!titleEl || !infoEl) return;
+function updateNextTaskDisplay(progress) {
+  const titleEl = document.getElementById("nextTaskTitle");
+  const infoEl  = document.getElementById("nextTaskInfo");
+  if (!titleEl || !infoEl) return;
 
-    const next = getNextIncompleteLesson(progress);
+  const next = getNextIncompleteLesson(progress);
 
-    if (next) {
-      titleEl.textContent = `${next.title}を進めよう！`;
-      infoEl.textContent  = `次のマスは「${next.title}」です。クリックして進めていきましょう。`;
-    } else {
-      titleEl.textContent = "このページは全部クリアしました！";
-      infoEl.textContent  = "お疲れさまでした。新しいページを追加して続きの原稿を進めましょう。";
-    }
+  if (next) {
+    titleEl.textContent = `${next.title}を進めよう！`;
+    infoEl.textContent  =
+      `次のマスは「${next.title}」です。クリックして進めていきましょう。`;
+
+    // ★ 継続パネル用：次にやるタスク名を共有
+    window.dailyNextTaskText = `${next.title}を進めてみましょう`;
+  } else {
+    titleEl.textContent = "このページは全部クリアしました！";
+    infoEl.textContent  =
+      "お疲れさまでした。新しいページを追加して続きの原稿を進めましょう。";
+
+    // ★ 全クリア時の文言（お好みで）
+    window.dailyNextTaskText = "このページは全部クリアしました";
   }
+}
 
   /* ===== 原稿用紙描画データ ===== */
 const EDIT_CANVAS_WIDTH  = 1000;
