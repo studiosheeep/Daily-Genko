@@ -2453,3 +2453,121 @@ img.style.backgroundPosition = "center";
     reader.readAsDataURL(file);
   });
 }
+
+(function() {
+  // ==== 設定：次にやることの文言 ====
+  // 原稿マップ側で計算している「次のタスク」に差し替えてください。
+  // 例: window.dailyNextTaskText = "枠線2コマ目を描こう！";
+  const DEFAULT_NEXT_TASK_TEXT = "枠線1コマ目を進めてみましょう！";
+
+  // ==== 日付の扱い（朝5時で日付切り替え） ====
+  function getLogicalDateStr() {
+    const now = new Date();
+
+    // ローカル時間で 5:00 以前なら前日扱い
+    if (now.getHours() < 5) {
+      now.setDate(now.getDate() - 1);
+    }
+
+    const y = now.getFullYear();
+    const m = String(now.getMonth() + 1).padStart(2, "0");
+    const d = String(now.getDate()).padStart(2, "0");
+    return y + "-" + m + "-" + d;
+  }
+
+  // ==== 連続日数の更新 ====
+  function updateStreakAndGet() {
+    const today = getLogicalDateStr();
+    const lastDate = localStorage.getItem("dg_lastDate");
+    let streak = Number(localStorage.getItem("dg_streak")) || 0;
+
+    if (!lastDate) {
+      // 初回
+      streak = 1;
+    } else if (lastDate === today) {
+      // 同じ日：カウントはそのまま
+      if (streak <= 0) streak = 1;
+    } else {
+      // 前日かどうかをチェック
+      const last = new Date(lastDate);
+      const todayDate = new Date(today);
+      const diffMs = todayDate - last;
+      const diffDays = diffMs / (1000 * 60 * 60 * 24);
+
+      if (diffDays === 1) {
+        streak += 1; // 連続
+      } else {
+        streak = 1;  // リセット
+      }
+    }
+
+    localStorage.setItem("dg_lastDate", today);
+    localStorage.setItem("dg_streak", String(streak));
+    return streak;
+  }
+
+  // ==== 今日はパネルを出さない設定 ====
+  function isHiddenToday() {
+    const today = getLogicalDateStr();
+    const hiddenDate = localStorage.getItem("dg_hide_today");
+    return hiddenDate === today;
+  }
+
+  function setHiddenToday() {
+    const today = getLogicalDateStr();
+    localStorage.setItem("dg_hide_today", today);
+  }
+
+  // ==== パネルの表示 ====
+  function openDailyPanel() {
+    const overlay = document.getElementById("daily-panel-overlay");
+    const line1 = document.getElementById("daily-panel-line1");
+    const line2 = document.getElementById("daily-panel-line2");
+    const startBtn = document.getElementById("daily-panel-start-btn");
+    const hideCheckbox = document.getElementById("daily-panel-hide-checkbox");
+
+    if (!overlay || !line1 || !line2 || !startBtn || !hideCheckbox) {
+      return;
+    }
+
+    // 連続日数の更新
+    const streak = updateStreakAndGet();
+
+    // 次にやることのメッセージ
+    const nextTaskText =
+      window.dailyNextTaskText || DEFAULT_NEXT_TASK_TEXT;
+
+    // テキストをセット
+    line1.textContent = "現在" + streak + "日継続しています。";
+    line2.textContent = "次は" + nextTaskText + "！";
+
+    // パネルを表示
+    overlay.style.display = "flex";
+
+    // ボタンクリックで閉じる
+    startBtn.addEventListener("click", function() {
+      if (hideCheckbox.checked) {
+        setHiddenToday();
+      }
+
+      overlay.style.display = "none";
+
+      // 必要ならここで「作業開始」用の処理を呼ぶ
+      // 例:
+      // if (typeof window.onDailyPanelStartWork === "function") {
+      //   window.onDailyPanelStartWork();
+      // }
+    }, { once: true });
+  }
+
+  // ==== ページ読み込み時の処理 ====
+  document.addEventListener("DOMContentLoaded", function() {
+    if (isHiddenToday()) {
+      // 「今日は表示しない」がチェック済み
+      return;
+    }
+
+    // ページアクセス時にパネルを出す
+    openDailyPanel();
+  });
+})();
