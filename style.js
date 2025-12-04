@@ -2586,7 +2586,11 @@ img.style.backgroundPosition = "center";
       return;
     }
 
-    // ページアクセス時にパネルを出す
-    openDailyPanel();
+    // renderAll() が window 側の DOMContentLoaded で実行されて
+    // window.dailyNextTaskText がセットされてからパネルを開きたいので、
+    // いったんタスクキューに回して少し遅らせる
+    setTimeout(() => {
+      openDailyPanel();
+    }, 0);
   });
 })();
