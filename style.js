@@ -47,11 +47,12 @@
     return Number(localStorage.getItem(GEM_TOTAL_KEY)) || 0;
   }
 
-  function updateGemDisplay() {
-    const el = document.getElementById("gemTotal");
-    if (!el) return;
-    el.textContent = loadGemTotal() + " 個";
-  }
+function updateGemDisplay() {
+  const el = document.getElementById("gemTotal");
+  if (!el) return;
+  // 単位は CSS で見せるので数字だけ入れる
+  el.textContent = loadGemTotal();
+}
 
   function saveGemTotal(total) {
     localStorage.setItem(GEM_TOTAL_KEY, String(total));
