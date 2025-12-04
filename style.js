@@ -652,8 +652,10 @@ function drawPaperBase(ctx, w, h) {
       return;
     }
 
+    // このレッスンをクリア扱いに
     progress[lesson.id] = lesson.maxProgress;
 
+    // それ以前のコマもまとめて埋める
     for (let i = 0; i < lessonIndex; i++) {
       const prevLesson = LESSONS[i];
       if (progress[prevLesson.id] < prevLesson.maxProgress) {
@@ -665,7 +667,7 @@ function drawPaperBase(ctx, w, h) {
 
     logMessage(`「${lesson.title}」をクリアしました。（${currentPage}ページ目）`);
 
-        // ★ここから：作業ジェム付与（このレッスンのみ）
+    // ★ここから：作業ジェム付与（このレッスンのみ）
     const [group] = lesson.id.split("_");
     let reward = 0;
     if (group === "frame") {
@@ -686,29 +688,10 @@ function drawPaperBase(ctx, w, h) {
     if (reward > 0) {
       addGems(reward, `${lesson.title} の作業`);
     }
-    // ★ここまで：前のコマをまとめて埋めても、ジェムはこのコマだけ
+    // ★ここまで
 
-    // 既存処理
+    // マスコットの褒め台詞＋継続日数
     mascotSayRandomPraise();
-    registerActivity();
-    updateStreakDisplay();
-
-    const isFinal = lesson.id === "finish_6";
-    renderAll();
-
-    const mapEl = document.getElementById("map");
-    const targetNode = mapEl
-      ? mapEl.querySelector(`.node[data-lesson-id="${lessonId}"]`)
-      : null;
-
-    showSuccessEffect();
-    triggerConfetti(targetNode);
-    playSuccessSound(isFinal);
-  }
-    
-    // ★ ここでマスコットに褒め台詞をしゃべらせる
-    mascotSayRandomPraise();
-    
     registerActivity();
     updateStreakDisplay();
 
@@ -2627,10 +2610,12 @@ function updateLoginStreakAndGet() {
     localStorage.setItem(GEM_LOGIN_LAST_DATE_KEY, today);
     return reward;
   }
-    
-    localStorage.setItem(LOGIN_LAST_DATE_KEY, today);
-    localStorage.setItem(LOGIN_STREAK_KEY, String(streak));
-    return streak;
+
+  // ==== 今日はパネルを出さない設定 ====
+  function isHiddenToday() {
+    const today = getLogicalDateStr();
+    const hiddenDate = localStorage.getItem("dg_hide_today");
+    return hiddenDate === today;
   }
   
   // ==== 今日はパネルを出さない設定 ====
