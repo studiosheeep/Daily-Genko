@@ -821,25 +821,30 @@ h1 {
   height: 14px;
 }
 
-/* ★ジェム表示 */
+/* ★ジェム表示（連続日数と同じデザイン） */
 .top-bar-gem {
-  margin-left: 12px;
+  margin-left: 4px;                 /* くっつきすぎるようなら調整 */
+  border-radius: 14px;
   padding: 6px 10px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.16);
+  font-size: 10px;
+  background: rgba(0, 0, 0, 0.15);   /* streak-box と同じ */
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  text-align: right;
+  box-shadow: none;
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  font-size: 11px;
 }
 
 .top-bar-gem-label {
-  opacity: 0.85;
+  color: rgba(255, 255, 255, 0.85);  /* streak-label と同じ色 */
+  margin-bottom: 1px;
 }
 
 .top-bar-gem-value {
-  font-weight: 600;
-  font-size: 13px;
+  font-size: 16px;                  /* streak-value と同じサイズ */
+  font-weight: 800;
+  color: #fef9c3;                   /* streak-value と同じ色 */
 }
 
 /* ★デイリーパネルのカレンダー */
