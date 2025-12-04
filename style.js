@@ -39,6 +39,33 @@
   const STORAGE_KEY = "mangaLessonProgress_v8_pages";
   const STREAK_KEY  = "mangaLessonStreak_v1";
 
+ // ===== ジェム管理 =====
+  const GEM_TOTAL_KEY = "genko_gems_total_v1";
+  const GEM_LOGIN_LAST_DATE_KEY = "genko_login_last_date_v1";
+
+  function loadGemTotal() {
+    return Number(localStorage.getItem(GEM_TOTAL_KEY)) || 0;
+  }
+
+  function updateGemDisplay() {
+    const el = document.getElementById("gemTotal");
+    if (!el) return;
+    el.textContent = loadGemTotal() + " 個";
+  }
+
+  function saveGemTotal(total) {
+    localStorage.setItem(GEM_TOTAL_KEY, String(total));
+    updateGemDisplay();
+  }
+
+  function addGems(amount, reason) {
+    if (!amount || amount <= 0) return;
+    const current = loadGemTotal();
+    const next = current + amount;
+    saveGemTotal(next);
+    logMessage(`ジェムを${amount}個獲得しました（${reason}）。合計: ${next}個`);
+  }
+
   /* ===== 進捗保存 ===== */
   function createInitialProgressMap() {
     const obj = {};
@@ -638,6 +665,47 @@ function drawPaperBase(ctx, w, h) {
 
     logMessage(`「${lesson.title}」をクリアしました。（${currentPage}ページ目）`);
 
+        // ★ここから：作業ジェム付与（このレッスンのみ）
+    const [group] = lesson.id.split("_");
+    let reward = 0;
+    if (group === "frame") {
+      // 枠線コマ
+      reward = 10;
+    } else if (group === "rough" || group === "text") {
+      // 下書き・台詞
+      reward = 20;
+    } else if (
+      group === "pen" ||
+      group === "beta" ||
+      group === "tone" ||
+      group === "finish"
+    ) {
+      // ペン入れ・ベタ・トーン・仕上げ
+      reward = 30;
+    }
+    if (reward > 0) {
+      addGems(reward, `${lesson.title} の作業`);
+    }
+    // ★ここまで：前のコマをまとめて埋めても、ジェムはこのコマだけ
+
+    // 既存処理
+    mascotSayRandomPraise();
+    registerActivity();
+    updateStreakDisplay();
+
+    const isFinal = lesson.id === "finish_6";
+    renderAll();
+
+    const mapEl = document.getElementById("map");
+    const targetNode = mapEl
+      ? mapEl.querySelector(`.node[data-lesson-id="${lessonId}"]`)
+      : null;
+
+    showSuccessEffect();
+    triggerConfetti(targetNode);
+    playSuccessSound(isFinal);
+  }
+    
     // ★ ここでマスコットに褒め台詞をしゃべらせる
     mascotSayRandomPraise();
     
@@ -2314,6 +2382,7 @@ drawPageContent(wctx, scaledData, {
     createTonePatternData();
 
     renderAll();
+    updateGemDisplay();   // ★追加：ページ読み込み時に表示を同期
 
 document.getElementById("resetProgressBtn").addEventListener("click", () => {
   if (!confirm("本当に全ページの進捗・枠線や下描き・台詞・ペン入れをすべてリセットしますか？\n※連続日数はリセットされません。")) return;
@@ -2474,6 +2543,10 @@ img.style.backgroundPosition = "center";
 }
 
 (function() {
+
+  const LOGIN_LAST_DATE_KEY = "dg_login_lastDate_v1";
+  const LOGIN_STREAK_KEY    = "dg_login_streak_v1";
+  
   // ==== 設定：次にやることの文言 ====
   // 原稿マップ側で計算している「次のタスク」に差し替えてください。
   // 例: window.dailyNextTaskText = "枠線2コマ目を描こう！";
@@ -2494,6 +2567,72 @@ img.style.backgroundPosition = "center";
     return y + "-" + m + "-" + d;
   }
 
+  // ==== ログイン日数の更新（ログボ用） ====
+function updateLoginStreakAndGet() {
+  const today = getLogicalDateStr();
+  const lastDate = localStorage.getItem(LOGIN_LAST_DATE_KEY);
+  let streak = Number(localStorage.getItem(LOGIN_STREAK_KEY)) || 0;
+
+  if (!lastDate) {
+    streak = 1;
+  } else if (lastDate === today) {
+    if (streak <= 0) streak = 1;
+  } else {
+    const last = new Date(lastDate);
+    const todayDate = new Date(today);
+    const diffMs = todayDate - last;
+    const diffDays = diffMs / (1000 * 60 * 60 * 24);
+
+    if (diffDays === 1) {
+      streak += 1;
+    } else {
+      streak = 1;
+    }
+  }
+
+  localStorage.setItem(LOGIN_LAST_DATE_KEY, today);
+  localStorage.setItem(LOGIN_STREAK_KEY, String(streak));
+
+  return streak;
+}
+
+  function updateLoginCalendarUI(loginStreak) {
+    const cells = document.querySelectorAll(".daily-panel-day");
+    if (!cells.length) return;
+
+    const dayIndex = ((loginStreak - 1) % 7) + 1; // 1〜7
+
+    cells.forEach(cell => {
+      const n = Number(cell.dataset.day);
+      cell.classList.remove("past", "today", "future");
+      if (n < dayIndex) {
+        cell.classList.add("past");
+      } else if (n === dayIndex) {
+        cell.classList.add("today");
+      } else {
+        cell.classList.add("future");
+      }
+    });
+  }
+
+  function giveLoginBonusIfNeeded(loginStreak) {
+    const today = getLogicalDateStr();
+    const lastBonusDate = localStorage.getItem(GEM_LOGIN_LAST_DATE_KEY);
+    if (lastBonusDate === today) return 0;
+
+    const dayIndex = ((loginStreak - 1) % 7) + 1;
+    const reward = dayIndex === 7 ? 20 : 10;
+
+    addGems(reward, `ログインボーナス ${dayIndex}日目`);
+    localStorage.setItem(GEM_LOGIN_LAST_DATE_KEY, today);
+    return reward;
+  }
+    
+    localStorage.setItem(LOGIN_LAST_DATE_KEY, today);
+    localStorage.setItem(LOGIN_STREAK_KEY, String(streak));
+    return streak;
+  }
+  
   // ==== 今日はパネルを出さない設定 ====
   function isHiddenToday() {
     const today = getLogicalDateStr();
@@ -2507,46 +2646,40 @@ img.style.backgroundPosition = "center";
   }
 
   // ==== パネルの表示 ====
-  function openDailyPanel() {
-    const overlay = document.getElementById("daily-panel-overlay");
-    const line1 = document.getElementById("daily-panel-line1");
-    const line2 = document.getElementById("daily-panel-line2");
-    const startBtn = document.getElementById("daily-panel-start-btn");
-    const hideCheckbox = document.getElementById("daily-panel-hide-checkbox");
+function openDailyPanel(loginStreak, workStreak) {
+  const overlay = document.getElementById("daily-panel-overlay");
+  const line1 = document.getElementById("daily-panel-line1");
+  const line2 = document.getElementById("daily-panel-line2");
+  const startBtn = document.getElementById("daily-panel-start-btn");
+  const hideCheckbox = document.getElementById("daily-panel-hide-checkbox");
 
-    if (!overlay || !line1 || !line2 || !startBtn || !hideCheckbox) {
-      return;
-    }
+  if (!overlay || !line1 || !line2 || !startBtn || !hideCheckbox) {
+    return;
+  }
 
-    // 連続日数の更新
-    const streak = calcCurrentStreak();
+  line1.textContent = "現在" + workStreak + "日継続しています。";
 
-    // 次にやることのメッセージ
-    const nextTaskText =
-      window.dailyNextTaskText || DEFAULT_NEXT_TASK_TEXT;
+  const nextTaskText = window.dailyNextTaskText || DEFAULT_NEXT_TASK_TEXT;
+  line2.textContent = "次は" + nextTaskText + "！";
 
-    // テキストをセット
-    line1.textContent = "現在" + streak + "日継続しています。";
-    line2.textContent = "次は" + nextTaskText + "！";
+  updateLoginCalendarUI(loginStreak);
 
-    // パネルを表示
-    overlay.style.display = "flex";
+  overlay.style.display = "flex";
 
-    // ボタンクリックで閉じる
-    startBtn.addEventListener("click", function() {
+  startBtn.addEventListener(
+    "click",
+    function () {
       if (hideCheckbox.checked) {
         setHiddenToday();
       }
 
-      overlay.style.display = "none";
+      giveLoginBonusIfNeeded(loginStreak);
 
-      // 必要ならここで「作業開始」用の処理を呼ぶ
-      // 例:
-      // if (typeof window.onDailyPanelStartWork === "function") {
-      //   window.onDailyPanelStartWork();
-      // }
-    }, { once: true });
-  }
+      overlay.style.display = "none";
+    },
+    { once: true }
+  );
+}
 
   // ==== ページ読み込み時の処理 ====
   document.addEventListener("DOMContentLoaded", function() {
@@ -2555,11 +2688,11 @@ img.style.backgroundPosition = "center";
       return;
     }
 
-    // renderAll() が window 側の DOMContentLoaded で実行されて
-    // window.dailyNextTaskText がセットされてからパネルを開きたいので、
-    // いったんタスクキューに回して少し遅らせる
+    // renderAll() などが先に走って dailyNextTaskText を設定してから開く
     setTimeout(() => {
-      openDailyPanel();
+      const loginStreak = updateLoginStreakAndGet();
+      const workStreak  = calcCurrentStreak();
+      openDailyPanel(loginStreak, workStreak);
     }, 0);
   });
 })();
