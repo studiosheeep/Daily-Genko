@@ -820,3 +820,62 @@ h1 {
   width: 14px;
   height: 14px;
 }
+
+/* ★ジェム表示 */
+.top-bar-gem {
+  margin-left: 12px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.16);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  font-size: 11px;
+}
+
+.top-bar-gem-label {
+  opacity: 0.85;
+}
+
+.top-bar-gem-value {
+  font-weight: 600;
+  font-size: 13px;
+}
+
+/* ★デイリーパネルのカレンダー */
+.daily-panel-calendar {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 4px;
+  margin: 10px 0 14px;
+  font-size: 11px;
+}
+
+.daily-panel-day {
+  border-radius: 6px;
+  padding: 4px 2px;
+  background: #e5e7eb;
+  text-align: center;
+}
+
+.daily-panel-day .day-label {
+  font-weight: 600;
+}
+
+.daily-panel-day .day-reward {
+  font-size: 10px;
+}
+
+/* 取得済み／今日／未来で色を変える */
+.daily-panel-day.past {
+  opacity: 0.45;
+}
+
+.daily-panel-day.today {
+  background: #22c55e;
+  color: #ffffff;
+}
+
+.daily-panel-day.future {
+  opacity: 0.9;
+}
