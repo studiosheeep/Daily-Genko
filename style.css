@@ -766,15 +766,15 @@ h1 {
 /* パネル本体 */
 .daily-panel {
   background: #ffffff;
-  border-radius: 20px;
-  padding: 20px 24px 16px;
-  box-shadow: 0 18px 45px rgba(15, 23, 42, 0.18);
-  max-width: 380px;
+  border-radius: 22px;
+  padding: 24px 28px 20px;
+  box-shadow: 0 20px 55px rgba(15, 23, 42, 0.18);
+  max-width: 520px;
   width: calc(100% - 40px);
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 18px;
 }
 
 /* テキスト部分 */
@@ -821,64 +821,148 @@ h1 {
   height: 14px;
 }
 
-/* ★ジェム表示（連続日数と同じデザイン） */
+/* ★右上ジェム表示をアイコン＋数字スタイルに */
 .top-bar-gem {
-  margin-left: 4px;                 /* くっつきすぎるようなら調整 */
-  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
   padding: 6px 10px;
-  font-size: 10px;
-  background: rgba(0, 0, 0, 0.15);   /* streak-box と同じ */
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  text-align: right;
-  box-shadow: none;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.16);
+  box-shadow: 0 2px 0 rgba(16, 185, 129, 0.6);
+}
+
+.top-bar-gem-icon {
+  width: 24px;
+  height: 24px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #fb7185, #ef4444);
+  position: relative;
+  box-shadow: 0 2px 0 rgba(185, 28, 28, 0.7);
+}
+
+/* アイコン内のキラキラ */
+.top-bar-gem-icon::before,
+.top-bar-gem-icon::after {
+  content: "";
+  position: absolute;
+  border-radius: 999px;
+  background: #fde68a;
+}
+
+.top-bar-gem-icon::before {
+  width: 10px;
+  height: 10px;
+  left: 5px;
+  top: 5px;
+}
+
+.top-bar-gem-icon::after {
+  width: 6px;
+  height: 6px;
+  right: 4px;
+  bottom: 4px;
+  opacity: 0.8;
+}
+
+.top-bar-gem-text {
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
+  line-height: 1.1;
 }
 
 .top-bar-gem-label {
-  color: rgba(255, 255, 255, 0.85);  /* streak-label と同じ色 */
-  margin-bottom: 1px;
+  font-size: 10px;
+  opacity: 0.85;
 }
 
-.top-bar-gem-value {
-  font-size: 16px;                  /* streak-value と同じサイズ */
-  font-weight: 800;
-  color: #fef9c3;                   /* streak-value と同じ色 */
+.top-bar-gem-count {
+  font-size: 15px;
+  font-weight: 700;
 }
 
 /* ★デイリーパネルのカレンダー */
 .daily-panel-calendar {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: 4px;
-  margin: 10px 0 14px;
-  font-size: 11px;
+  gap: 8px;
+  margin: 12px 0 16px;
+  font-size: 12px;
 }
 
+/* 一日分のカード */
 .daily-panel-day {
-  border-radius: 6px;
-  padding: 4px 2px;
-  background: #e5e7eb;
+  border-radius: 10px;
+  background: linear-gradient(#fefce8, #fef9c3);
+  border: 1px solid #fbbf24;
+  box-shadow: 0 2px 0 rgba(217, 119, 6, 0.55);
+  padding: 4px 2px 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
   text-align: center;
 }
 
+/* 上の「1日目」ラベル部分 */
 .daily-panel-day .day-label {
-  font-weight: 600;
+  font-weight: 700;
+  font-size: 11px;
+  color: #f9fafb;
+  background: linear-gradient(180deg, #b91c1c, #7f1d1d);
+  border-radius: 8px 8px 4px 4px;
+  padding: 2px 0;
 }
 
+/* 報酬表示部分 */
 .daily-panel-day .day-reward {
-  font-size: 10px;
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding-top: 6px;
+  font-weight: 700;
+  color: #1f2937;
 }
 
-/* 取得済み／今日／未来で色を変える */
+/* 報酬の「ジェム」アイコンをCSSで描画 */
+.daily-panel-day .day-reward::before {
+  content: "";
+  width: 14px;
+  height: 14px;
+  background: linear-gradient(135deg, #38bdf8, #0ea5e9);
+  box-shadow: 0 1px 0 rgba(15, 23, 42, 0.25);
+  border-radius: 4px;
+  clip-path: polygon(
+    50% 0%,
+    90% 35%,
+    70% 100%,
+    30% 100%,
+    10% 35%
+  ); /* 六角形に近いダイヤ形 */
+}
+
+/* 取得済み・今日・未来の見た目差分 */
 .daily-panel-day.past {
-  opacity: 0.45;
+  background: #f9fafb;
+  border-color: #e5e7eb;
+  box-shadow: none;
+  opacity: 0.65;
+}
+
+.daily-panel-day.past .day-label {
+  background: #9ca3af;
 }
 
 .daily-panel-day.today {
-  background: #22c55e;
-  color: #ffffff;
+  transform: translateY(-1px);
+  background: linear-gradient(#ecfccb, #bbf7d0);
+  border-color: #22c55e;
+  box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.4);
+}
+
+.daily-panel-day.today .day-label {
+  background: linear-gradient(180deg, #16a34a, #166534);
 }
 
 .daily-panel-day.future {
