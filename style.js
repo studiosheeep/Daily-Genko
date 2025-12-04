@@ -2494,37 +2494,6 @@ img.style.backgroundPosition = "center";
     return y + "-" + m + "-" + d;
   }
 
-  // ==== 連続日数の更新 ====
-  function updateStreakAndGet() {
-    const today = getLogicalDateStr();
-    const lastDate = localStorage.getItem("dg_lastDate");
-    let streak = Number(localStorage.getItem("dg_streak")) || 0;
-
-    if (!lastDate) {
-      // 初回
-      streak = 1;
-    } else if (lastDate === today) {
-      // 同じ日：カウントはそのまま
-      if (streak <= 0) streak = 1;
-    } else {
-      // 前日かどうかをチェック
-      const last = new Date(lastDate);
-      const todayDate = new Date(today);
-      const diffMs = todayDate - last;
-      const diffDays = diffMs / (1000 * 60 * 60 * 24);
-
-      if (diffDays === 1) {
-        streak += 1; // 連続
-      } else {
-        streak = 1;  // リセット
-      }
-    }
-
-    localStorage.setItem("dg_lastDate", today);
-    localStorage.setItem("dg_streak", String(streak));
-    return streak;
-  }
-
   // ==== 今日はパネルを出さない設定 ====
   function isHiddenToday() {
     const today = getLogicalDateStr();
@@ -2550,7 +2519,7 @@ img.style.backgroundPosition = "center";
     }
 
     // 連続日数の更新
-    const streak = updateStreakAndGet();
+    const streak = calcCurrentStreak();
 
     // 次にやることのメッセージ
     const nextTaskText =
