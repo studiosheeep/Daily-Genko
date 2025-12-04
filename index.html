@@ -24,18 +24,25 @@
           一番上のマスから順番にクリックして進めていく原稿すごろくです。
         </div>
       </div>
-      <div class="top-bar-right">
-        <div class="streak-box">
-          <div class="streak-label">現在の連続日数</div>
-          <div class="streak-value" id="streakValue">0 日</div>
-          <div class="streak-note">※朝5時区切りでカウント</div>
-        </div>
-
-          <!-- ★追加：ジェム表示 -->
-  <div class="top-bar-gem">
-    <div class="top-bar-gem-label">💎所持ジェム</div>
-    <div id="gemTotal" class="top-bar-gem-value">0 個</div>
+      
+<div class="top-bar-right">
+  <div class="streak-box">
+    <div class="streak-label">現在の連続日数</div>
+    <div class="streak-value" id="streakValue">0 日</div>
+    <div class="streak-note">※朝5時区切りでカウント</div>
   </div>
+
+  <!-- ここからジェム表示 -->
+  <div class="top-bar-gem">
+    <div class="top-bar-gem-icon"></div>
+    <div class="top-bar-gem-text">
+      <div class="top-bar-gem-label">所持ジェム</div>
+      <div class="top-bar-gem-count">
+        <span id="gemTotal">0</span>
+      </div>
+    </div>
+  </div>
+  <!-- ここまでジェム表示 -->
         
         <button class="reset-btn" id="resetProgressBtn">進捗をリセット</button>
       </div>
@@ -88,53 +95,50 @@
 
 <!-- ==== 継続パネル ==== -->
 <div id="daily-panel-overlay" class="daily-panel-overlay" style="display:none;">
-  <div class="daily-panel">
-    <div class="daily-panel-text">
-      <p id="daily-panel-line1" class="daily-panel-line1"> </p>
-      <p id="daily-panel-line2" class="daily-panel-line2"></p>
-    </div>
+<div class="daily-panel">
+  <p id="daily-panel-line1" class="daily-panel-line1"></p>
+  <p id="daily-panel-line2" class="daily-panel-line2"></p>
 
-    <!-- ★追加：ログインボーナス 7 日カレンダー -->
-    <div class="daily-panel-calendar">
-      <div class="daily-panel-day" data-day="1">
-        <div class="day-label">1日目</div>
-        <div class="day-reward">💎+10</div>
-      </div>
-      <div class="daily-panel-day" data-day="2">
-        <div class="day-label">2日目</div>
-        <div class="day-reward">💎+10</div>
-      </div>
-      <div class="daily-panel-day" data-day="3">
-        <div class="day-label">3日目</div>
-        <div class="day-reward">💎+10</div>
-      </div>
-      <div class="daily-panel-day" data-day="4">
-        <div class="day-label">4日目</div>
-        <div class="day-reward">💎+10</div>
-      </div>
-      <div class="daily-panel-day" data-day="5">
-        <div class="day-label">5日目</div>
-        <div class="day-reward">💎+10</div>
-      </div>
-      <div class="daily-panel-day" data-day="6">
-        <div class="day-label">6日目</div>
-        <div class="day-reward">💎+10</div>
-      </div>
-      <div class="daily-panel-day" data-day="7">
-        <div class="day-label">7日目</div>
-        <div class="day-reward">💎+20</div>
-      </div>
+  <div class="daily-panel-calendar">
+    <div class="daily-panel-day" data-day="1">
+      <div class="day-label">1日目</div>
+      <div class="day-reward">+10</div>
     </div>
-    
-    <button id="daily-panel-start-btn" class="daily-panel-start-btn">
-      作業を進める
-    </button>
-
-    <label class="daily-panel-hide-today">
-      <input type="checkbox" id="daily-panel-hide-checkbox">
-      今日はこのパネルを表示しない
-    </label>
+    <div class="daily-panel-day" data-day="2">
+      <div class="day-label">2日目</div>
+      <div class="day-reward">+10</div>
+    </div>
+    <div class="daily-panel-day" data-day="3">
+      <div class="day-label">3日目</div>
+      <div class="day-reward">+10</div>
+    </div>
+    <div class="daily-panel-day" data-day="4">
+      <div class="day-label">4日目</div>
+      <div class="day-reward">+10</div>
+    </div>
+    <div class="daily-panel-day" data-day="5">
+      <div class="day-label">5日目</div>
+      <div class="day-reward">+10</div>
+    </div>
+    <div class="daily-panel-day" data-day="6">
+      <div class="day-label">6日目</div>
+      <div class="day-reward">+10</div>
+    </div>
+    <div class="daily-panel-day" data-day="7">
+      <div class="day-label">7日目</div>
+      <div class="day-reward">+20</div>
+    </div>
   </div>
+
+  <button id="daily-panel-start-btn" class="daily-panel-start-btn">
+    作業を進める
+  </button>
+
+  <label class="daily-panel-hide-today">
+    <input id="daily-panel-hide-checkbox" type="checkbox">
+    今日はこのパネルを表示しない
+  </label>
+</div>
 </div>
       
 </body>
