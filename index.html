@@ -32,20 +32,26 @@
     <div class="streak-note">※朝5時区切りでカウント</div>
   </div>
 
-  <!-- 所持ジェム表示 -->
   <div class="top-bar-gem">
-    <div class="top-bar-gem-icon"></div>
-    <div class="top-bar-gem-text">
-      <div class="top-bar-gem-label">所持ジェム</div>
-      <div class="top-bar-gem-value">
-        <span id="gemTotal">0</span>
+    <div class="top-bar-gem-inner">
+      <div class="top-bar-gem-icon">
+        <svg viewBox="0 0 36 36" aria-hidden="true" class="gem-svg">
+          <path fill="#BDDDF4" d="M13 3H7l-7 9h10z"></path>
+          <path fill="#5DADEC" d="M36 12l-7-9h-6l3 9z"></path>
+          <path fill="#4289C1" d="M26 12h10L18 33z"></path>
+          <path fill="#8CCAF7" d="M10 12H0l18 21zm3-9l-3 9h16l-3-9z"></path>
+          <path fill="#5DADEC" d="M18 33l-8-21h16z"></path>
+        </svg>
+      </div>
+      <div class="top-bar-gem-text">
+        <div class="top-bar-gem-label">所持ジェム</div>
+        <div class="top-bar-gem-value" id="gemTotal">0 個</div>
       </div>
     </div>
   </div>
-  <!-- ここまでジェム表示 -->
-        
-        <button class="reset-btn" id="resetProgressBtn">進捗をリセット</button>
-      </div>
+
+  <button id="resetProgressBtn" class="reset-btn">進捗をリセット</button>
+</div>
     </div>
 
     <div class="page-nav">
