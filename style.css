@@ -821,80 +821,101 @@ h1 {
   height: 14px;
 }
 
-/* ★右上ジェム：連続日数と同じ箱デザインに揃える */
+/* ===========================
+   ★ 右上ジェム（高さ完全一致）
+   =========================== */
 .top-bar-gem {
-  border-radius: 14px;
-  padding: 6px 10px;
-  font-size: 10px;
-  background: rgba(0, 0, 0, 0.15);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  color: #ffffff;
   display: flex;
   align-items: center;
-  gap: 8px;
-  box-shadow: none;
+  gap: 10px;
+
+  height: 89.453px;              /* ← 左の box と完全一致 */
+  padding: 6px 14px;
+
+  background: rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 14px;
+  color: #ffffff;
+
+  box-sizing: border-box;
 }
 
-/* 宝石アイコン（絵文字の代わりにCSSで描画） */
+/* ▼ 宝石アイコン（添付の青いダイヤ形を CSS 再現） */
 .top-bar-gem-icon {
-  width: 22px;
-  height: 22px;
-  border-radius: 8px;
+  width: 34px;
+  height: 34px;
   position: relative;
-  background: radial-gradient(circle at 30% 25%, #fef9c3 0%, #fb7185 45%, #f97373 70%, #b91c1c 100%);
-  box-shadow: 0 2px 0 rgba(185, 28, 28, 0.7);
+  box-sizing: border-box;
 }
 
-/* ダイヤ形っぽいカット */
+/* ダイヤ形の本体 */
 .top-bar-gem-icon::before {
   content: "";
   position: absolute;
-  inset: 4px;
-  background: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(254,249,195,0.1));
+  inset: 0;
+
+  background: linear-gradient(180deg,
+      #93c5fd 0%,       /* 上：薄いブルー */
+      #60a5fa 45%,      /* 中間 */
+      #3b82f6 100%      /* 下：濃いブルー */
+  );
+
   clip-path: polygon(
     50% 0%,
-    94% 32%,
-    72% 100%,
-    28% 100%,
-    6% 32%
+    90% 30%,
+    100% 60%,
+    80% 100%,
+    20% 100%,
+    0% 60%,
+    10% 30%
   );
 }
 
-/* ハイライト */
+/* ダイヤの上面の光り部分 */
 .top-bar-gem-icon::after {
   content: "";
   position: absolute;
-  left: 6px;
-  top: 6px;
-  width: 8px;
-  height: 8px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.85);
-  opacity: 0.85;
+  top: 4px;
+  left: 5px;
+  width: 24px;
+  height: 14px;
+
+  background: radial-gradient(circle at 20% 20%, 
+      rgba(255,255,255,0.9), 
+      rgba(255,255,255,0) 60%
+  );
+
+  clip-path: polygon(
+    50% 0%,
+    85% 50%,
+    15% 50%
+  );
+  opacity: 0.8;
 }
 
+/* 文字部分 */
 .top-bar-gem-text {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  line-height: 1.1;
+  justify-content: center;
+  line-height: 1.2;
 }
 
 .top-bar-gem-label {
-  font-size: 10px;
-  opacity: 0.9;
+  font-size: 11px;
+  opacity: 0.92;
 }
 
 .top-bar-gem-value {
-  font-size: 15px;
+  font-size: 18px;
   font-weight: 700;
 }
 
-/* 個数の「個」はCSSで足す */
 .top-bar-gem-value span::after {
   content: " 個";
-  font-size: 11px;
   margin-left: 2px;
+  font-size: 13px;
+  opacity: 0.85;
 }
 
 /* ★デイリーパネルのカレンダー */
