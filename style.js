@@ -2527,64 +2527,36 @@ img.style.backgroundPosition = "center";
 }
 
 (function() {
-
-  const LOGIN_LAST_DATE_KEY = "dg_login_lastDate_v1";
-  const LOGIN_STREAK_KEY    = "dg_login_streak_v1";
-  
   // ==== 設定：次にやることの文言 ====
-  // 原稿マップ側で計算している「次のタスク」に差し替えてください。
-  // 例: window.dailyNextTaskText = "枠線2コマ目を描こう！";
   const DEFAULT_NEXT_TASK_TEXT = "枠線1コマ目を進めてみましょう！";
 
   // ==== 日付の扱い（朝5時で日付切り替え） ====
   function getLogicalDateStr() {
     const now = new Date();
-
-    // ローカル時間で 5:00 以前なら前日扱い
     if (now.getHours() < 5) {
       now.setDate(now.getDate() - 1);
     }
-
     const y = now.getFullYear();
     const m = String(now.getMonth() + 1).padStart(2, "0");
     const d = String(now.getDate()).padStart(2, "0");
     return y + "-" + m + "-" + d;
   }
 
-  // ==== ログイン日数の更新（ログボ用） ====
-function updateLoginStreakAndGet() {
-  const today = getLogicalDateStr();
-  const lastDate = localStorage.getItem(LOGIN_LAST_DATE_KEY);
-  let streak = Number(localStorage.getItem(LOGIN_STREAK_KEY)) || 0;
-
-  if (!lastDate) {
-    streak = 1;
-  } else if (lastDate === today) {
-    if (streak <= 0) streak = 1;
-  } else {
-    const last = new Date(lastDate);
-    const todayDate = new Date(today);
-    const diffMs = todayDate - last;
-    const diffDays = diffMs / (1000 * 60 * 60 * 24);
-
-    if (diffDays === 1) {
-      streak += 1;
-    } else {
-      streak = 1;
-    }
-  }
-
-  localStorage.setItem(LOGIN_LAST_DATE_KEY, today);
-  localStorage.setItem(LOGIN_STREAK_KEY, String(streak));
-
-  return streak;
-}
-
-  function updateLoginCalendarUI(loginStreak) {
+  // ★ ログボカレンダーを「作業の連続日数」に合わせて塗り分ける
+  function updateLoginCalendarUI(workStreak) {
     const cells = document.querySelectorAll(".daily-panel-day");
     if (!cells.length) return;
 
-    const dayIndex = ((loginStreak - 1) % 7) + 1; // 1〜7
+    // まだ1日も作業していない場合：全部 future
+    if (!workStreak || workStreak <= 0) {
+      cells.forEach(cell => {
+        cell.classList.remove("past", "today", "future");
+        cell.classList.add("future");
+      });
+      return;
+    }
+
+    const dayIndex = ((workStreak - 1) % 7) + 1; // 1〜7 をループ
 
     cells.forEach(cell => {
       const n = Number(cell.dataset.day);
@@ -2599,12 +2571,14 @@ function updateLoginStreakAndGet() {
     });
   }
 
-  function giveLoginBonusIfNeeded(loginStreak) {
+  // ★ ジェム付与も「作業連続日数」を元に計算
+  function giveLoginBonusIfNeeded(workStreak) {
     const today = getLogicalDateStr();
     const lastBonusDate = localStorage.getItem(GEM_LOGIN_LAST_DATE_KEY);
-    if (lastBonusDate === today) return 0;
+    if (lastBonusDate === today) return 0;        // その日はもう受け取り済み
+    if (!workStreak || workStreak <= 0) return 0; // まだ連続日数0なら付与なし
 
-    const dayIndex = ((loginStreak - 1) % 7) + 1;
+    const dayIndex = ((workStreak - 1) % 7) + 1;
     const reward = dayIndex === 7 ? 20 : 10;
 
     addGems(reward, `ログインボーナス ${dayIndex}日目`);
@@ -2618,13 +2592,6 @@ function updateLoginStreakAndGet() {
     const hiddenDate = localStorage.getItem("dg_hide_today");
     return hiddenDate === today;
   }
-  
-  // ==== 今日はパネルを出さない設定 ====
-  function isHiddenToday() {
-    const today = getLogicalDateStr();
-    const hiddenDate = localStorage.getItem("dg_hide_today");
-    return hiddenDate === today;
-  }
 
   function setHiddenToday() {
     const today = getLogicalDateStr();
@@ -2632,53 +2599,54 @@ function updateLoginStreakAndGet() {
   }
 
   // ==== パネルの表示 ====
-function openDailyPanel(loginStreak, workStreak) {
-  const overlay = document.getElementById("daily-panel-overlay");
-  const line1 = document.getElementById("daily-panel-line1");
-  const line2 = document.getElementById("daily-panel-line2");
-  const startBtn = document.getElementById("daily-panel-start-btn");
-  const hideCheckbox = document.getElementById("daily-panel-hide-checkbox");
+  function openDailyPanel(workStreak) {
+    const overlay = document.getElementById("daily-panel-overlay");
+    const line1 = document.getElementById("daily-panel-line1");
+    const line2 = document.getElementById("daily-panel-line2");
+    const startBtn = document.getElementById("daily-panel-start-btn");
+    const hideCheckbox = document.getElementById("daily-panel-hide-checkbox");
 
-  if (!overlay || !line1 || !line2 || !startBtn || !hideCheckbox) {
-    return;
+    if (!overlay || !line1 || !line2 || !startBtn || !hideCheckbox) return;
+
+    const nextTaskText =
+      window.dailyNextTaskText || DEFAULT_NEXT_TASK_TEXT;
+
+    // 上部の「現在の連続日数」と同じ値を使う
+    line1.textContent = `現在${workStreak}日継続しています。`;
+    line2.textContent = `次は${nextTaskText}！`;
+
+    // カレンダー更新（ここも同じ workStreak）
+    updateLoginCalendarUI(workStreak);
+
+    overlay.style.display = "flex";
+
+    startBtn.addEventListener(
+      "click",
+      function() {
+        if (hideCheckbox.checked) {
+          setHiddenToday();
+        }
+        // 1日1回だけジェムを付与
+        giveLoginBonusIfNeeded(workStreak);
+        overlay.style.display = "none";
+      },
+      { once: true }
+    );
   }
-
-  line1.textContent = "現在" + workStreak + "日継続しています。";
-
-  const nextTaskText = window.dailyNextTaskText || DEFAULT_NEXT_TASK_TEXT;
-  line2.textContent = "次は" + nextTaskText + "！";
-
-  updateLoginCalendarUI(loginStreak);
-
-  overlay.style.display = "flex";
-
-  startBtn.addEventListener(
-    "click",
-    function () {
-      if (hideCheckbox.checked) {
-        setHiddenToday();
-      }
-
-      giveLoginBonusIfNeeded(loginStreak);
-
-      overlay.style.display = "none";
-    },
-    { once: true }
-  );
-}
 
   // ==== ページ読み込み時の処理 ====
   document.addEventListener("DOMContentLoaded", function() {
     if (isHiddenToday()) {
-      // 「今日は表示しない」がチェック済み
+      // 「今日は表示しない」がオンなら何もしない
       return;
     }
 
-    // renderAll() などが先に走って dailyNextTaskText を設定してから開く
+    // 原稿マップ側の renderAll() が走ってから開きたいので、少し後ろにずらす
     setTimeout(() => {
-      const loginStreak = updateLoginStreakAndGet();
-      const workStreak  = calcCurrentStreak();
-      openDailyPanel(loginStreak, workStreak);
+      // ★ここで使うのは一元管理されている calcCurrentStreak()
+      const workStreak = calcCurrentStreak();
+      openDailyPanel(workStreak);
     }, 0);
   });
 })();
+
